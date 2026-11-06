@@ -1,141 +1,223 @@
-// ============================================================
-// app.js — what your site DOES.
-// Plain JavaScript, no libraries, no installs.
-// It uses STARTUP and LISTINGS from data.js (loaded first).
-// ============================================================
-
 (function () {
   "use strict";
 
-  // ----------------------------------------------------------
-  // 1. Saving things in the browser (localStorage).
-  //    This only remembers things on THIS browser on THIS device.
-  //    Your teammates and your customers will NOT see it.
-  //    A real product would need a server and a database for that.
-  // ----------------------------------------------------------
-  const storage = {
-    get: function (key, fallback) {
-      try {
-        const saved = localStorage.getItem(key);
-        return saved === null ? fallback : JSON.parse(saved);
-      } catch (error) {
-        return fallback; // storage blocked or broken: just carry on
-      }
-    },
-    set: function (key, value) {
-      try {
-        localStorage.setItem(key, JSON.stringify(value));
-      } catch (error) {
-        // storage blocked (e.g. private window): ignore
-      }
-    }
+  const storageKey = "terraforma-sample-plan";
+  const elements = {
+    mapMarkers: document.getElementById("map-markers"),
+    zonePicker: document.getElementById("zone-picker"),
+    planList: document.getElementById("plan-list"),
+    planCount: document.getElementById("plan-count"),
+    planTotal: document.getElementById("plan-total"),
+    storageMessage: document.getElementById("storage-message"),
+    featureSelect: document.getElementById("feature-select"),
+    locationSelect: document.getElementById("location-select"),
+    planForm: document.getElementById("plan-form")
   };
 
-  let savedIds = storage.get("savedIds", []);
+  let selectedZoneId = PROPERTY.zones[0].id;
+  let planItems = PROPERTY.initialPlan.slice();
+  let storageAvailable = true;
 
-  // ----------------------------------------------------------
-  // 2. Put the startup's name and pitch on the page.
-  // ----------------------------------------------------------
-  document.title = STARTUP.name;
-  document.getElementById("brand-name").textContent = STARTUP.name;
+  document.title = STARTUP.name + " — Land planning, made thoughtful";
   document.getElementById("tagline").textContent = STARTUP.tagline;
   document.getElementById("pitch").textContent = STARTUP.pitch;
+  document.getElementById("property-name").textContent = PROPERTY.name;
+  document.getElementById("property-location").textContent = PROPERTY.location;
+  document.getElementById("property-area").textContent = PROPERTY.area;
+  document.getElementById("area-note").textContent = "Sample dashboard · " + PROPERTY.areaNote + ".";
+  document.getElementById("observation-count").textContent = PROPERTY.zones.length;
 
-  // ----------------------------------------------------------
-  // 3. Views: show one section at a time, based on the #link in the address bar.
-  // ----------------------------------------------------------
-  function showView() {
-    const requested = (window.location.hash || "#home").slice(1);
-    const views = document.querySelectorAll("[data-view]");
-    const exists = Array.prototype.some.call(views, function (view) {
-      return view.id === requested;
+  function makeOption(label, value) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    return option;
+  }
+
+  PROPOSED_FEATURES.forEach(function (feature) {
+    elements.featureSelect.appendChild(makeOption(feature, feature));
+  });
+
+  PROPERTY.zones.forEach(function (zone) {
+    elements.locationSelect.appendChild(makeOption(zone.label, zone.label));
+  });
+
+  function getZoneById(id) {
+    return PROPERTY.zones.find(function (zone) { return zone.id === id; });
+  }
+
+  function selectZone(id) {
+    const zone = getZoneById(id);
+    if (!zone) return;
+    selectedZoneId = id;
+
+    document.getElementById("zone-title").textContent = zone.label;
+    document.getElementById("zone-category").textContent = zone.category;
+    document.getElementById("zone-evidence").textContent = zone.evidence;
+    document.getElementById("zone-observation-title").textContent = zone.title;
+    document.getElementById("zone-observation-note").textContent = zone.note;
+
+    renderZonePicker();
+    renderMapMarkers();
+  }
+
+  function renderZonePicker() {
+    elements.zonePicker.replaceChildren();
+    PROPERTY.zones.forEach(function (zone) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "zone-button" + (zone.id === selectedZoneId ? " is-selected" : "");
+      button.textContent = zone.label;
+      button.setAttribute("aria-pressed", zone.id === selectedZoneId ? "true" : "false");
+      button.addEventListener("click", function () { selectZone(zone.id); });
+      elements.zonePicker.appendChild(button);
     });
-    const current = exists ? requested : "home";
+  }
 
-    views.forEach(function (view) {
-      view.hidden = view.id !== current;
+  function renderMapMarkers() {
+    elements.mapMarkers.replaceChildren();
+
+    PROPERTY.zones.forEach(function (zone) {
+      const marker = document.createElement("button");
+      marker.type = "button";
+      marker.className = "map-marker" + (zone.id === selectedZoneId ? " is-selected" : "");
+      marker.style.left = zone.x + "%";
+      marker.style.top = zone.y + "%";
+      marker.textContent = zone.shortLabel;
+      marker.setAttribute("aria-label", "Show observation: " + zone.label);
+      marker.setAttribute("aria-pressed", zone.id === selectedZoneId ? "true" : "false");
+      marker.addEventListener("click", function () { selectZone(zone.id); });
+      elements.mapMarkers.appendChild(marker);
     });
 
-    document.querySelectorAll("nav a").forEach(function (link) {
-      if (link.getAttribute("href") === "#" + current) {
-        link.setAttribute("aria-current", "page");
-      } else {
-        link.removeAttribute("aria-current");
+    const locationCounts = {};
+    planItems.forEach(function (item) {
+      locationCounts[item.location] = (locationCounts[item.location] || 0) + 1;
+    });
+
+    PROPERTY.zones.forEach(function (zone, index) {
+      const count = locationCounts[zone.label];
+      if (!count) return;
+      const marker = document.createElement("span");
+      marker.className = "plan-marker";
+      marker.style.left = Math.min(zone.x + 5 + index, 91) + "%";
+      marker.style.top = Math.max(zone.y - 7 - index, 8) + "%";
+      marker.textContent = "+" + count;
+      marker.setAttribute("aria-label", count + (count === 1 ? " planned feature" : " planned features") + " near " + zone.label);
+      elements.mapMarkers.appendChild(marker);
+    });
+  }
+
+  function readSavedPlan() {
+    try {
+      const saved = window.localStorage.getItem(storageKey);
+      if (saved === null) return;
+      const parsed = JSON.parse(saved);
+      if (!Array.isArray(parsed) || !parsed.every(function (item) {
+        return item && typeof item.id === "string" &&
+          typeof item.feature === "string" &&
+          typeof item.location === "string" &&
+          typeof item.note === "string";
+      })) {
+        throw new Error("The saved planning data has an unexpected format.");
       }
-    });
-
-    window.scrollTo(0, 0);
-  }
-
-  window.addEventListener("hashchange", showView);
-
-  // ----------------------------------------------------------
-  // 4. Explore page: build one card per listing.
-  //    We use textContent (not innerHTML) so text is always shown
-  //    as text — a basic security habit.
-  // ----------------------------------------------------------
-  const grid = document.getElementById("listing-grid");
-  const searchBox = document.getElementById("search-box");
-  const emptyMessage = document.getElementById("empty-message");
-  const savedCount = document.getElementById("saved-count");
-
-  function makeCard(item) {
-    const card = document.createElement("article");
-    card.className = "card";
-
-    const tag = document.createElement("span");
-    tag.className = "tag";
-    tag.textContent = item.category;
-
-    const title = document.createElement("h2");
-    title.textContent = item.name;
-
-    const text = document.createElement("p");
-    text.textContent = item.description;
-
-    const isSaved = savedIds.indexOf(item.id) !== -1;
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "button secondary";
-    button.textContent = isSaved ? "Saved ✓" : "Save";
-    button.setAttribute("aria-pressed", isSaved ? "true" : "false");
-    button.addEventListener("click", function () {
-      toggleSaved(item.id);
-    });
-
-    card.append(tag, title, text, button);
-    return card;
-  }
-
-  function toggleSaved(id) {
-    if (savedIds.indexOf(id) === -1) {
-      savedIds.push(id);
-    } else {
-      savedIds = savedIds.filter(function (savedId) { return savedId !== id; });
+      planItems = parsed;
+    } catch (error) {
+      storageAvailable = false;
+      elements.storageMessage.textContent = "Could not load this browser's saved plan. The sample plan is shown instead.";
+      elements.storageMessage.classList.add("storage-error");
+      console.error("TerraForma could not read the saved plan:", error);
     }
-    storage.set("savedIds", savedIds);
-    renderListings();
   }
 
-  function renderListings() {
-    const query = searchBox.value.trim().toLowerCase();
-    const matches = LISTINGS.filter(function (item) {
-      const text = (item.name + " " + item.category + " " + item.description).toLowerCase();
-      return text.indexOf(query) !== -1;
+  function savePlan() {
+    if (!storageAvailable) return false;
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(planItems));
+      elements.storageMessage.textContent = "Your planning ideas are stored only in this browser.";
+      elements.storageMessage.classList.remove("storage-error");
+      return true;
+    } catch (error) {
+      storageAvailable = false;
+      elements.storageMessage.textContent = "Could not save this plan in your browser. Your changes will be lost when you leave.";
+      elements.storageMessage.classList.add("storage-error");
+      console.error("TerraForma could not save the plan:", error);
+      return false;
+    }
+  }
+
+  function renderPlan() {
+    elements.planList.replaceChildren();
+    document.getElementById("plan-count").textContent = planItems.length;
+    elements.planTotal.textContent = planItems.length + (planItems.length === 1 ? " idea" : " ideas");
+
+    if (planItems.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "empty-plan";
+      empty.textContent = "No planning ideas yet. Add one to start shaping this sample property.";
+      elements.planList.appendChild(empty);
+    }
+
+    planItems.forEach(function (item) {
+      const article = document.createElement("article");
+      article.className = "plan-item";
+
+      const icon = document.createElement("span");
+      icon.className = "plan-item-icon";
+      icon.setAttribute("aria-hidden", "true");
+      icon.textContent = "✳";
+
+      const content = document.createElement("div");
+      content.className = "plan-item-content";
+      const title = document.createElement("h4");
+      title.textContent = item.feature;
+      const location = document.createElement("p");
+      location.className = "plan-location";
+      location.textContent = item.location;
+      const note = document.createElement("p");
+      note.className = "plan-note";
+      note.textContent = item.note;
+      content.append(title, location, note);
+
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.className = "remove-button";
+      removeButton.textContent = "Remove";
+      removeButton.setAttribute("aria-label", "Remove " + item.feature + " from the plan");
+      removeButton.addEventListener("click", function () {
+        planItems = planItems.filter(function (planItem) { return planItem.id !== item.id; });
+        savePlan();
+        renderPlan();
+        renderMapMarkers();
+      });
+
+      article.append(icon, content, removeButton);
+      elements.planList.appendChild(article);
     });
 
-    grid.replaceChildren.apply(grid, matches.map(makeCard));
-    emptyMessage.hidden = matches.length > 0;
-    savedCount.textContent = savedIds.length === 0
-      ? "Tap Save on anything you like."
-      : "You've saved " + savedIds.length + " item(s) on this device.";
+    renderMapMarkers();
   }
 
-  searchBox.addEventListener("input", renderListings);
+  elements.planForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+    const feature = elements.featureSelect.value;
+    const location = elements.locationSelect.value;
+    if (PROPOSED_FEATURES.indexOf(feature) === -1 ||
+        !PROPERTY.zones.some(function (zone) { return zone.label === location; })) {
+      return;
+    }
 
-  // ----------------------------------------------------------
-  // 5. Start up.
-  // ----------------------------------------------------------
-  renderListings();
-  showView();
+    planItems.push({
+      id: "plan-" + Date.now(),
+      feature: feature,
+      location: location,
+      note: "A starting idea to research and adapt to the actual site."
+    });
+    savePlan();
+    renderPlan();
+  });
+
+  readSavedPlan();
+  selectZone(selectedZoneId);
+  renderPlan();
 })();

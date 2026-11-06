@@ -3,91 +3,196 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>YourStartup</title>
-  <meta name="description" content="A student startup prototype for BSAD 281.">
+  <meta name="description" content="Explore a sample homestead plan with TerraForma, a permaculture planning prototype.">
+  <meta name="theme-color" content="#f5f4ec">
+  <title>TerraForma — Land planning, made thoughtful</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
-  <!-- =========================================================
-       HEADER: logo text + navigation.
-       Each link points to a "view" further down the page (#home, #explore, #about).
-       ========================================================= -->
   <header class="site-header">
-    <a class="brand" href="#home" id="brand-name">YourStartup</a>
-    <nav aria-label="Main">
-      <a href="#home">Home</a>
-      <a href="#explore">Explore</a>
-      <a href="#about">About</a>
+    <a class="brand" href="#overview" aria-label="TerraForma home">
+      <span class="brand-mark" aria-hidden="true">T</span>
+      <span>terraforma</span>
+    </a>
+    <nav aria-label="Main navigation">
+      <a href="#overview">Overview</a>
+      <a href="#property">Property</a>
+      <a href="#plan">My plan</a>
     </nav>
+    <span class="prototype-pill"><span aria-hidden="true"></span> Student prototype</span>
   </header>
 
   <main>
+    <section class="welcome" id="overview">
+      <div>
+        <p class="eyebrow">A more thoughtful way to grow</p>
+        <h1 id="tagline">Understand your land. Design your future.</h1>
+        <p class="welcome-copy" id="pitch">A practical planning companion for people turning a piece of land into a more productive, resilient home.</p>
+      </div>
+      <a class="button button-dark" href="#property">Explore the sample property <span aria-hidden="true">↘</span></a>
+    </section>
 
-    <!-- =======================================================
-         VIEW 1: HOME — what you do, for whom, and why it matters.
-         ======================================================= -->
-    <section id="home" data-view>
-      <div class="hero">
-        <p class="eyebrow">Prototype</p>
-        <h1 id="tagline">One sentence that says what your startup does.</h1>
-        <p class="lead" id="pitch">
-          Who is your customer, what problem do they have, and why is your
-          solution better than what they use today?
-        </p>
-        <a class="button" href="#explore">See it in action</a>
+    <section class="snapshot" aria-label="Sample property snapshot">
+      <div class="property-heading">
+        <div>
+          <p class="eyebrow">Your workspace · Sample property</p>
+          <h2 id="property-name">Cedar Ridge Homestead</h2>
+          <p class="muted" id="property-location">Illustrative property · Atlantic Canada</p>
+        </div>
+        <span class="demo-label">Fictional demo data</span>
       </div>
 
-      <div class="steps">
-        <div class="card">
-          <h2>1. Step one</h2>
-          <p>Describe the first thing a customer does.</p>
+      <div class="stats" aria-label="Sample property data">
+        <article class="stat">
+          <span class="stat-icon" aria-hidden="true">⌂</span>
+          <div><p class="stat-label">Property area</p><p class="stat-value" id="property-area">2.4 acres</p></div>
+        </article>
+        <article class="stat">
+          <span class="stat-icon" aria-hidden="true">◉</span>
+          <div><p class="stat-label">Site observations</p><p class="stat-value"><span id="observation-count">3</span> sample notes</p></div>
+        </article>
+        <article class="stat">
+          <span class="stat-icon" aria-hidden="true">✳</span>
+          <div><p class="stat-label">Planning ideas</p><p class="stat-value"><span id="plan-count">2</span> proposed features</p></div>
+        </article>
+      </div>
+      <p class="snapshot-note" id="area-note">Sample dashboard · Area is illustrative, not a measured parcel.</p>
+    </section>
+
+    <section class="workspace" id="property">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Explore your place</p>
+          <h2>Property map</h2>
         </div>
-        <div class="card">
-          <h2>2. Step two</h2>
-          <p>Describe what happens next.</p>
-        </div>
-        <div class="card">
-          <h2>3. Step three</h2>
-          <p>Describe the result the customer gets.</p>
-        </div>
+        <p class="section-hint">Choose a marker to see a sample observation.</p>
+      </div>
+
+      <div class="property-grid">
+        <article class="panel map-panel">
+          <div class="panel-heading">
+            <div>
+              <h3>Site overview</h3>
+              <p class="muted">Illustrative layout · Not to scale</p>
+            </div>
+            <span class="map-key"><span class="key-dot observation-dot"></span> Observation <span class="key-dot feature-dot"></span> Planned feature</span>
+          </div>
+
+          <div class="map-frame" role="group" aria-label="Illustrative property map with three selectable observation locations">
+            <svg class="site-map" viewBox="0 0 640 430" role="img" aria-labelledby="map-title map-description">
+              <title id="map-title">Illustrative Cedar Ridge property</title>
+              <desc id="map-description">A fictional, not-to-scale property drawing with wooded edges, a clearing, a path, and a low corner.</desc>
+              <defs>
+                <pattern id="field-lines" width="18" height="18" patternUnits="userSpaceOnUse" patternTransform="rotate(32)">
+                  <path d="M 0 0 L 0 18" class="field-line"></path>
+                </pattern>
+                <pattern id="woods" width="36" height="36" patternUnits="userSpaceOnUse">
+                  <circle cx="10" cy="12" r="7" class="tree-light"></circle>
+                  <circle cx="24" cy="24" r="9" class="tree-dark"></circle>
+                </pattern>
+              </defs>
+              <rect width="640" height="430" rx="18" class="map-ground"></rect>
+              <path class="parcel" d="M90 55 C165 30 242 55 319 45 C406 34 496 56 554 91 L527 344 C445 379 367 364 293 380 C205 397 138 362 76 331 Z"></path>
+              <path class="tree-zone" d="M101 76 C163 57 224 76 284 66 L272 116 C216 126 163 105 102 125 Z"></path>
+              <path class="tree-zone" d="M494 88 C522 105 534 129 527 167 L511 300 C492 287 486 270 490 245 Z"></path>
+              <path class="field-zone" d="M145 145 C226 119 341 132 421 144 L407 256 C327 269 234 260 155 280 Z"></path>
+              <path class="field-lines" d="M145 145 C226 119 341 132 421 144 L407 256 C327 269 234 260 155 280 Z"></path>
+              <path class="pathway" d="M312 71 C301 129 323 170 300 218 C279 260 316 297 301 356"></path>
+              <path class="water-zone" d="M300 294 C349 276 414 291 476 315 L470 348 C413 337 361 358 309 361 C293 342 291 318 300 294 Z"></path>
+              <path class="stream" d="M322 329 C355 315 395 326 427 318 C447 313 460 323 477 326"></path>
+              <g class="tree-symbol" aria-hidden="true">
+                <circle cx="124" cy="156" r="19"></circle><circle cx="468" cy="183" r="23"></circle>
+                <circle cx="450" cy="235" r="18"></circle><circle cx="153" cy="317" r="17"></circle>
+                <circle cx="206" cy="96" r="16"></circle><circle cx="456" cy="110" r="17"></circle>
+              </g>
+              <g class="building-symbol" aria-hidden="true">
+                <path d="M254 208 l24 -19 24 19 v28 h-48z"></path><path d="M246 210 l32 -25 32 25"></path>
+                <rect x="272" y="218" width="12" height="18"></rect>
+              </g>
+              <text x="332" y="105" class="map-label">OPEN CLEARING</text>
+              <text x="335" y="239" class="map-label small-label">SAMPLE HOME</text>
+              <text x="367" y="353" class="map-label small-label">LOW CORNER</text>
+            </svg>
+            <div class="map-markers" id="map-markers"></div>
+            <span class="north-arrow" aria-hidden="true">N <span>↑</span></span>
+          </div>
+          <div class="map-footer">
+            <p><span class="legend-swatch woods-swatch"></span> Tree line <span class="legend-swatch field-swatch"></span> Open area</p>
+            <span>Sample site plan</span>
+          </div>
+        </article>
+
+        <aside class="panel observation-panel" aria-live="polite">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Selected location</p>
+              <h3 id="zone-title">North clearing</h3>
+            </div>
+            <span class="observation-icon" aria-hidden="true">◉</span>
+          </div>
+          <div class="observation-image" aria-hidden="true">
+            <span class="image-sun"></span>
+            <span class="image-hill"></span>
+            <span class="image-grass"></span>
+            <span class="image-caption">Example property photo</span>
+          </div>
+          <div class="observation-copy">
+            <div class="tag-row"><span class="tag" id="zone-category">Sunlight</span><span class="evidence-label" id="zone-evidence">Sample observation</span></div>
+            <h4 id="zone-observation-title">Open, sunny space</h4>
+            <p id="zone-observation-note">The sample owner describes this clearing as sunny through much of the day. Sun exposure has not been measured.</p>
+          </div>
+          <div class="zone-picker" id="zone-picker" aria-label="Property locations"></div>
+        </aside>
       </div>
     </section>
 
-    <!-- =======================================================
-         VIEW 2: EXPLORE — a list built from the fake data in data.js.
-         ======================================================= -->
-    <section id="explore" data-view hidden>
-      <h1>Explore</h1>
-      <p class="muted">These examples are fake. They come from <code>data.js</code>.</p>
+    <section class="workspace plan-section" id="plan">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Turn ideas into action</p>
+          <h2>Your homestead plan</h2>
+        </div>
+        <span class="local-label"><span aria-hidden="true">↻</span> Saved on this device only</span>
+      </div>
 
-      <label class="search">
-        <span>Search</span>
-        <input type="search" id="search-box" placeholder="Type to filter…">
-      </label>
+      <div class="plan-grid">
+        <article class="panel plan-list-panel">
+          <div class="plan-list-heading">
+            <div>
+              <h3>Proposed features</h3>
+              <p class="muted">Early ideas to explore, not professional recommendations.</p>
+            </div>
+            <span class="plan-total" id="plan-total">2 ideas</span>
+          </div>
+          <div class="plan-list" id="plan-list" aria-live="polite"></div>
+          <p class="storage-message" id="storage-message" role="status">Your planning ideas are stored only in this browser.</p>
+        </article>
 
-      <p class="muted" id="saved-count"></p>
-      <div class="grid" id="listing-grid"></div>
-      <p class="empty" id="empty-message" hidden>Nothing matches your search.</p>
+        <form class="panel add-plan-panel" id="plan-form">
+          <p class="eyebrow">Keep exploring</p>
+          <h3>Add a planning idea</h3>
+          <p class="muted">Try placing a feature in the sample property.</p>
+          <label for="feature-select">Feature type</label>
+          <select id="feature-select" name="feature" required></select>
+          <label for="location-select">Suggested area</label>
+          <select id="location-select" name="location" required></select>
+          <button class="button button-dark" type="submit">Add to my plan <span aria-hidden="true">+</span></button>
+          <p class="form-footnote">Fictional sample data. No account or payment required.</p>
+        </form>
+      </div>
     </section>
 
-    <!-- =======================================================
-         VIEW 3: ABOUT — your team and your story.
-         ======================================================= -->
-    <section id="about" data-view hidden>
-      <h1>About us</h1>
-      <p>Tell the story of why your team started this company.</p>
-      <p>Use first names only, or no names at all — this site is public.</p>
+    <section class="honesty-note" aria-label="Prototype limitations">
+      <span class="honesty-icon" aria-hidden="true">i</span>
+      <p><strong>A note about this demo</strong> Everything shown is fictional sample content. The map is illustrative and not to scale; observations are not verified measurements. Plans save only in this browser. This prototype does not provide AI analysis, professional land assessments, accounts, or payments.</p>
     </section>
-
   </main>
 
-  <!-- Keep this footer. Your site must say it is a student project. -->
   <footer class="site-footer">
+    <a class="brand footer-brand" href="#overview"><span class="brand-mark" aria-hidden="true">T</span><span>terraforma</span></a>
     <p>Student prototype for BSAD 281 at St. Francis Xavier University. Not a real company — all data is fictional.</p>
   </footer>
 
-  <!-- Scripts load in this order: data first, then the code that uses it. -->
   <script src="data.js"></script>
   <script src="app.js"></script>
 </body>

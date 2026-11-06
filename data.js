@@ -1,26 +1,73 @@
-// ============================================================
-// data.js — ALL the fake data for your prototype lives here.
-//
-// There is no database. Everything below is made up, and that is
-// on purpose: never put real people's names, emails, phone numbers
-// or addresses in this file.
-//
-// To change what appears on the Explore page, edit LISTINGS.
-// Each item is one card. Keep the same fields (id, name, category,
-// description) or ask Copilot to add new ones everywhere they're needed.
-// ============================================================
+// Fictional sample content for the TerraForma student prototype.
+// Do not add real property addresses, personal information, or measurements.
 
 const STARTUP = {
-  name: "YourStartup",
-  tagline: "One sentence that says what your startup does.",
-  pitch: "Who is your customer, what problem do they have, and why is your solution better than what they use today?"
+  name: "TerraForma",
+  tagline: "Understand your land. Design your future.",
+  pitch: "A practical planning companion for people turning a piece of land into a more productive, resilient home."
 };
 
-const LISTINGS = [
-  { id: 1, name: "Sample listing A", category: "Category 1", description: "A short description of this item." },
-  { id: 2, name: "Sample listing B", category: "Category 2", description: "A short description of this item." },
-  { id: 3, name: "Sample listing C", category: "Category 1", description: "A short description of this item." },
-  { id: 4, name: "Sample listing D", category: "Category 3", description: "A short description of this item." },
-  { id: 5, name: "Sample listing E", category: "Category 2", description: "A short description of this item." },
-  { id: 6, name: "Sample listing F", category: "Category 3", description: "A short description of this item." }
+const PROPERTY = {
+  name: "Cedar Ridge Homestead",
+  location: "Illustrative property · Atlantic Canada",
+  area: "2.4 acres",
+  areaNote: "Fictional example, not a measured parcel",
+  zones: [
+    {
+      id: "north-clearing",
+      label: "North clearing",
+      shortLabel: "North",
+      x: 52,
+      y: 25,
+      category: "Sunlight",
+      evidence: "Sample observation",
+      title: "Open, sunny space",
+      note: "The sample owner describes this clearing as sunny through much of the day. Sun exposure has not been measured."
+    },
+    {
+      id: "east-edge",
+      label: "East tree line",
+      shortLabel: "East",
+      x: 78,
+      y: 48,
+      category: "Vegetation",
+      evidence: "Sample observation",
+      title: "Existing tree line",
+      note: "A fictional photo note mentions mature trees along this edge. Species and condition have not been verified."
+    },
+    {
+      id: "low-corner",
+      label: "South low corner",
+      shortLabel: "South",
+      x: 42,
+      y: 76,
+      category: "Water",
+      evidence: "Sample observation",
+      title: "Water after heavy rain",
+      note: "The sample owner reports standing water here after heavy rain. This is an observation, not a drainage assessment."
+    }
+  ],
+  initialPlan: [
+    {
+      id: "demo-1",
+      feature: "Vegetable beds",
+      location: "North clearing",
+      note: "Start with a small growing area and observe sunlight through the season."
+    },
+    {
+      id: "demo-2",
+      feature: "Rain garden",
+      location: "South low corner",
+      note: "Explore suitable plants and confirm site conditions before building."
+    }
+  ]
+};
+
+const PROPOSED_FEATURES = [
+  "Vegetable beds",
+  "Fruit trees",
+  "Food forest",
+  "Rain garden",
+  "Compost area",
+  "Greenhouse"
 ];

@@ -12,6 +12,15 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 ### Session — 2026-11-07 — driver: student
 
+- **Goal for this session:** Replace the map's terrain-only fiction with a legally reusable real-data preview and identify a safe regional test area.
+- **What worked:** Added an opt-in Natural Resources Canada HRDEM Mosaic WMS preview for a fixed Halifax Regional Municipality window. It can switch among bare-earth hillshade, elevation colors, bare-earth slope, and surface hillshade (trees/structures where available). Planning overlays and sample observations hide in terrain view because they are not georeferenced to that area; property editing and drawing are blocked there. Source and licence links are visible.
+- **Source and privacy:** The HRDEM product specification points to the [Open Government Licence — Canada](https://open.canada.ca/en/open-government-licence-canada). The app requests only the fixed demo bounding box from the [NRCan HRDEM WMS](https://datacube.services.geo.ca/ows/elevation); it does not transmit the user's entered location. The Halifax window is real terrain context, not a real homestead parcel, verified ownership boundary, or permission to access land.
+- **What we checked:** JavaScript syntax and diff formatting; all four WMS layers returned images and rendered in-browser; toggling back restored the sketch map; overlays were hidden and drawing was blocked in terrain mode; existing local plans and outline storage stayed unchanged; mobile layout had no horizontal overflow.
+- **Limitations / next step:** This is an online regional preview, not a georeferenced parcel map or local/offline dataset. Resolution and coverage vary. Vector contours, spot elevations, 3D terrain, property-coordinate alignment, and seasonal sun/shadow analysis are not implemented. Next, tie a clearly synthetic or user-authorized boundary to a known map coordinate system, then derive reliable elevation values/contours before planning against terrain.
+- **Committed?** no — not committed yet.
+
+### Session — 2026-11-07 — driver: student
+
 - **Goal for this session:** Make the local map's property-outline editing foundation work before adding real basemaps or terrain data.
 - **What worked:** Added point-by-point property outline editing with pointer and keyboard input, cancel/save actions, and browser-local persistence. Rejects too-small, self-crossing, malformed, or too-detailed outlines; saved plans must remain fully inside a replacement boundary. Plan drawing now checks against the current editable outline, and the illustrative scale updates when the outline changes.
 - **Accuracy, privacy, and scope notes:** This is still a schematic SVG sketch, not a georeferenced parcel, survey, terrain model, or source of elevation/sun/shade data. Drawn outline dimensions and feature sizes remain approximate. The outline uses a separate storage key and does not change plan, brief, theme, or profile data.

@@ -292,12 +292,32 @@
           <div class="panel-heading">
             <div>
               <h3>Site overview</h3>
-              <p class="muted">Illustrative layout · Not to scale</p>
+              <p class="muted" id="map-context">Illustrative layout · Not to scale</p>
             </div>
-            <span class="map-key"><span class="key-dot observation-dot"></span> Observation <span class="key-dot feature-dot"></span> Planned area</span>
+            <span class="map-key" id="map-legend"><span class="key-dot observation-dot"></span> Observation <span class="key-dot feature-dot"></span> Planned area</span>
           </div>
 
-          <div class="map-frame" role="group" aria-label="Illustrative property map with three selectable observation locations">
+          <div class="terrain-controls">
+            <label for="terrain-layer">Map view
+              <select id="terrain-layer">
+                <option value="illustrative">Illustrative planning map</option>
+                <option value="dtm-hillshade">Real terrain · hillshade (bare earth)</option>
+                <option value="dtm">Real terrain · elevation colors</option>
+                <option value="dtm-slope">Real terrain · slope</option>
+                <option value="dsm-hillshade">Real surface · trees and structures</option>
+              </select>
+            </label>
+            <p class="terrain-data-note" id="terrain-status" role="status" aria-live="polite">
+              Terrain preview uses a fixed Halifax-area test window. It does not locate a property or prove land ownership/access.
+            </p>
+          </div>
+          <p class="terrain-data-source" id="terrain-source" hidden>
+            Elevation source: <a href="https://ftp.maps.canada.ca/pub/elevation/dem_mne/HRDEMmosaic_mosaiqueMNEHR/" target="_blank" rel="noreferrer">Natural Resources Canada HRDEM Mosaic</a> under the
+            <a href="https://open.canada.ca/en/open-government-licence-canada" target="_blank" rel="noreferrer">Open Government Licence — Canada</a>.
+            The fixed Halifax-area request contains no user-entered property location. The overlay is regional terrain data, not a parcel boundary or permission to access land.
+          </p>
+
+          <div class="map-frame" role="group" aria-label="Illustrative planning map with an optional real Halifax-area terrain data preview">
             <svg class="site-map" id="site-map" viewBox="0 0 640 430" role="group" tabindex="0" aria-labelledby="map-title map-description" aria-label="Interactive illustrative property map. While drawing a feature or property outline, use arrow keys and Enter to add points.">
               <title id="map-title">Illustrative map · Cedar Ridge Homestead</title>
               <desc id="map-description">A fictional, not-to-scale property drawing with wooded edges, a clearing, a path, and a low corner.</desc>
@@ -311,37 +331,41 @@
                 </pattern>
               </defs>
               <rect width="640" height="430" rx="18" class="map-ground"></rect>
-              <path class="parcel" id="property-boundary" d="M90 55 L319 45 L554 91 L527 344 L293 380 L76 331 Z"></path>
-              <path class="tree-zone" d="M101 76 C163 57 224 76 284 66 L272 116 C216 126 163 105 102 125 Z"></path>
-              <path class="tree-zone" d="M494 88 C522 105 534 129 527 167 L511 300 C492 287 486 270 490 245 Z"></path>
-              <path class="field-zone" d="M145 145 C226 119 341 132 421 144 L407 256 C327 269 234 260 155 280 Z"></path>
-              <path class="field-lines" d="M145 145 C226 119 341 132 421 144 L407 256 C327 269 234 260 155 280 Z"></path>
-              <path class="pathway" d="M312 71 C301 129 323 170 300 218 C279 260 316 297 301 356"></path>
-              <path class="water-zone" d="M300 294 C349 276 414 291 476 315 L470 348 C413 337 361 358 309 361 C293 342 291 318 300 294 Z"></path>
-              <g id="plan-areas" aria-label="Planned feature areas"></g>
-              <path class="stream" d="M322 329 C355 315 395 326 427 318 C447 313 460 323 477 326"></path>
-              <g class="tree-symbol" aria-hidden="true">
+              <image id="terrain-raster" class="terrain-raster" x="0" y="0" width="640" height="430" preserveAspectRatio="none" aria-hidden="true"></image>
+              <path class="parcel illustration-context" id="property-boundary" d="M90 55 L319 45 L554 91 L527 344 L293 380 L76 331 Z"></path>
+              <path class="tree-zone illustration-context" d="M101 76 C163 57 224 76 284 66 L272 116 C216 126 163 105 102 125 Z"></path>
+              <path class="tree-zone illustration-context" d="M494 88 C522 105 534 129 527 167 L511 300 C492 287 486 270 490 245 Z"></path>
+              <path class="field-zone illustration-context" d="M145 145 C226 119 341 132 421 144 L407 256 C327 269 234 260 155 280 Z"></path>
+              <path class="field-lines illustration-context" d="M145 145 C226 119 341 132 421 144 L407 256 C327 269 234 260 155 280 Z"></path>
+              <path class="pathway illustration-context" d="M312 71 C301 129 323 170 300 218 C279 260 316 297 301 356"></path>
+              <path class="water-zone illustration-context" d="M300 294 C349 276 414 291 476 315 L470 348 C413 337 361 358 309 361 C293 342 291 318 300 294 Z"></path>
+              <g id="plan-areas" class="illustration-context" aria-label="Planned feature areas"></g>
+              <path class="stream illustration-context" d="M322 329 C355 315 395 326 427 318 C447 313 460 323 477 326"></path>
+              <g class="tree-symbol illustration-context" aria-hidden="true">
                 <circle cx="124" cy="156" r="19"></circle><circle cx="468" cy="183" r="23"></circle>
                 <circle cx="450" cy="235" r="18"></circle><circle cx="153" cy="317" r="17"></circle>
                 <circle cx="206" cy="96" r="16"></circle><circle cx="456" cy="110" r="17"></circle>
               </g>
-              <g class="building-symbol" aria-hidden="true">
+              <g class="building-symbol illustration-context" aria-hidden="true">
                 <path d="M254 208 l24 -19 24 19 v28 h-48z"></path><path d="M246 210 l32 -25 32 25"></path>
                 <rect x="272" y="218" width="12" height="18"></rect>
               </g>
-              <text x="332" y="105" class="map-label">OPEN CLEARING</text>
-              <text x="335" y="239" class="map-label small-label">SAMPLE HOME</text>
-              <text x="367" y="353" class="map-label small-label">LOW CORNER</text>
+              <text x="332" y="105" class="map-label illustration-context">OPEN CLEARING</text>
+              <text x="335" y="239" class="map-label small-label illustration-context">SAMPLE HOME</text>
+              <text x="367" y="353" class="map-label small-label illustration-context">LOW CORNER</text>
             </svg>
             <div class="map-markers" id="map-markers"></div>
             <span class="north-arrow" aria-hidden="true">N <span>↑</span></span>
           </div>
-          <div class="map-footer">
-            <p><span class="legend-swatch woods-swatch"></span> Tree line <span class="legend-swatch field-swatch"></span> Open area <span class="legend-swatch planned-swatch"></span> Planned footprint</p>
-            <span>Illustrative, not measured</span>
+          <div class="map-footer" id="map-footer">
+            <p id="map-footer-legend"><span class="legend-swatch woods-swatch"></span> Tree line <span class="legend-swatch field-swatch"></span> Open area <span class="legend-swatch planned-swatch"></span> Planned footprint</p>
+            <span id="map-scale-note">Illustrative, not measured</span>
+          </div>
+          <div class="terrain-legend" id="terrain-legend" hidden>
+            <img id="terrain-legend-image" alt="">
           </div>
           <div class="boundary-editor" id="boundary-editor">
-            <p class="boundary-editor-note">The terrain illustration stays fictional. Edit the outline to match a sketch; it is not georeferenced or a surveyed boundary.</p>
+            <p class="boundary-editor-note" id="boundary-editor-note">The terrain illustration stays fictional. Edit the outline to match a sketch; it is not georeferenced or a surveyed boundary.</p>
             <div class="boundary-editor-actions">
               <button class="map-action-button" id="edit-boundary" type="button">Edit property outline</button>
               <button class="map-action-button map-action-primary" id="save-boundary" type="button" hidden>Save outline</button>
@@ -385,7 +409,7 @@
           </div>
         </article>
 
-        <aside class="panel observation-panel" aria-live="polite">
+        <aside class="panel observation-panel" id="observation-panel" aria-live="polite">
           <div class="panel-heading">
             <div>
               <p class="eyebrow">Selected location</p>

@@ -13,11 +13,47 @@
   const speciesCardDismissDelay = 8000;
   const preflightCheckIds = ["boundary", "utilities", "well-septic", "water", "soil", "rules", "access"];
   const svgNamespace = "http://www.w3.org/2000/svg";
+  const terrainServiceUrl = "https://datacube.services.geo.ca/ows/elevation";
+  const terrainDemoBounds = "44.62,-63.69,44.70,-63.57";
+  const terrainLayerDetails = {
+    "dtm-hillshade": {
+      label: "Bare-earth terrain hillshade",
+      description: "Natural Resources Canada HRDEM bare-earth terrain hillshade for the Halifax-area demo window."
+    },
+    dtm: {
+      label: "Bare-earth elevation colors",
+      style: "default",
+      legend: "https://datacube.services.geo.ca/assets/legend/legend_elevation_color.png",
+      description: "Natural Resources Canada HRDEM bare-earth elevation color layer for the Halifax-area demo window."
+    },
+    "dtm-slope": {
+      label: "Bare-earth slope",
+      style: "default",
+      legend: "https://datacube.services.geo.ca/assets/legend/legend_elevation_slope_color.png",
+      description: "Natural Resources Canada HRDEM bare-earth slope layer for the Halifax-area demo window."
+    },
+    "dsm-hillshade": {
+      label: "Surface hillshade",
+      description: "Natural Resources Canada HRDEM surface hillshade for the Halifax-area demo window, including mapped trees and structures where available."
+    }
+  };
   const elements = {
     mapMarkers: document.getElementById("map-markers"),
     mapFrame: document.querySelector(".map-frame"),
+    propertyGrid: document.querySelector(".property-grid"),
     mapSvg: document.getElementById("site-map"),
     mapTitle: document.getElementById("map-title"),
+    mapDescription: document.getElementById("map-description"),
+    mapContext: document.getElementById("map-context"),
+    mapLegend: document.getElementById("map-legend"),
+    mapFooterLegend: document.getElementById("map-footer-legend"),
+    mapScaleNote: document.getElementById("map-scale-note"),
+    terrainLayer: document.getElementById("terrain-layer"),
+    terrainRaster: document.getElementById("terrain-raster"),
+    terrainStatus: document.getElementById("terrain-status"),
+    terrainSource: document.getElementById("terrain-source"),
+    terrainLegend: document.getElementById("terrain-legend"),
+    terrainLegendImage: document.getElementById("terrain-legend-image"),
     propertyBoundary: document.getElementById("property-boundary"),
     planAreas: document.getElementById("plan-areas"),
     zonePicker: document.getElementById("zone-picker"),
@@ -71,6 +107,8 @@
     saveBoundary: document.getElementById("save-boundary"),
     cancelBoundary: document.getElementById("cancel-boundary"),
     boundaryEditorStatus: document.getElementById("boundary-editor-status"),
+    boundaryEditorNote: document.getElementById("boundary-editor-note"),
+    observationPanel: document.getElementById("observation-panel"),
     capacitySummary: document.getElementById("capacity-summary"),
     capacityProgress: document.getElementById("capacity-progress"),
     perspectiveTabs: document.getElementById("perspective-tabs"),
@@ -144,6 +182,7 @@
   let boundaryPoints = [];
   let keyboardCursor = { x: 320, y: 215 };
   let drawingShape = "freeform";
+  let activeMapView = "illustrative";
 
   function localDateValue(date) {
     return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0") +
@@ -198,23 +237,17 @@
     propertyMapAreaM2PerUnit = propertyAreaM2 / polygonArea(propertyBoundary);
     elements.propertyProfileStatusMessage.classList.remove("storage-error");
     elements.propertyName.textContent = profile.name;
-    elements.mapTitle.textContent = "Illustrative map · " + profile.name;
-    elements.propertyLocation.textContent = profile.location
-      ? "User-entered general location · " + profile.location
-      : isSaved ? "General location not recorded · map is illustrative" : PROPERTY.location;
+    if (activeMapView === "illustrative") {
+      elements.mapTitle.textContent = "Illustrative map · " + profile.name;
+    }
     elements.propertyArea.textContent =
       new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(profile.area) +
       " " + profile.areaUnit + (isSaved ? " · estimate" : "");
-    elements.areaNote.textContent = isSaved
-      ? "User-entered area estimate. Map shape, terrain, and observation locations remain fictional; drawn feature sizes are approximate."
-      : "Sample dashboard · " + PROPERTY.areaNote + ".";
-    elements.propertyProfileStatus.textContent = isSaved
-      ? "User-provided details · illustrative map"
-      : "Fictional demo data";
     elements.profileName.value = profile.name;
     elements.profileLocation.value = profile.location;
     elements.profileArea.value = profile.area;
     elements.profileAreaUnit.value = profile.areaUnit;
+    updatePropertyMapCaveat(profile, isSaved);
     if (isSaved) {
       elements.propertyProfileSaveState.textContent = "Saved on this device";
       elements.propertyProfileStatusMessage.textContent = "Property details are saved only in this browser.";
@@ -223,6 +256,112 @@
       elements.propertyProfileStatusMessage.textContent = "Details are stored only in this browser.";
     }
   }
+
+  function updatePropertyMapCaveat(profile, isSaved) {
+    const terrainView = activeMapView !== "illustrative";
+    elements.propertyLocation.textContent = profile.location
+      ? "User-entered general location · " + profile.location +
+        (terrainView ? " · map preview remains a fixed Halifax demo area" : "")
+      : terrainView
+        ? "Fixed Halifax terrain demo · not linked to this property's location"
+        : isSaved ? "General location not recorded · map is illustrative" : PROPERTY.location;
+    elements.areaNote.textContent = terrainView
+      ? "User-entered area estimate. Real regional elevation data is previewed from Halifax; the property boundary and plans are not georeferenced to that area."
+      : isSaved
+        ? "User-entered area estimate. Map shape, terrain, and observation locations remain fictional; drawn feature sizes are approximate."
+        : "Sample dashboard · " + PROPERTY.areaNote + ".";
+    elements.propertyProfileStatus.textContent = isSaved
+      ? terrainView
+        ? "User-provided details · regional terrain preview separate"
+        : "User-provided details · illustrative map"
+      : "Fictional demo data";
+  }
+
+  function terrainMapUrl(layer) {
+    const details = terrainLayerDetails[layer];
+    if (!details) return "";
+    const parameters = new URLSearchParams({
+      SERVICE: "WMS",
+      VERSION: "1.3.0",
+      REQUEST: "GetMap",
+      LAYERS: layer,
+      STYLES: details.style || "",
+      CRS: "EPSG:4326",
+      BBOX: terrainDemoBounds,
+      WIDTH: "640",
+      HEIGHT: "430",
+      FORMAT: "image/png",
+      TRANSPARENT: "TRUE"
+    });
+    return terrainServiceUrl + "?" + parameters.toString();
+  }
+
+  function setMapView(view) {
+    const isTerrain = view !== "illustrative";
+    activeMapView = view;
+    elements.mapFrame.classList.toggle("is-terrain-view", isTerrain);
+    elements.propertyGrid.classList.toggle("is-terrain-view", isTerrain);
+    elements.terrainSource.hidden = !isTerrain;
+    elements.terrainLegend.hidden = !isTerrain || !terrainLayerDetails[view].legend;
+    updatePropertyMapCaveat(savedPropertyProfile, propertyProfileIsSaved);
+    elements.mapLegend.hidden = isTerrain;
+    elements.mapFooterLegend.hidden = isTerrain;
+    elements.editBoundary.disabled = isTerrain;
+    elements.saveBoundary.disabled = isTerrain;
+    elements.cancelBoundary.disabled = isTerrain;
+    elements.mapFrame.setAttribute("aria-label", isTerrain
+      ? "Real Natural Resources Canada terrain data preview for Halifax, Nova Scotia. This is not a property boundary."
+      : "Illustrative property map with three selectable observation locations.");
+    elements.mapSvg.setAttribute("aria-label", isTerrain
+      ? "Regional Halifax-area terrain data preview. Planning features and observations are hidden because they are not georeferenced to this area."
+      : "Interactive illustrative property map. While drawing a feature or property outline, use arrow keys and Enter to add points.");
+
+    if (!isTerrain) {
+      elements.mapTitle.textContent = "Illustrative map · " + elements.propertyName.textContent;
+      elements.mapDescription.textContent =
+        "A fictional, not-to-scale property drawing with wooded edges, a clearing, a path, and a low corner.";
+      elements.mapContext.textContent = "Illustrative layout · Not to scale";
+      elements.mapScaleNote.textContent = "Illustrative, not measured";
+      elements.terrainStatus.textContent =
+        "Terrain preview uses a fixed Halifax-area test window. It does not locate a property or prove land ownership/access.";
+      elements.boundaryEditorNote.textContent =
+        "The terrain illustration stays fictional. Edit the outline to match a sketch; it is not georeferenced or a surveyed boundary.";
+      elements.terrainRaster.removeAttribute("href");
+      elements.terrainLegendImage.removeAttribute("src");
+      return;
+    }
+
+    const details = terrainLayerDetails[view];
+    elements.mapTitle.textContent = "NRCan HRDEM terrain · Halifax-area demo window";
+    elements.mapDescription.textContent =
+      details.description + " This regional data preview does not show a property boundary or permission to access land.";
+    elements.mapContext.textContent = "Real elevation data · Halifax Regional Municipality, Nova Scotia · regional preview";
+    elements.mapScaleNote.textContent = "Regional context · not a parcel map";
+    elements.boundaryEditorNote.textContent =
+      "Outline drawing is turned off in this terrain preview because the current sketch belongs to the illustrative map, not this real-world location.";
+    elements.terrainStatus.textContent = "Loading " + details.label + " from Natural Resources Canada…";
+    elements.terrainRaster.setAttribute("href", terrainMapUrl(view));
+    elements.terrainRaster.dataset.layer = view;
+    if (details.legend) {
+      elements.terrainLegendImage.src = details.legend;
+      elements.terrainLegendImage.alt = details.label + " legend from Natural Resources Canada.";
+    } else {
+      elements.terrainLegendImage.removeAttribute("src");
+      elements.terrainLegendImage.alt = "";
+    }
+  }
+
+  elements.terrainRaster.addEventListener("load", function () {
+    if (activeMapView !== elements.terrainRaster.dataset.layer) return;
+    const details = terrainLayerDetails[activeMapView];
+    elements.terrainStatus.textContent = details.label +
+      " loaded for the fixed Halifax-area demo window. Terrain is real; planning overlays are hidden because they are not georeferenced here.";
+  });
+  elements.terrainRaster.addEventListener("error", function () {
+    if (activeMapView !== elements.terrainRaster.dataset.layer) return;
+    elements.terrainStatus.textContent =
+      "Terrain data could not be loaded from Natural Resources Canada. Check the connection or return to the illustrative planning map.";
+  });
 
   function readPropertyProfile() {
     savedPropertyProfile = defaultPropertyProfile();
@@ -297,6 +436,10 @@
   }
 
   function beginBoundaryEdit() {
+    if (activeMapView !== "illustrative") {
+      elements.boundaryEditorStatus.textContent = "Switch to the illustrative planning map before editing its sketch outline.";
+      return;
+    }
     if (pendingPlanItem) {
       elements.boundaryEditorStatus.textContent = "Finish or cancel the current feature drawing before editing the property outline.";
       return;
@@ -2069,6 +2212,15 @@
   }
 
   elements.featureSelect.addEventListener("change", updateFeatureDetails);
+  elements.terrainLayer.addEventListener("change", function () {
+    if (pendingPlanItem || boundaryEditing) {
+      elements.terrainLayer.value = activeMapView;
+      elements.terrainStatus.textContent =
+        "Finish or cancel the current drawing before switching map views.";
+      return;
+    }
+    setMapView(elements.terrainLayer.value);
+  });
   elements.detailSelect.addEventListener("change", function () {
     const feature = getCatalogItem(elements.featureSelect.value);
     if (!feature) return;
@@ -2098,6 +2250,10 @@
   });
   elements.planForm.addEventListener("submit", function (event) {
     event.preventDefault();
+    if (activeMapView !== "illustrative") {
+      showFormError("Switch back to the illustrative planning map before drawing a feature; the terrain preview is not georeferenced to this plan.");
+      return;
+    }
     if (boundaryEditing) {
       showFormError("Finish or cancel the property-outline edit before drawing a planned feature.");
       return;
@@ -2170,6 +2326,7 @@
   });
 
   elements.mapFrame.addEventListener("click", function (event) {
+    if (activeMapView !== "illustrative") return;
     if (boundaryEditing) {
       if (boundaryPoints.length >= 100) {
         elements.boundaryEditorStatus.textContent = "The outline has reached its 100-point limit. Save it or cancel and redraw more simply.";
@@ -2186,6 +2343,7 @@
     addDrawingPoint(pointerToMapPoint(event));
   });
   elements.mapFrame.addEventListener("pointermove", function (event) {
+    if (activeMapView !== "illustrative") return;
     if (boundaryEditing) return;
     if (!pendingPlanItem) return;
     const pointer = pointerToMapPoint(event);

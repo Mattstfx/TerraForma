@@ -372,7 +372,40 @@ main {
 
 .map-frame.is-editing-boundary .map-markers,
 .map-frame.is-editing-boundary .north-arrow { pointer-events: none; }
+.terrain-controls {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1.4fr);
+  align-items: end;
+  gap: 10px;
+  margin-top: 12px;
+}
+.terrain-controls label { display: grid; gap: 5px; color: #526250; font-size: 0.68rem; font-weight: 700; }
+.terrain-controls select {
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 9px;
+  border: 1px solid #cbd6c3;
+  border-radius: 8px;
+  background: white;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.71rem;
+}
+.terrain-data-note { margin: 0; color: #68746b; font-size: 0.66rem; line-height: 1.5; }
+.terrain-data-source { margin: 9px 0 0; color: #68746b; font-size: 0.65rem; line-height: 1.55; }
+.terrain-data-source a { color: #365a42; font-weight: 700; }
+.terrain-legend { display: flex; justify-content: flex-end; margin-top: 8px; }
+.terrain-legend[hidden] { display: none; }
+.terrain-legend img { max-width: 100%; max-height: 140px; object-fit: contain; }
+.map-frame.is-terrain-view .terrain-raster { display: block; }
+.map-frame.is-terrain-view .illustration-context,
+.map-frame.is-terrain-view .map-markers,
+.map-frame.is-terrain-view .north-arrow { display: none; }
+.property-grid.is-terrain-view { grid-template-columns: minmax(0, 1fr); }
+.property-grid.is-terrain-view .observation-panel { display: none; }
+#map-legend[hidden], #map-footer-legend[hidden] { display: none; }
 .site-map { display: block; width: 100%; height: 100%; }
+.terrain-raster { display: none; }
 .map-ground { fill: #e8eee1; }
 .parcel { fill: #d6e0c9; stroke: #667e61; stroke-width: 3; stroke-dasharray: 8 7; }
 .tree-zone { fill: url(#woods); opacity: 0.94; }
@@ -840,6 +873,8 @@ main {
 
 @media (max-width: 620px) {
   .map-frame { aspect-ratio: 640 / 430; }
+  .terrain-controls { grid-template-columns: 1fr; }
+  .terrain-controls { gap: 7px; }
   .contents-fieldset { padding: 10px; }
   .map-footer { align-items: flex-start; flex-direction: column; }
   .plan-item-actions { gap: 2px; }

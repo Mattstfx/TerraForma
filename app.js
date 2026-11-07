@@ -17,6 +17,7 @@
     detailField: document.getElementById("detail-field"),
     detailLabel: document.getElementById("detail-label"),
     detailSelect: document.getElementById("detail-select"),
+    detailSpeciesTrigger: document.getElementById("detail-species-trigger"),
     detailCaution: document.getElementById("detail-caution"),
     contentsFieldset: document.getElementById("contents-fieldset"),
     contentsTitle: document.getElementById("contents-title"),
@@ -31,9 +32,10 @@
     speciesCard: document.getElementById("species-card"),
     speciesCardTitle: document.getElementById("species-card-title"),
     speciesCardScientific: document.getElementById("species-card-scientific"),
+    speciesCardStatus: document.getElementById("species-card-status"),
     speciesCardFacts: document.getElementById("species-card-facts"),
     speciesCardCaveat: document.getElementById("species-card-caveat"),
-    speciesCardSource: document.getElementById("species-card-source"),
+    speciesCardSources: document.getElementById("species-card-sources"),
     speciesCardClose: document.getElementById("species-card-close"),
     rotationField: document.getElementById("rotation-field"),
     rotationDays: document.getElementById("rotation-days"),
@@ -123,6 +125,7 @@
     elements.guildOptions.replaceChildren();
     elements.contentsFieldset.hidden = !feature;
     elements.detailField.hidden = !feature;
+    elements.detailSpeciesTrigger.hidden = true;
     elements.rotationField.hidden = !feature || !["garden-beds", "greenhouse"].includes(feature.id);
     elements.autoSelectNote.textContent = "";
     if (!feature) return;
@@ -133,8 +136,39 @@
 
     elements.detailLabel.textContent = feature.id === "fruit-tree" ? "Tree type" :
       feature.id === "apple-guild" ? "Guild anchor" : "Primary setup";
+    updateTreeTypeSpeciesTrigger(feature);
     elements.detailCaution.textContent = getDetailCaution(feature);
     renderFeatureContents(feature);
+  }
+
+  function updateTreeTypeSpeciesTrigger(feature) {
+    if (!feature || feature.id !== "fruit-tree") return;
+    const treeType = feature.options[Number(elements.detailSelect.value)] || "";
+    let speciesOption = null;
+    if (treeType.indexOf("Multi-grafted") === 0 || treeType.indexOf("Apple") === 0) {
+      speciesOption = {
+        name: "Apple (Malus domestica)",
+        scientificName: "Malus domestica",
+        profileId: "appleTree"
+      };
+    } else if (treeType.indexOf("Pear") === 0) {
+      speciesOption = {
+        name: "Pear (Pyrus communis)",
+        scientificName: "Pyrus communis",
+        profileId: "pear-layer"
+      };
+    } else if (treeType.indexOf("European plum") === 0) {
+      speciesOption = {
+        name: "European plum (Prunus domestica)",
+        scientificName: "Prunus domestica",
+        profileId: "plum-layer"
+      };
+    }
+    elements.detailSpeciesTrigger.hidden = !speciesOption;
+    elements.detailSpeciesTrigger.speciesOption = speciesOption;
+    elements.detailSpeciesTrigger.textContent = speciesOption
+      ? "Plant details: " + speciesOption.name
+      : "";
   }
 
   function getFeatureContents(feature) {
@@ -176,40 +210,99 @@
   }
 
   function showSpeciesCard(option, anchor) {
-    const source = option && option.sourceId ? getSource(option.sourceId) : null;
+    const optionProfile = option && option.profileId ? PLANT_PROFILES[option.profileId] : null;
+    const profile = Object.assign({}, optionProfile || {}, option && option.profile || {}, option || {});
+    const sourceIds = new Set(profile.sourceIds || []);
+    if (profile.sourceId) sourceIds.add(profile.sourceId);
+    if (Array.isArray(profile.facts)) {
+      profile.facts.forEach(function (fact) {
+        (fact.sourceIds || (fact.sourceId ? [fact.sourceId] : [])).forEach(function (id) {
+          sourceIds.add(id);
+        });
+      });
+    }
+    const sources = Array.from(sourceIds).map(getSource).filter(Boolean);
     elements.speciesCardTitle.textContent = option && option.name ? option.name : "Plant information";
-    elements.speciesCardScientific.textContent = option && option.scientificName
-      ? option.scientificName
+    elements.speciesCardScientific.textContent = profile.scientificName
+      ? profile.scientificName
       : "";
     elements.speciesCardScientific.hidden = !elements.speciesCardScientific.textContent;
     elements.speciesCardFacts.replaceChildren();
-    const facts = option && Array.isArray(option.verifiedFacts)
-      ? option.verifiedFacts
-      : source
-        ? ["Listed as an example in the linked reference. This prototype has no verified species-care profile for this choice."]
-        : ["No source-verified profile is available for this choice in this prototype."];
-    facts.forEach(function (fact) {
-      const item = document.createElement("li");
-      item.textContent = fact;
-      elements.speciesCardFacts.appendChild(item);
-    });
-    const role = option && option.layerRole
-      ? "Menu placement: " + option.layerRole + ". This is a planning classification, not proof of local suitability."
-      : "";
-    const scope = option && option.sourceId && option.sourceId.indexOf("umn-") === 0
-      ? "Regional limit: this reference is Minnesota-specific and should not be treated as Atlantic Canada guidance."
-      : source
-        ? "The reference does not establish local suitability or companion compatibility."
-        : "Do not treat this menu entry as a recommendation.";
-    elements.speciesCardCaveat.textContent = [role, scope].filter(Boolean).join(" ");
-    elements.speciesCardSource.hidden = !source;
-    if (source) {
-      elements.speciesCardSource.href = source.url;
-      elements.speciesCardSource.textContent = "Source: " + source.label;
+    if (Array.isArray(profile.facts) && profile.facts.length) {
+      const categories = new Map();
+      profile.facts.forEach(function (fact) {
+        const category = fact.category || fact.topic || "Source-verified notes";
+        if (!categories.has(category)) categories.set(category, []);
+        categories.get(category).push(fact);
+      });
+      categories.forEach(function (facts, category) {
+        const section = document.createElement("section");
+        const heading = document.createElement("h3");
+        heading.textContent = category;
+        const list = document.createElement("ul");
+        facts.forEach(function (fact) {
+          const item = document.createElement("li");
+          item.textContent = typeof fact === "string" ? fact : fact.text;
+          list.appendChild(item);
+        });
+        section.append(heading, list);
+        elements.speciesCardFacts.appendChild(section);
+      });
     } else {
-      elements.speciesCardSource.removeAttribute("href");
-      elements.speciesCardSource.textContent = "";
+      const facts = Array.isArray(profile.verifiedFacts) && profile.verifiedFacts.length
+        ? profile.verifiedFacts
+        : sources.length
+          ? ["Listed as an example in the linked reference. This prototype has no verified species-care profile for this choice."]
+          : ["No source-verified profile is available for this choice in this prototype."];
+      const list = document.createElement("ul");
+      facts.forEach(function (fact) {
+        const item = document.createElement("li");
+        item.textContent = fact;
+        list.appendChild(item);
+      });
+      elements.speciesCardFacts.appendChild(list);
     }
+    const gaps = Array.isArray(profile.unknowns) ? profile.unknowns : [];
+    if (gaps.length) {
+      const section = document.createElement("section");
+      const heading = document.createElement("h3");
+      heading.textContent = "Not established by these sources";
+      const list = document.createElement("ul");
+      gaps.forEach(function (gap) {
+        const item = document.createElement("li");
+        item.textContent = gap;
+        list.appendChild(item);
+      });
+      section.append(heading, list);
+      elements.speciesCardFacts.appendChild(section);
+    }
+    elements.speciesCardStatus.textContent = profile.profileStatus ||
+      (profile.facts || profile.verifiedFacts ? "Source-backed notes; see scope limits below." :
+        sources.length ? "Reference listed, but no species-care profile has been verified here." :
+          "No source-verified profile available.");
+    const role = profile.layerRole
+      ? "Menu placement: " + profile.layerRole + ". This is a planning classification, not proof of local suitability."
+      : "";
+    const scope = profile.scopeNote || (profile.sourceId && profile.sourceId.indexOf("umn-") === 0
+      ? "Regional limit: this reference is Minnesota-specific and should not be treated as Atlantic Canada guidance."
+      : sources.length
+        ? "The reference does not establish local suitability or companion compatibility."
+        : "Do not treat this menu entry as a recommendation.");
+    const warnings = Array.isArray(profile.warnings) ? profile.warnings : [];
+    elements.speciesCardCaveat.textContent = [role, scope].concat(warnings).filter(Boolean).join(" ");
+    elements.speciesCardSources.replaceChildren();
+    sources.forEach(function (source) {
+      const link = document.createElement("a");
+      link.href = source.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = source.label;
+      const note = document.createElement("span");
+      note.textContent = " — " + source.note;
+      const wrapper = document.createElement("p");
+      wrapper.append(link, note);
+      elements.speciesCardSources.appendChild(wrapper);
+    });
     elements.speciesCard.hidden = false;
     requestAnimationFrame(function () { positionSpeciesCard(anchor); });
   }
@@ -393,59 +486,17 @@
     return "A planning example only. Check site conditions, local suitability, and requirements before building or planting.";
   }
 
-  function autoSelectByLegacyTraits() {
-    return;
-    const feature = getCatalogItem(elements.featureSelect.value);
-    if (!feature) return;
-    const exposure = elements.bedExposure.value;
-    const watering = elements.bedWatering.value;
-
-    if (elements.contentsOptions.querySelector('input[name="feature-content"][data-water]')) {
-      const inputs = Array.from(elements.contentsOptions.querySelectorAll('input[name="feature-content"]'));
-      inputs.forEach(function (input) {
-        input.checked = input.dataset.water === targetWater &&
-          input.dataset.fertility === targetFertility;
-        input.dispatchEvent(new Event("change", { bubbles: true }));
-      });
-      if (!inputs.some(function (input) { return input.checked; })) {
-        inputs.sort(function (a, b) {
-          const score = function (input) {
-            return Math.abs(rank[input.dataset.water] - rank[targetWater]) +
-              Math.abs(rank[input.dataset.fertility] - rank[targetFertility]);
-          };
-          return score(a) - score(b);
-        });
-        if (inputs[0]) inputs[0].checked = true;
-      }
-    } else {
-      elements.guildOptions.querySelectorAll(".guild-layer-select").forEach(function (select) {
-        const layer = GUILD_LAYERS.find(function (entry) { return entry.id === select.dataset.layerId; });
-        if (!layer) return;
-        const candidates = layer.options.slice().sort(function (a, b) {
-          const score = function (plant) {
-            return Math.abs(rank[plant.water] - rank[targetWater]) +
-              Math.abs(rank[plant.fertility] - rank[targetFertility]);
-          };
-          return score(a) - score(b);
-        });
-        select.value = candidates[0] ? candidates[0].id : "";
-      });
-      const fixer = elements.guildOptions.querySelector("#nitrogen-fixer-select");
-      if (fixer) fixer.value = "clover";
-    }
-    elements.autoSelectNote.textContent =
-      "Selected from rough water/fertility tags only. This does not predict plant compatibility, yield, or fertilizer needs.";
-  }
-
   function autoSelectContents() {
     const exposure = elements.bedExposure.value;
-    const watering = elements.bedWatering.value;
+    const wateringApplication = BED_WATERING_APPLICATIONS[elements.bedWatering.value];
     const matches = [];
     elements.contentsOptions.querySelectorAll('input[name="feature-content"]').forEach(function (input) {
       const plant = VEGETABLE_PLANTS.find(function (entry) { return entry.id === input.value; });
-      const matchesProfile = plant && Array.isArray(plant.verifiedFacts) &&
-        Array.isArray(plant.sun) && plant.sun.includes(exposure) &&
-        Array.isArray(plant.watering) && plant.watering.includes(watering);
+      const profile = plant && PLANT_PROFILES[plant.profileId];
+      const matchesProfile = profile && profile.fit &&
+        Array.isArray(profile.fit.exposure) && profile.fit.exposure.includes(exposure) &&
+        Array.isArray(profile.fit.wateringApplication) &&
+        profile.fit.wateringApplication.includes(wateringApplication);
       input.checked = Boolean(matchesProfile);
       input.dispatchEvent(new Event("change", { bubbles: true }));
       if (matchesProfile) matches.push(plant.name);
@@ -1200,8 +1251,24 @@
   elements.detailSelect.addEventListener("change", function () {
     const feature = getCatalogItem(elements.featureSelect.value);
     if (!feature) return;
+    updateTreeTypeSpeciesTrigger(feature);
     renderFeatureContents(feature);
     elements.detailCaution.textContent = getDetailCaution(feature);
+  });
+  elements.detailSpeciesTrigger.addEventListener("mouseenter", function () {
+    if (elements.detailSpeciesTrigger.speciesOption) {
+      showSpeciesCard(elements.detailSpeciesTrigger.speciesOption, elements.detailSpeciesTrigger);
+    }
+  });
+  elements.detailSpeciesTrigger.addEventListener("focus", function () {
+    if (elements.detailSpeciesTrigger.speciesOption) {
+      showSpeciesCard(elements.detailSpeciesTrigger.speciesOption, elements.detailSpeciesTrigger);
+    }
+  });
+  elements.detailSpeciesTrigger.addEventListener("click", function () {
+    if (elements.detailSpeciesTrigger.speciesOption) {
+      showSpeciesCard(elements.detailSpeciesTrigger.speciesOption, elements.detailSpeciesTrigger);
+    }
   });
   elements.autoSelect.addEventListener("click", autoSelectContents);
   elements.speciesCardClose.addEventListener("click", function () {

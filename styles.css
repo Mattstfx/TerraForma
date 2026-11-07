@@ -659,13 +659,19 @@ main {
 .species-name-trigger:hover { color: #1d392e; text-decoration-color: currentColor; }
 .guild-species-trigger { margin: 4px 0 3px 4px; font-size: 0.65rem; }
 .guild-species-trigger[hidden] { display: none; }
+.detail-species-trigger[hidden] { display: none; }
 .species-card { position: fixed; z-index: 20; width: min(340px, calc(100vw - 24px)); max-height: min(70vh, 480px); overflow-y: auto; padding: 16px; border: 1px solid #cbd6c3; border-radius: 12px; background: #fffefa; box-shadow: 0 12px 35px rgb(29 57 46 / 20%); color: var(--ink); }
 .species-card[hidden] { display: none; }
 .species-card h2 { margin: 0 24px 3px 0; color: var(--forest-deep); font-size: 0.95rem; }
 .species-card-scientific { margin: 0 0 8px; color: #748073; font-size: 0.7rem; font-style: italic; }
-.species-card ul { margin: 8px 0; padding-left: 18px; color: #536157; font-size: 0.7rem; }
+.species-card-status { margin: 0 0 8px; color: #405c47; font-size: 0.66rem; font-weight: 700; }
+.species-card-facts section { margin-top: 9px; }
+.species-card-facts h3 { margin: 0; color: #53644f; font-size: 0.7rem; }
+.species-card ul { margin: 4px 0 8px; padding-left: 18px; color: #536157; font-size: 0.68rem; }
 .species-card li + li { margin-top: 4px; }
 .species-card-caveat { margin: 8px 0; color: #7d6848; font-size: 0.66rem; }
+.species-card-sources { border-top: 1px solid var(--line); padding-top: 4px; }
+.species-card-sources p { margin: 6px 0; color: #68746b; font-size: 0.63rem; }
 .species-card a { color: #315a40; font-size: 0.66rem; font-weight: 700; }
 .species-card-close { position: absolute; top: 8px; right: 9px; width: 27px; height: 27px; border: 0; border-radius: 50%; background: #edf1e8; color: #435545; cursor: pointer; font-size: 1rem; line-height: 1; }
 .fit-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 9px; margin: 9px 0; padding: 9px; border-radius: 8px; background: #f0f3eb; }

@@ -12,6 +12,14 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 ### Session — 2026-11-07 — driver: student
 
+- **Goal for this session:** Deepen the plant catalog without filling evidence gaps with guesses, and make the scope of each source visible.
+- **What worked:** Added 48 profile records with source links, grouped facts, explicit unknowns, and regional caveats. Connected every selectable species entry—including fruit-tree types—to a profile, narrowed several choices to identified taxa, and kept forest-garden examples clearly distinct from care recommendations. Removed tansy and broom from the selectable guild list; added species-specific comfrey safety/spread cautions. Updated the source-coverage note and removed the unused legacy auto-selection routine and duplicate pea/tomato facts.
+- **Accuracy and migration notes:** New England and Minnesota facts remain labeled by jurisdiction; a forest-garden layer citation is not evidence of local suitability, companion benefits, or nitrogen transfer. Existing saved plan data was not altered.
+- **What we checked:** JavaScript syntax and diff whitespace; a data audit found no missing source IDs or profile IDs among selectable species. Browser checks covered keyboard-focus and click cards, source links, apple/pear/plum tree cards, comfrey cautions, all seven guild layers, and removal of tansy/broom from choices.
+- **Committed?** no — not committed yet.
+
+### Session — 2026-11-07 — driver: student
+
 - **Goal for this session:** Add transparent plant-information cards, make bed settings easier to configure, and avoid presenting unsupported guild or crop-fit claims as facts.
 - **What worked:** Added hover-, keyboard-, and tap-accessible plant cards that display cited notes and clearly identify missing profiles. Added one sun-exposure and one watering-method setting per bed, with auto-selection limited to cited crop profiles matching both settings. Added an at-a-glance guild layer/role summary and explicitly stated that selected layers do not establish companion compatibility or benefits.
 - **Accuracy and migration notes:** Tomato, pea, and apple cultivar details cite University of Minnesota Extension and are labeled Minnesota-specific, not Atlantic Canada recommendations. Other candidate menu entries are not assigned invented care stats. Pear and plum cultivar names can be entered from a local source and are labeled user-provided rather than app-verified. Existing saved plans remain supported, including older companion selections, which are now labeled unverified.

@@ -205,46 +205,33 @@ const APPLE_GUILD_PLANTS = [
 ];
 
 const VEGETABLE_PLANTS = [
-  { id: "lettuce", name: "Lettuce", maturityEditable: true },
-  { id: "radish", name: "Radish", maturityEditable: true },
-  { id: "carrot", name: "Carrot", maturityEditable: true },
+  { id: "lettuce", name: "Lettuce", scientificName: "Lactuca sativa", profileId: "lettuce", maturityEditable: true },
+  { id: "radish", name: "Table radish", scientificName: "Raphanus sativus", profileId: "radish", maturityEditable: true },
+  { id: "carrot", name: "Carrot", scientificName: "Daucus carota", profileId: "carrot", maturityEditable: true },
   {
     id: "pea",
     name: "Pea",
     scientificName: "Pisum sativum",
-    sun: ["full"],
-    watering: ["drip", "soaker", "hand"],
-    verifiedFacts: [
-      "Needs full sun.",
-      "Good growing temperatures are 55–65°F.",
-      "Soil pH range given by the source: 6.0–7.5; well-drained soil is advised.",
-      "Water the soil rather than the vines; during the growing season the source suggests at least 1 inch per week, with more frequent watering possible in sandy soil."
-    ],
-    sourceId: "umn-peas",
+    profileId: "pea",
     maturityEditable: true
   },
-  { id: "bean", name: "Bean", maturityEditable: true },
+  { id: "bean", name: "Common bean (snap, shell, or dry; choose cultivar)", scientificName: "Phaseolus vulgaris", profileId: "commonBean", maturityEditable: true },
   {
     id: "tomato",
     name: "Tomato",
     scientificName: "Solanum lycopersicum",
-    sun: ["full"],
-    watering: ["drip", "soaker", "hand"],
-    verifiedFacts: [
-      "Requires full sun and a long, frost-free growing season.",
-      "The source gives soil pH 5.5–7.0 as ideal.",
-      "Consistent soil moisture is recommended; avoid overhead sprinkling and soak the soil thoroughly.",
-      "The source gives about 1 inch of rainfall or irrigation per week as ideal; sandy soil may need more frequent watering."
-    ],
-    sourceId: "umn-tomatoes",
+    profileId: "tomato",
     maturityEditable: true
   },
-  { id: "pepper", name: "Pepper", maturityEditable: true },
-  { id: "cucumber", name: "Cucumber", maturityEditable: true },
-  { id: "squash", name: "Squash", maturityEditable: true },
-  { id: "kale", name: "Kale", maturityEditable: true },
-  { id: "beet", name: "Beet", maturityEditable: true },
-  { id: "potato", name: "Potato", maturityEditable: true }
+  { id: "pepper", name: "Sweet pepper (bell/frying; choose cultivar)", scientificName: "Capsicum annuum", profileId: "sweetPepper", maturityEditable: true },
+  { id: "cucumber", name: "Cucumber (choose use type and cultivar)", scientificName: "Cucumis sativus", profileId: "cucumber", maturityEditable: true },
+  { id: "summer-squash", name: "Summer squash (e.g. zucchini; choose cultivar)", scientificName: "Cucurbita pepo", profileId: "summerSquash", maturityEditable: true },
+  { id: "winter-squash-pepo", name: "Winter squash (Cucurbita pepo group; choose cultivar)", scientificName: "Cucurbita pepo", profileId: "winterSquashPepo", maturityEditable: true },
+  { id: "winter-squash-maxima", name: "Hubbard / buttercup squash (choose cultivar)", scientificName: "Cucurbita maxima", profileId: "winterSquashMaxima", maturityEditable: true },
+  { id: "butternut-squash", name: "Butternut squash (choose cultivar)", scientificName: "Cucurbita moschata", profileId: "butternutSquash", maturityEditable: true },
+  { id: "kale", name: "Kale (choose cultivar)", scientificName: "Brassica oleracea (kale group)", profileId: "kale", maturityEditable: true },
+  { id: "beet", name: "Garden beet (choose cultivar)", scientificName: "Beta vulgaris", profileId: "beet", maturityEditable: true },
+  { id: "potato", name: "Potato (choose use and variety)", scientificName: "Solanum tuberosum", profileId: "potato", maturityEditable: true }
 ];
 
 const APPLE_CULTIVARS = [
@@ -252,6 +239,7 @@ const APPLE_CULTIVARS = [
     id: "cortland",
     name: "Cortland",
     scientificName: "Malus domestica 'Cortland'",
+    profileId: "cortland",
     verifiedFacts: [
       "The University of Minnesota table lists good-to-fair hardiness for zones 4 to 3.",
       "Average harvest listed: late September to early October.",
@@ -264,6 +252,7 @@ const APPLE_CULTIVARS = [
     id: "haralson",
     name: "Haralson",
     scientificName: "Malus domestica 'Haralson'",
+    profileId: "haralson",
     verifiedFacts: [
       "The University of Minnesota table lists very-good-to-good hardiness for zones 4 to 3.",
       "Average harvest listed: late September to early October.",
@@ -276,6 +265,7 @@ const APPLE_CULTIVARS = [
     id: "honeycrisp",
     name: "Honeycrisp",
     scientificName: "Malus domestica 'Honeycrisp'",
+    profileId: "honeycrisp",
     verifiedFacts: [
       "The University of Minnesota table lists very-good-to-good hardiness for zones 4 to 3.",
       "Average harvest listed: late September.",
@@ -288,6 +278,7 @@ const APPLE_CULTIVARS = [
     id: "liberty",
     name: "Liberty",
     scientificName: "Malus domestica 'Liberty'",
+    profileId: "liberty",
     verifiedFacts: [
       "The University of Minnesota table lists good-to-fair hardiness for zones 4 to 3.",
       "Average harvest listed: early October.",
@@ -303,71 +294,68 @@ const GUILD_LAYERS = [
     id: "canopy",
     name: "1. Canopy / overstory tree",
     options: [
-      { id: "apple", name: "Apple (Malus spp.)", sourceId: "forest-gardening", layerRole: "Canopy / overstory tree" },
-      { id: "pear", name: "Pear (Pyrus spp.)", sourceId: "forest-gardening", layerRole: "Canopy / overstory tree" },
-      { id: "plum", name: "Plum (Prunus spp.)", sourceId: "forest-gardening", layerRole: "Canopy / overstory tree" }
+      { id: "apple", name: "Apple (Malus spp.)", scientificName: "Malus spp.", sourceId: "forest-gardening", profileId: "apple-layer", layerRole: "Canopy / overstory tree" },
+      { id: "pear", name: "Pear (Pyrus communis)", scientificName: "Pyrus communis", sourceId: "forest-gardening", profileId: "pear-layer", layerRole: "Canopy / overstory tree" },
+      { id: "plum", name: "Plum (Prunus domestica)", scientificName: "Prunus domestica", sourceId: "forest-gardening", profileId: "plum-layer", layerRole: "Canopy / overstory tree" }
     ]
   },
   {
     id: "understory",
     name: "2. Small tree / understory",
     options: [
-      { id: "serviceberry", name: "Serviceberry (Amelanchier spp.)", sourceId: "forest-gardening", layerRole: "Small tree / large shrub" },
-      { id: "dwarf-fruit", name: "Dwarf fruit tree (rootstock-specific)", sourceId: "umn-apples", layerRole: "Small tree / large shrub" }
+      { id: "serviceberry", name: "Serviceberry (Amelanchier spp.)", scientificName: "Amelanchier spp.", sourceId: "forest-gardening", profileId: "serviceberry-layer", layerRole: "Small tree / large shrub" },
+      { id: "dwarf-apple", name: "Dwarf apple (cultivar and rootstock not selected)", scientificName: "Malus spp.", sourceId: "forest-gardening", profileId: "apple-layer", layerRole: "Small tree / large shrub" }
     ]
   },
   {
     id: "shrub",
     name: "3. Shrub",
     options: [
-      { id: "currant", name: "Currant (Ribes spp.)", sourceId: "forest-gardening", layerRole: "Shrub" },
-      { id: "gooseberry", name: "Gooseberry (Ribes spp.)", sourceId: "forest-gardening", layerRole: "Shrub; species-level verification still needed" },
-      { id: "aronia", name: "Chokeberry (Aronia spp.)", sourceId: "forest-gardening", layerRole: "Shrub" }
+      { id: "currant", name: "Currant (type unspecified)", scientificName: "Ribes spp.", sourceId: "forest-gardening", profileId: "currantGroup", layerRole: "Shrub" },
+      { id: "aronia", name: "Chokeberry (Aronia spp.)", scientificName: "Aronia spp.", sourceId: "forest-gardening", profileId: "aronia-layer", layerRole: "Shrub" }
     ]
   },
   {
     id: "herbaceous",
     name: "4. Herbaceous / perennial",
     options: [
-      { id: "comfrey", name: "Comfrey (Symphytum spp.)", sourceId: "forest-gardening", layerRole: "Herbaceous perennial; spreading habit noted by source" },
-      { id: "mint", name: "Mint (Mentha spp.)", sourceId: "forest-gardening", layerRole: "Herbaceous perennial" },
-      { id: "lemon-balm", name: "Lemon balm (Melissa officinalis)", sourceId: "forest-gardening", layerRole: "Herbaceous perennial" },
-      { id: "tansy", name: "Tansy (Tanacetum vulgare)", sourceId: "forest-gardening", layerRole: "Example plant for attracting predators of common pests; verify local suitability" }
+      { id: "comfrey", name: "Common comfrey (Symphytum officinale)", scientificName: "Symphytum officinale", sourceId: "forest-gardening", profileId: "commonComfrey", layerRole: "Herbaceous perennial; safety and spread caveats apply" },
+      { id: "mint", name: "Mint (Mentha spp.)", scientificName: "Mentha spp.", sourceId: "forest-gardening", profileId: "mint-layer", layerRole: "Herbaceous perennial" },
+      { id: "lemon-balm", name: "Lemon balm (Melissa officinalis)", scientificName: "Melissa officinalis", sourceId: "forest-gardening", profileId: "lemon-balm-layer", layerRole: "Herbaceous perennial" }
     ]
   },
   {
     id: "groundcover",
     name: "5. Groundcover",
     options: [
-      { id: "wild-ginger", name: "Wild ginger (Asarum spp.)", sourceId: "forest-gardening", layerRole: "Groundcover" },
-      { id: "bunchberry", name: "Bunchberry (Cornus canadensis)", sourceId: "forest-gardening", layerRole: "Groundcover" },
-      { id: "wintergreen", name: "Wintergreen (Gaultheria spp.)", sourceId: "forest-gardening", layerRole: "Groundcover" },
-      { id: "creeping-raspberry", name: "Carpeting bramble (Rubus spp.)", sourceId: "forest-gardening", layerRole: "Groundcover" }
+      { id: "wild-ginger", name: "Canada wild ginger (Asarum canadense)", scientificName: "Asarum canadense", sourceId: "forest-gardening", profileId: "wildGinger", layerRole: "Groundcover" },
+      { id: "bunchberry", name: "Bunchberry (Cornus canadensis)", scientificName: "Cornus canadensis", sourceId: "forest-gardening", profileId: "bunchberry-layer", layerRole: "Groundcover" },
+      { id: "wintergreen", name: "Eastern spicy-wintergreen (Gaultheria procumbens)", scientificName: "Gaultheria procumbens", sourceId: "forest-gardening", profileId: "wintergreen", layerRole: "Groundcover" },
+      { id: "creeping-raspberry", name: "Carpeting bramble (Rubus calycinoides / R. tricolor)", scientificName: "Rubus calycinoides / Rubus tricolor", sourceId: "forest-gardening", profileId: "carpeting-bramble-layer", layerRole: "Groundcover" }
     ]
   },
   {
     id: "rhizosphere",
     name: "6. Root / rhizosphere",
     options: [
-      { id: "liquorice", name: "Liquorice (Glycyrrhiza spp.)", sourceId: "forest-gardening", layerRole: "Useful-root / rhizosphere example" },
-      { id: "barberry-root", name: "Barberry (Berberis spp.)", sourceId: "forest-gardening", layerRole: "Useful-root / rhizosphere example" }
+      { id: "liquorice", name: "Liquorice (Glycyrrhiza spp.)", scientificName: "Glycyrrhiza spp.", sourceId: "forest-gardening", profileId: "liquorice-layer", layerRole: "Useful-root / rhizosphere example" },
+      { id: "barberry-root", name: "Barberry (Berberis spp.)", scientificName: "Berberis spp.", sourceId: "forest-gardening", profileId: "barberry-layer", layerRole: "Useful-root / rhizosphere example" }
     ]
   },
   {
     id: "vine",
     name: "7. Climber / vine",
     options: [
-      { id: "grape", name: "Grape (Vitis spp.)", sourceId: "forest-gardening", layerRole: "Climber / vine" },
-      { id: "hardy-kiwi", name: "Hardy kiwi (Actinidia spp.)", sourceId: "forest-gardening", layerRole: "Climber / vine; source notes sturdy tree support" }
+      { id: "grape", name: "Grape (Vitis spp.)", scientificName: "Vitis spp.", sourceId: "forest-gardening", profileId: "grape-layer", layerRole: "Climber / vine" },
+      { id: "hardy-kiwi", name: "Hardy kiwi (Actinidia spp.)", scientificName: "Actinidia spp.", sourceId: "forest-gardening", profileId: "kiwi-layer", layerRole: "Climber / vine; source notes sturdy tree support" }
     ]
   }
 ];
 
 const NITROGEN_FIXERS = [
-  { id: "alder", name: "Alder (Alnus spp.)", sourceId: "forest-gardening", role: "Nitrogen-fixer example listed by source" },
-  { id: "broom", name: "Broom (Cytisus scoparius)", sourceId: "forest-gardening", role: "Nitrogen-fixer example listed by source" },
-  { id: "elaeagnus", name: "Elaeagnus (Elaeagnus spp.)", sourceId: "forest-gardening", role: "Nitrogen-fixer example listed by source" },
-  { id: "shrub-lupin", name: "Shrub lupin (Lupinus arboreus)", sourceId: "forest-gardening", role: "Nitrogen-fixer example listed by source" },
+  { id: "alder", name: "Alder (Alnus spp.)", scientificName: "Alnus spp.", sourceId: "forest-gardening", profileId: "alder-fixer", role: "Nitrogen-fixer example listed by source" },
+  { id: "elaeagnus", name: "Elaeagnus (Elaeagnus spp.)", scientificName: "Elaeagnus spp.", sourceId: "forest-gardening", profileId: "elaeagnus-fixer", role: "Nitrogen-fixer example listed by source" },
+  { id: "shrub-lupin", name: "Shrub lupin (Lupinus arboreus)", scientificName: "Lupinus arboreus", sourceId: "forest-gardening", profileId: "shrub-lupin-fixer", role: "Nitrogen-fixer example listed by source" },
   { id: "none", name: "No nitrogen-fixer selected", role: "" }
 ];
 
@@ -376,11 +364,11 @@ const FACILITY_CONTENTS = {
   greenhouse: { type: "plants", title: "Choose crops for this greenhouse", options: VEGETABLE_PLANTS },
   "berry-planting": {
     type: "components",
-    title: "Choose berry-planting ideas",
+    title: "Choose a documented berry example to investigate",
     options: [
-      { id: "blueberry", name: "Blueberry (Vaccinium spp.; soil pH and cultivar need checking)" },
-      { id: "currant", name: "Currant (Ribes spp.; verify local disease and site fit)" },
-      { id: "raspberry", name: "Raspberry (Rubus idaeus; plan for spread and support)" }
+      { id: "blueberry", name: "Cultivated blueberry (type unspecified)", scientificName: "Vaccinium spp.", profileId: "blueberryGroup" },
+      { id: "currant", name: "Currant (type unspecified)", scientificName: "Ribes spp.", profileId: "currantGroup" },
+      { id: "raspberry", name: "Red raspberry (cultivar unspecified)", scientificName: "Rubus idaeus", profileId: "raspberry" }
     ]
   },
   "fruit-tree": { type: "cultivars", title: "Choose scions / cultivars", options: APPLE_CULTIVARS },
@@ -399,20 +387,16 @@ const FACILITY_CONTENTS = {
   },
   "rain-garden": {
     type: "components",
-    title: "Choose planting ideas to research",
+    title: "Choose a source-backed species to investigate",
     options: [
-      { id: "sedge", name: "Locally native sedge (Carex spp.)" },
-      { id: "rush", name: "Locally native rush (Juncus spp.)" },
-      { id: "swamp-milkweed", name: "Swamp milkweed (Asclepias incarnata; verify site fit)" }
+      { id: "swamp-milkweed", name: "Swamp milkweed (Asclepias incarnata)", scientificName: "Asclepias incarnata", profileId: "swampMilkweed" }
     ]
   },
   "pollinator-patch": {
     type: "components",
-    title: "Choose flowering-plant ideas to research",
+    title: "Choose a documented flowering-plant example to investigate",
     options: [
-      { id: "native-aster", name: "Native aster (Symphyotrichum spp.)" },
-      { id: "native-goldenrod", name: "Native goldenrod (Solidago spp.)" },
-      { id: "wild-bergamot", name: "Wild bergamot (Monarda fistulosa)" }
+      { id: "wild-bergamot", name: "Wild bergamot (Monarda fistulosa)", scientificName: "Monarda fistulosa", profileId: "wildBergamot" }
     ]
   },
   "beneficial-habitat": {
@@ -446,11 +430,10 @@ const FACILITY_CONTENTS = {
   },
   "native-border": {
     type: "components",
-    title: "Choose planting ideas to research",
+    title: "Choose a documented species to investigate",
     options: [
-      { id: "native-aster", name: "Native aster (Symphyotrichum spp.)" },
-      { id: "native-goldenrod", name: "Native goldenrod (Solidago spp.)" },
-      { id: "native-sedge", name: "Locally native sedge (Carex spp.)" }
+      { id: "wild-bergamot", name: "Wild bergamot (Monarda fistulosa)", scientificName: "Monarda fistulosa", profileId: "wildBergamot" },
+      { id: "swamp-milkweed", name: "Swamp milkweed (Asclepias incarnata)", scientificName: "Asclepias incarnata", profileId: "swampMilkweed" }
     ]
   }
 };
@@ -497,8 +480,602 @@ const REFERENCE_SOURCES = [
     label: "University of Minnesota Extension: Growing apples",
     url: "https://extension.umn.edu/garden-and-home/yard-and-garden/gardening-in-minnesota/growing-apples",
     note: "Source for the listed apple cultivation and cultivar-table notes; Minnesota hardiness and harvest timing are not Atlantic Canada recommendations."
+  },
+  {
+    id: "umn-blueberries",
+    label: "University of Minnesota Extension: Growing blueberries",
+    url: "https://extension.umn.edu/garden-and-home/yard-and-garden/gardening-in-minnesota/growing-blueberries-in-the-home-garden",
+    note: "Home-garden growing and cultivar guidance is Minnesota-specific; do not treat it as an Atlantic Canada cultivar recommendation."
+  },
+  {
+    id: "umn-currants",
+    label: "University of Minnesota Extension: Growing currants and gooseberries",
+    url: "https://extension.umn.edu/garden-and-home/yard-and-garden/gardening-in-minnesota/growing-currants-and-gooseberries-in-the-home-garden",
+    note: "Growing guidance is Minnesota-specific and distinguishes currant types; do not generalize a cultivar profile across Ribes."
+  },
+  {
+    id: "umn-raspberries",
+    label: "University of Minnesota Extension: Growing raspberries",
+    url: "https://extension.umn.edu/garden-and-home/yard-and-garden/gardening-in-minnesota/growing-raspberries-in-the-home-garden",
+    note: "Growing guidance is Minnesota-specific; cultivar, cane type, and local performance still need checking."
+  },
+  {
+    id: "umaine-raspberries",
+    label: "University of Maine Cooperative Extension: Growing raspberries and blackberries",
+    url: "https://extension.umaine.edu/publications/2066e/",
+    note: "New England guidance, not a province-specific Atlantic Canada performance guarantee."
+  },
+  {
+    id: "gobotany-canadense",
+    label: "Native Plant Trust Go Botany: Canada wild ginger",
+    url: "https://gobotany.nativeplanttrust.org/species/asarum/canadense/",
+    note: "Botanical distribution and habitat information for Asarum canadense; not a food-use or horticultural prescription."
+  },
+  {
+    id: "gobotany-procumbens",
+    label: "Native Plant Trust Go Botany: Eastern spicy-wintergreen",
+    url: "https://gobotany.nativeplanttrust.org/species/gaultheria/procumbens/",
+    note: "Botanical distribution and habitat information for Gaultheria procumbens; the genus-level menu label is broader."
+  },
+  {
+    id: "gobotany-incarnata",
+    label: "Native Plant Trust Go Botany: Swamp milkweed",
+    url: "https://gobotany.nativeplanttrust.org/species/asclepias/incarnata/",
+    note: "Botanical range and habitat information for New England; not a blanket rain-garden or Atlantic Canada recommendation."
+  },
+  {
+    id: "gobotany-fistulosa",
+    label: "Native Plant Trust Go Botany: Wild bergamot",
+    url: "https://gobotany.nativeplanttrust.org/species/monarda/fistulosa/",
+    note: "Botanical range and ecology information for New England; variety and province-level suitability need checking."
+  },
+  {
+    id: "ncstate-comfrey",
+    label: "NC State Extension Plant Toolbox: Common comfrey",
+    url: "https://plants.ces.ncsu.edu/plants/symphytum-officinale/",
+    note: "Species-specific facts for Symphytum officinale; do not generalize to all comfrey species."
+  },
+  {
+    id: "newengland-lettuce",
+    label: "New England Vegetable Management Guide: Lettuce, endive, and escarole",
+    url: "https://nevegetable.org/node/387/",
+    note: "New England production guidance; commercial spacing and timing are not home-garden or Atlantic Canada prescriptions."
+  },
+  {
+    id: "newengland-radish",
+    label: "New England Vegetable Management Guide: Radish",
+    url: "https://nevegetable.org/node/269/",
+    note: "New England production guidance; planting dates and maturity conditions should not be transferred directly to Atlantic Canada."
+  },
+  {
+    id: "newengland-carrot",
+    label: "New England Vegetable Management Guide: Carrot and parsnip",
+    url: "https://nevegetable.org/node/245/",
+    note: "New England production guidance; commercial rates and spacing are not home-garden prescriptions."
+  },
+  {
+    id: "newengland-bean",
+    label: "New England Vegetable Management Guide: Bean",
+    url: "https://nevegetable.org/node/239/",
+    note: "Distinguishes bean species and uses; New England production timing is not an Atlantic Canada prescription."
+  },
+  {
+    id: "umn-beans",
+    label: "University of Minnesota Extension: Growing beans",
+    url: "https://extension.umn.edu/garden-and-home/yard-and-garden/gardening-in-minnesota/growing-beans",
+    note: "Home-garden information is Minnesota-specific; cultivar and regional timing must be checked."
+  },
+  {
+    id: "newengland-pepper",
+    label: "New England Vegetable Management Guide: Pepper",
+    url: "https://nevegetable.org/node/249/",
+    note: "New England production guide; sweet/hot type and species distinctions matter."
+  },
+  {
+    id: "umn-peppers",
+    label: "University of Minnesota Extension: Growing peppers",
+    url: "https://extension.umn.edu/garden-and-home/yard-and-garden/gardening-in-minnesota/growing-peppers",
+    note: "Home-garden guidance is Minnesota-specific; pepper types and cultivar performance vary."
+  },
+  {
+    id: "newengland-cucumber",
+    label: "New England Vegetable Management Guide: Cucumber, muskmelon, and watermelon",
+    url: "https://nevegetable.org/node/257/",
+    note: "New England production guidance; do not transfer planting dates or commercial rates to Atlantic Canada."
+  },
+  {
+    id: "newengland-squash",
+    label: "New England Vegetable Management Guide: Pumpkin, squash, and gourds",
+    url: "https://nevegetable.org/node/275/",
+    note: "Distinguishes Cucurbita species and use types; New England production timing is not an Atlantic Canada prescription."
+  },
+  {
+    id: "newengland-kale",
+    label: "New England Vegetable Management Guide: Brassica crops",
+    url: "https://nevegetable.org/node/243/",
+    note: "New England production guidance; some content is commercial-scale and regional."
+  },
+  {
+    id: "newengland-beet",
+    label: "New England Vegetable Management Guide: Beet and Swiss chard",
+    url: "https://nevegetable.org/node/241/",
+    note: "New England production guidance; taxonomy and commercial production rates require context."
+  },
+  {
+    id: "newengland-potato",
+    label: "New England Vegetable Management Guide: Potato",
+    url: "https://nevegetable.org/node/311/",
+    note: "Production-oriented New England guidance; not a complete home-garden recommendation."
+  },
+  {
+    id: "gnb-apples",
+    label: "Government of New Brunswick: Apples",
+    url: "https://www2.gnb.ca/content/gnb/en/departments/10/agriculture/content/crops/apples.html",
+    note: "Commercial crop context and linked orchard resources; not a home-orchard cultivar guide."
+  },
+  {
+    id: "gnb-apple-site",
+    label: "Government of New Brunswick: Site selection for productive apple orchards",
+    url: "https://www2.gnb.ca/content/gnb/en/departments/10/agriculture/content/crops/apples/site_selection.html",
+    note: "Regional orchard site-selection facts; still requires evaluation of the specific soil and microclimate."
+  },
+  {
+    id: "gnb-potatoes",
+    label: "Government of New Brunswick: Potatoes",
+    url: "https://www2.gnb.ca/content/gnb/en/departments/10/agriculture/content/crops/potatoes.html",
+    note: "Commercial production resources, not a household growing guide."
+  },
+  {
+    id: "gnb-potato-varieties",
+    label: "Government of New Brunswick: Potato variety development and selection",
+    url: "https://www2.gnb.ca/content/gnb/en/departments/10/agriculture/content/crops/potatoes/variety.html",
+    note: "Supports choosing varieties for local adaptation and small-scale testing; not a home-garden care guide."
+  },
+  {
+    id: "gnb-small-fruits",
+    label: "Government of New Brunswick: Small fruits",
+    url: "https://www2.gnb.ca/content/gnb/en/departments/10/agriculture/content/crops/small_fruits.html",
+    note: "Regional commercial-sector context; does not provide home-garden growing or cultivar recommendations."
+  },
+  {
+    id: "gnb-wild-blueberries",
+    label: "Government of New Brunswick: Wild blueberries",
+    url: "https://www2.gnb.ca/content/gnb/en/departments/10/agriculture/content/crops/wild_blueberries.html",
+    note: "Wild blueberry sector information is not a highbush blueberry home-garden guide."
   }
 ];
+
+const BED_WATERING_APPLICATIONS = {
+  drip: "soil",
+  soaker: "soil",
+  hand: "soil",
+  overhead: "foliage"
+};
+
+const PLANT_PROFILES = {
+  pea: {
+    name: "Pea",
+    scientificName: "Pisum sativum",
+    profileStatus: "Species-level facts are sourced from Minnesota Extension; this is not Atlantic Canada growing advice.",
+    scopeNote: "Facts below come from University of Minnesota Extension. Regional season, frost dates, variety performance, and timing are not established for Atlantic Canada.",
+    sourceIds: ["umn-peas"],
+    facts: [
+      { category: "Light and soil", text: "Needs full sun. Well-drained soil is advised; the source gives a pH range of 6.0–7.5." },
+      { category: "Temperature and season", text: "The source identifies 55–65°F as a good growing-temperature range. It reports that hot weather above 85°F can stop flowering and pod production." },
+      { category: "Water", text: "Water soil rather than vines. The source suggests soaking to at least 1 inch per week during the growing season; rain, spring conditions, and sandy soil can change watering needs." },
+      { category: "Habit and support", text: "The source describes tall vining varieties reaching about 5 feet and bush types reaching about 2–3 feet; check the chosen variety and provide support as needed." },
+      { category: "Planting and harvest", text: "The source says most varieties need about 60 days before harvest and gives Minnesota-specific spring planting advice. Use the seed packet and local frost information for timing." },
+      { category: "Soil amendments", text: "The source notes peas need less fertilizer than other crops and recommends soil-test context; it does not support a universal fertilizer rate." }
+    ],
+    unknowns: [
+      "Atlantic Canada-specific planting dates, frost windows, and cultivar performance.",
+      "The chosen cultivar's maturity, disease resistance, and growth habit.",
+      "A fertilizer prescription without a soil test."
+    ],
+    fit: { exposure: ["full"], wateringApplication: ["soil"] }
+  },
+  tomato: {
+    name: "Tomato",
+    scientificName: "Solanum lycopersicum",
+    profileStatus: "Species-level facts are sourced from Minnesota Extension; this is not Atlantic Canada growing advice.",
+    scopeNote: "Facts below come from University of Minnesota Extension. Minnesota's frost calendar and climate do not transfer directly to Atlantic Canada.",
+    sourceIds: ["umn-tomatoes"],
+    facts: [
+      { category: "Light and season", text: "Requires full sun and a long, frost-free growing season." },
+      { category: "Soil", text: "The source gives pH 5.5–7.0 as ideal and advises using soil-test results to guide fertilizer decisions." },
+      { category: "Water", text: "Maintain consistent soil moisture; avoid overhead sprinkling and soak the soil thoroughly. The source gives about 1 inch of rainfall or irrigation per week as ideal, with sandy soil potentially needing more frequent watering." },
+      { category: "Growth and support", text: "The source describes bush types as typically 24–30 inches and not needing support, while vining types need support and may grow 3–5 feet or more. Check the selected cultivar." },
+      { category: "Starting and transplanting", text: "The source suggests starting seed indoors 5–6 weeks before outdoor planting and transplanting after frost danger and adequate soil warming; these timing cues are Minnesota guidance, not Atlantic Canada dates." }
+    ],
+    unknowns: [
+      "Atlantic Canada-specific cultivar performance, frost dates, and planting calendar.",
+      "The chosen cultivar's growth habit, maturity, disease resistance, and fruit traits.",
+      "Soil-test results and a site-specific fertilizer need."
+    ],
+    fit: { exposure: ["full"], wateringApplication: ["soil"] }
+  },
+  cortland: {
+    name: "Cortland",
+    scientificName: "Malus domestica 'Cortland'",
+    profileStatus: "Cultivar-table facts are sourced from Minnesota Extension; not an Atlantic Canada recommendation.",
+    scopeNote: "Cultivar table and cultivation notes are from University of Minnesota Extension. Minnesota hardiness and harvest timing are not local performance predictions.",
+    sourceIds: ["umn-apples"],
+    facts: [
+      { category: "Cultivar record", text: "The Minnesota table lists good-to-fair hardiness for USDA zones 4 to 3, average harvest from late September to early October, and uses including fresh eating, cooking, and salad." },
+      { category: "Fruit and disease notes", text: "The table describes medium-sized fruit and susceptibility to apple scab and fire blight." },
+      { category: "General apple care (source scope)", text: "The source says apple trees need at least 8 hours of sun, soil pH 6–7, and well-drained soil without standing water. Tree size depends strongly on rootstock." },
+      { category: "Pollination", text: "The source says apples need pollen from a different variety and discusses a nearby crabapple as a possible pollen source. Bloom overlap and compatibility of any particular pair must be checked." }
+    ],
+    unknowns: ["Atlantic Canada hardiness, bloom overlap, harvest date, disease response, and local performance for this cultivar.", "Rootstock identity, final tree size, and compatible pollinizer at the actual site."]
+  },
+  haralson: {
+    name: "Haralson",
+    scientificName: "Malus domestica 'Haralson'",
+    profileStatus: "Cultivar-table facts are sourced from Minnesota Extension; not an Atlantic Canada recommendation.",
+    scopeNote: "Cultivar table and cultivation notes are from University of Minnesota Extension. Minnesota hardiness and harvest timing are not local performance predictions.",
+    sourceIds: ["umn-apples"],
+    facts: [
+      { category: "Cultivar record", text: "The Minnesota table lists very-good-to-good hardiness for USDA zones 4 to 3, average harvest from late September to early October, and fresh-eating/cooking uses; it notes the fruit is good for pie." },
+      { category: "Fruit and disease notes", text: "The table describes medium fruit and reports some resistance to apple scab and fire blight." },
+      { category: "General apple care (source scope)", text: "The source says apple trees need at least 8 hours of sun, soil pH 6–7, and well-drained soil without standing water. Tree size depends strongly on rootstock." },
+      { category: "Pollination", text: "The source says apples need pollen from a different variety and discusses a nearby crabapple as a possible pollen source. Bloom overlap and compatibility of any particular pair must be checked." }
+    ],
+    unknowns: ["Atlantic Canada hardiness, bloom overlap, harvest date, disease response, and local performance for this cultivar.", "Rootstock identity, final tree size, and compatible pollinizer at the actual site."]
+  },
+  honeycrisp: {
+    name: "Honeycrisp",
+    scientificName: "Malus domestica 'Honeycrisp'",
+    profileStatus: "Cultivar-table facts are sourced from Minnesota Extension; not an Atlantic Canada recommendation.",
+    scopeNote: "Cultivar table and cultivation notes are from University of Minnesota Extension. Minnesota hardiness and harvest timing are not local performance predictions.",
+    sourceIds: ["umn-apples"],
+    facts: [
+      { category: "Cultivar record", text: "The Minnesota table lists very-good-to-good hardiness for USDA zones 4 to 3, average harvest in late September, and best use as fresh eating; it is also listed as good for cooking." },
+      { category: "Fruit and disease notes", text: "The table describes medium-large fruit as very juicy and crisp and reports some resistance to apple scab and fire blight." },
+      { category: "General apple care (source scope)", text: "The source says apple trees need at least 8 hours of sun, soil pH 6–7, and well-drained soil without standing water. Tree size depends strongly on rootstock." },
+      { category: "Pollination", text: "The source says apples need pollen from a different variety and discusses a nearby crabapple as a possible pollen source. Bloom overlap and compatibility of any particular pair must be checked." }
+    ],
+    unknowns: ["Atlantic Canada hardiness, bloom overlap, harvest date, disease response, and local performance for this cultivar.", "Rootstock identity, final tree size, and compatible pollinizer at the actual site."]
+  },
+  liberty: {
+    name: "Liberty",
+    scientificName: "Malus domestica 'Liberty'",
+    profileStatus: "Cultivar-table facts are sourced from Minnesota Extension; not an Atlantic Canada recommendation.",
+    scopeNote: "Cultivar table and cultivation notes are from University of Minnesota Extension. Minnesota hardiness and harvest timing are not local performance predictions.",
+    sourceIds: ["umn-apples"],
+    facts: [
+      { category: "Cultivar record", text: "The Minnesota table lists good-to-fair hardiness for USDA zones 4 to 3, average harvest in early October, and fresh-eating/cooking uses." },
+      { category: "Fruit and disease notes", text: "The table describes medium fruit and calls the cultivar immune to apple scab and resistant to fire blight." },
+      { category: "General apple care (source scope)", text: "The source says apple trees need at least 8 hours of sun, soil pH 6–7, and well-drained soil without standing water. Tree size depends strongly on rootstock." },
+      { category: "Pollination", text: "The source says apples need pollen from a different variety and discusses a nearby crabapple as a possible pollen source. Bloom overlap and compatibility of any particular pair must be checked." }
+    ],
+    unknowns: ["Atlantic Canada hardiness, bloom overlap, harvest date, disease response, and local performance for this cultivar.", "Rootstock identity, final tree size, and compatible pollinizer at the actual site."]
+  },
+  blueberryGroup: {
+    name: "Cultivated blueberry (type not specified)",
+    scientificName: "Vaccinium spp. (the selected species is not specified)",
+    profileStatus: "Group-level cultivation notes only; species, cultivar, and Atlantic Canada suitability are not established.",
+    scopeNote: "Guidance is from University of Minnesota Extension. Blueberry species and cultivars differ; these facts are not a cultivar or Atlantic Canada recommendation.",
+    sourceIds: ["umn-blueberries"],
+    facts: [
+      { category: "Light and soil", text: "The source recommends full sun and acidic soil, with a stated pH range of 4–5." },
+      { category: "Pollination", text: "The source recommends planting two or more varieties for pollination; cultivar bloom overlap for a chosen pair is not established here." },
+      { category: "Growth and maintenance", text: "The source says blueberry plants grow slowly and may take about 8–10 years to reach full size; it recommends annual pruning of old, weak, or dead wood." }
+    ],
+    unknowns: ["The blueberry species and cultivar represented by the plan.", "Cultivar-specific mature size, hardiness, harvest, pollination compatibility, and performance in Atlantic Canada.", "Site soil pH and drainage."]
+  },
+  currantGroup: {
+    name: "Currant (type not specified)",
+    scientificName: "Ribes spp. (the selected species is not specified)",
+    profileStatus: "Group-level cultivation notes only; currant type, cultivar, and Atlantic Canada suitability are not established.",
+    scopeNote: "Guidance is from University of Minnesota Extension. Red/white currants and black currants are treated as distinct types; facts for one must not be generalized to all Ribes.",
+    sourceIds: ["umn-currants"],
+    facts: [
+      { category: "Light and site", text: "The source says currants and gooseberries tolerate full sun to partial shade, with better fruiting in sunnier sites." },
+      { category: "Soil and spacing", text: "The source prefers rich, well-drained soil and gives at least 3 feet as a spacing minimum for the described plants." },
+      { category: "Pollination and maintenance", text: "The source says most currants are self-fruitful and advises annual pruning. It reports fruit may begin 1–3 years after planting." }
+    ],
+    unknowns: ["Whether this entry means red, white, or black currant, and the cultivar.", "Cultivar-specific hardiness, harvest, disease resistance, and Atlantic Canada performance.", "Site soil and spacing needs for the chosen variety."]
+  },
+  raspberry: {
+    name: "Red raspberry (cultivar not specified)",
+    scientificName: "Rubus idaeus",
+    profileStatus: "Species-level growing notes from Maine and Minnesota Extension; no cultivar or province-specific guarantee.",
+    scopeNote: "Sources cover New England and Minnesota. They do not establish performance, cultivars, or planting dates for a particular Atlantic Canadian site.",
+    sourceIds: ["umaine-raspberries", "umn-raspberries"],
+    facts: [
+      { category: "Light and soil", text: "The Maine source says red raspberries are adaptable in New England and prefer full sun, well-drained sandy loam rich in organic matter, with soil pH 5.6–6.2." },
+      { category: "Pollination", text: "The Minnesota source identifies bees as important pollinators." },
+      { category: "Growth and maintenance", text: "The sources describe raspberry canes as having a two-year life cycle and requiring annual pruning. The Minnesota source warns that red/yellow types can spread." },
+      { category: "Harvest", text: "The Minnesota source says fruiting may begin the year after planting; actual timing depends on the type and cultivar." }
+    ],
+    unknowns: ["Cultivar, cane/fruiting type, local disease pressure, and province-specific performance.", "Exact local harvest dates, mature dimensions, and support/spacing for the selected cultivar.", "Site soil test, drainage, and current pest/disease diagnosis."]
+  },
+  lettuce: {
+    name: "Lettuce",
+    scientificName: "Lactuca sativa",
+    profileStatus: "Crop-level facts sourced from a New England production guide; not an Atlantic Canada prescription.",
+    scopeNote: "The New England Vegetable Management Guide is a nearby-region production reference, not a local household growing recommendation. Its commercial spacings are omitted.",
+    sourceIds: ["newengland-lettuce"],
+    facts: [
+      { category: "Season and crop types", text: "The guide describes lettuce as a cool-season crop with spring and fall as major New England production seasons. It distinguishes crisphead, butterhead, romaine, leaf, and one-cut types." },
+      { category: "Plant health", text: "The guide notes inadequate water and calcium as factors that may contribute to tipburn." }
+    ],
+    unknowns: ["Cultivar-specific timing, spacing, light, soil, irrigation, disease resistance, and local performance.", "Atlantic Canada planting dates and frost windows."]
+  },
+  radish: {
+    name: "Table radish (cultivar not specified)",
+    scientificName: "Raphanus sativus",
+    profileStatus: "Crop facts sourced from a New England production guide; local planting dates are not verified.",
+    scopeNote: "The source distinguishes table radishes and daikons. The planting windows it lists are New England guidance, not Atlantic Canada dates.",
+    sourceIds: ["newengland-radish"],
+    facts: [
+      { category: "Crop types", text: "Table radishes and daikons differ in shape and use; daikon production is associated with cool temperatures and short days." },
+      { category: "Maturity", text: "The guide gives 21–28 days in ideal conditions and 40–50 days in cold weather; these are source-specific ranges, not a guarantee for a chosen cultivar." },
+      { category: "Soil and water", text: "Loose, well-drained soil and consistent moisture support root quality. The guide says heat and low moisture can increase pungency and bolting." },
+      { category: "Season", text: "The guide lists early spring and August planting windows for New England; do not use these as local dates without checking regional advice." }
+    ],
+    unknowns: ["Specific cultivar, radish type, local maturity, and Atlantic Canada planting calendar.", "The actual bed's soil texture, moisture, and drainage."]
+  },
+  carrot: {
+    name: "Carrot",
+    scientificName: "Daucus carota",
+    profileStatus: "Crop facts sourced from a New England production guide; some reported rates are production-context data.",
+    scopeNote: "The New England Vegetable Management Guide is a production reference. Its water and planting figures should not be treated as a measured home-bed prescription or Atlantic Canada calendar.",
+    sourceIds: ["newengland-carrot"],
+    facts: [
+      { category: "Soil and roots", text: "The guide associates deep, well-drained soil—ideally sandy loam or muck—with root development and notes raised beds can increase tilled depth." },
+      { category: "Germination and sowing", text: "The guide emphasizes constant moisture during slow germination and gives a sowing depth of 0.5–0.75 inches." },
+      { category: "Water and harvest quality", text: "The guide reports 1–1.5 inches of water per week in its production context and warns excess water near harvest can split roots. This is not a universal home-garden watering schedule." }
+    ],
+    unknowns: ["Cultivar-specific maturity, spacing, storage, and disease resistance.", "Atlantic Canada planting dates and site-specific irrigation needs."]
+  },
+  commonBean: {
+    name: "Common bean (choose use and cultivar)",
+    scientificName: "Phaseolus vulgaris",
+    profileStatus: "Common-bean facts from New England and Minnesota guides; other bean species are not included.",
+    scopeNote: "The sources distinguish common bean from runner, lima, soybean, and fava beans. These facts apply only to common bean and are not an Atlantic Canada calendar.",
+    sourceIds: ["newengland-bean", "umn-beans"],
+    facts: [
+      { category: "Uses and habit", text: "Common beans include snap, shell, and dry-bean uses. UMN describes bush beans as upright and about 2 feet tall, and pole beans as climbing types that need support." },
+      { category: "Temperature", text: "The New England guide advises planting after soil reaches 60°F and reports that temperatures above 90°F or below 50°F can impair pod set." },
+      { category: "Harvest", text: "Harvest stage depends on use: snap beans are picked as pods, while shell and dry beans are harvested at different maturity stages. Follow the selected cultivar and intended use." }
+    ],
+    unknowns: ["Specific common-bean cultivar, maturity, disease resistance, and local performance.", "Type-specific spacing and Atlantic Canada planting dates."]
+  },
+  sweetPepper: {
+    name: "Sweet pepper (type/cultivar not specified)",
+    scientificName: "Capsicum annuum",
+    profileStatus: "Crop facts sourced from New England and Minnesota guides; cultivar and region-specific performance are unverified.",
+    scopeNote: "Sources describe sweet pepper types and New England/Minnesota conditions. Do not apply this scientific name to hot-pepper cultivars without checking their taxonomy.",
+    sourceIds: ["newengland-pepper", "umn-peppers"],
+    facts: [
+      { category: "Crop type and season", text: "The New England guide treats pepper as a warm-season crop, distinguishes bell, sweet frying, and hot types, and describes production from transplants." },
+      { category: "Harvest", text: "The guide reports green-fruit production beginning around 55–60 days after transplanting, with roughly 20 additional days for colored fruit; cultivar and conditions affect timing." },
+      { category: "Temperature", text: "The guide gives a 3–4 month frost-free period in its production context; this is not an Atlantic Canada guarantee or planting calendar." }
+    ],
+    unknowns: ["Exact sweet-pepper type and cultivar, days to maturity, disease resistance, and local performance.", "Atlantic Canada transplant timing and frost-free window."]
+  },
+  cucumber: {
+    name: "Cucumber (type/cultivar not specified)",
+    scientificName: "Cucumis sativus",
+    profileStatus: "Crop facts sourced from a New England production guide; not an Atlantic Canada planting recommendation.",
+    scopeNote: "The New England guide distinguishes cucumber market/use types. Type-specific cultivar, support, timing, and spacing are not verified for this plan.",
+    sourceIds: ["newengland-cucumber"],
+    facts: [
+      { category: "Season and temperature", text: "The guide describes cucumbers as tender, warm-season crops that do not tolerate chilling or soil temperatures below 55°F." },
+      { category: "Crop types", text: "The guide distinguishes pickling, slicing, Asian, European, and Beit Alpha cucumber types; fruit form and intended use vary." }
+    ],
+    unknowns: ["Specific cucumber type/cultivar, trellising, spacing, maturity, disease resistance, and local planting dates."]
+  },
+  summerSquash: {
+    name: "Summer squash (cultivar not specified)",
+    scientificName: "Cucurbita pepo",
+    profileStatus: "Type facts sourced from a New England production guide; cultivar and local timing are not verified.",
+    scopeNote: "The New England guide identifies summer squash examples within Cucurbita pepo. These crop facts are not a regional planting prescription.",
+    sourceIds: ["newengland-squash"],
+    facts: [
+      { category: "Identity and harvest", text: "The guide places summer squash such as zucchini, yellow squash, and patty pan within C. pepo and describes harvest every 1–3 days while fruits are being produced." }
+    ],
+    unknowns: ["Cultivar-specific size, maturity, disease resistance, soil, spacing, and Atlantic Canada planting dates."]
+  },
+  winterSquashPepo: {
+    name: "Winter squash (Cucurbita pepo group; cultivar not specified)",
+    scientificName: "Cucurbita pepo",
+    profileStatus: "Type facts sourced from a New England production guide; cultivar and local timing are not verified.",
+    scopeNote: "Some winter squash are C. pepo; the common name alone does not determine species or cultivar.",
+    sourceIds: ["newengland-squash"],
+    facts: [
+      { category: "Identity and harvest", text: "The guide says some winter squash are C. pepo and that winter squash is harvested once at the end of the season, unlike summer squash harvested repeatedly." }
+    ],
+    unknowns: ["Whether this plan's winter squash is C. pepo, C. maxima, or C. moschata, and the cultivar.", "Cultivar-specific maturity, storage, size, disease resistance, and local season."]
+  },
+  winterSquashMaxima: {
+    name: "Hubbard / buttercup squash (cultivar not specified)",
+    scientificName: "Cucurbita maxima",
+    profileStatus: "Species/type facts sourced from a New England production guide; cultivar and local timing are not verified.",
+    scopeNote: "The New England guide identifies Hubbard and buttercup examples as C. maxima. This is not a cultivar or Atlantic Canada recommendation.",
+    sourceIds: ["newengland-squash"],
+    facts: [
+      { category: "Identity and harvest", text: "The guide places Hubbard and buttercup winter squash in C. maxima and describes winter squash as harvested once at season's end." }
+    ],
+    unknowns: ["Exact cultivar, maturity, storage, mature vine size, and Atlantic Canada performance."]
+  },
+  butternutSquash: {
+    name: "Butternut squash (cultivar not specified)",
+    scientificName: "Cucurbita moschata",
+    profileStatus: "Species/type facts sourced from a New England production guide; cultivar and local timing are not verified.",
+    scopeNote: "The New England guide identifies butternut as C. moschata. This is not a cultivar or Atlantic Canada recommendation.",
+    sourceIds: ["newengland-squash"],
+    facts: [
+      { category: "Identity and harvest", text: "The guide places butternut squash in C. moschata and describes winter squash as harvested once at season's end." }
+    ],
+    unknowns: ["Exact cultivar, maturity, storage, mature vine size, and Atlantic Canada performance."]
+  },
+  kale: {
+    name: "Kale (cultivar not specified)",
+    scientificName: "Brassica oleracea (kale group)",
+    profileStatus: "Crop facts sourced from a New England production guide; not an Atlantic Canada planting recommendation.",
+    scopeNote: "The source is a New England production guide. It does not establish a local home-garden planting calendar or cultivar performance.",
+    sourceIds: ["newengland-kale"],
+    facts: [
+      { category: "Season and harvest", text: "The guide describes kale as cold-hardy, says it grows well as a fall crop for full-size leaves, and notes leaf flavor improves after a light frost." },
+      { category: "Succession", text: "The guide says kale can also be succession-planted through the season; specific dates depend on region and cultivar." }
+    ],
+    unknowns: ["Cultivar-specific maturity, disease resistance, spacing, and Atlantic Canada planting dates."]
+  },
+  beet: {
+    name: "Garden beet (cultivar not specified)",
+    scientificName: "Beta vulgaris (the guide reports var. crassa)",
+    profileStatus: "Crop facts sourced from a New England production guide; taxonomy is shown as reported by that source.",
+    scopeNote: "The guide reports the name Beta vulgaris var. crassa. This is a source-reported taxonomy note, not a claim that it is the only current taxonomic treatment.",
+    sourceIds: ["newengland-beet"],
+    facts: [
+      { category: "Season and temperature", text: "The guide describes beets as cool-season and able to tolerate frost/light freezes; it reports best quality in sun and cool temperatures around 50–65°F." },
+      { category: "Soil and moisture", text: "The guide prefers deep, friable, well-drained sandy loam to silt loam and adequate moisture." },
+      { category: "Fertility", text: "The guide warns that excessive nitrogen relative to phosphorus and potassium can favor leaf growth over roots. This is not a fertilizer prescription for an untested home bed." }
+    ],
+    unknowns: ["Cultivar-specific maturity, spacing, and disease resistance.", "Atlantic Canada planting dates and soil-test results."]
+  },
+  potato: {
+    name: "Potato (variety not specified)",
+    scientificName: "Solanum tuberosum",
+    profileStatus: "Facts sourced from New England production guidance and New Brunswick variety-selection resources; not a home-garden cultivar recommendation.",
+    scopeNote: "The New England source is production-oriented; New Brunswick sources concern commercial potato varieties. Keep their context and do not infer a home-bed rate or variety recommendation.",
+    sourceIds: ["newengland-potato", "gnb-potato-varieties"],
+    facts: [
+      { category: "Temperature and soil", text: "The New England guide describes potato as a cool-season crop, with best yields when average growing-season temperatures are slightly below 70°F, and prefers well-drained, medium-textured soil." },
+      { category: "Variety selection", text: "New Brunswick guidance emphasizes local adaptation, disease resistance, and intended use, and recommends testing a small area when trialing a variety new to a farm's soil or microclimate." }
+    ],
+    unknowns: ["Specific variety, intended use, disease resistance, storage characteristics, and Atlantic home-garden performance.", "Site soil, drainage, rotation history, and local planting dates."]
+  }
+};
+
+const FOREST_GARDEN_REFERENCE_EXAMPLES = [
+  { id: "apple-layer", name: "Apple (Malus spp.)", scientificName: "Malus spp.", layer: "canopy trees" },
+  { id: "pear-layer", name: "Pear (Pyrus communis)", scientificName: "Pyrus communis", layer: "canopy trees" },
+  { id: "plum-layer", name: "Plum (Prunus domestica)", scientificName: "Prunus domestica", layer: "canopy trees" },
+  { id: "serviceberry-layer", name: "Serviceberry (Amelanchier spp.)", scientificName: "Amelanchier spp.", layer: "small trees and large shrubs" },
+  { id: "currant-layer", name: "Currant (Ribes spp.; type unspecified)", scientificName: "Ribes spp.", layer: "shrubs" },
+  { id: "aronia-layer", name: "Chokeberry (Aronia spp.)", scientificName: "Aronia spp.", layer: "shrubs" },
+  { id: "comfrey-layer", name: "Comfrey (Symphytum spp.)", scientificName: "Symphytum spp.", layer: "herbaceous perennials" },
+  { id: "mint-layer", name: "Mint (Mentha spp.)", scientificName: "Mentha spp.", layer: "herbaceous perennials" },
+  { id: "lemon-balm-layer", name: "Lemon balm", scientificName: "Melissa officinalis", layer: "herbaceous perennials" },
+  { id: "ginger-layer", name: "Canada wild ginger", scientificName: "Asarum canadense", layer: "ground covers" },
+  { id: "bunchberry-layer", name: "Bunchberry", scientificName: "Cornus canadensis", layer: "ground covers" },
+  { id: "wintergreen-layer", name: "Eastern spicy-wintergreen", scientificName: "Gaultheria procumbens", layer: "ground covers" },
+  { id: "carpeting-bramble-layer", name: "Carpeting bramble", scientificName: "Rubus calycinoides / Rubus tricolor", layer: "ground covers" },
+  { id: "liquorice-layer", name: "Liquorice (Glycyrrhiza spp.)", scientificName: "Glycyrrhiza spp.", layer: "rhizosphere" },
+  { id: "barberry-layer", name: "Barberry (Berberis spp.)", scientificName: "Berberis spp.", layer: "rhizosphere" },
+  { id: "grape-layer", name: "Grape (Vitis spp.)", scientificName: "Vitis spp.", layer: "climbers and vines" },
+  { id: "kiwi-layer", name: "Hardy kiwi (Actinidia spp.)", scientificName: "Actinidia spp.", layer: "climbers and vines" },
+  { id: "alder-fixer", name: "Alder (Alnus spp.)", scientificName: "Alnus spp.", layer: "nitrogen-fixer examples", role: "nitrogen-fixer candidate" },
+  { id: "elaeagnus-fixer", name: "Elaeagnus (Elaeagnus spp.)", scientificName: "Elaeagnus spp.", layer: "nitrogen-fixer examples", role: "nitrogen-fixer candidate" },
+  { id: "shrub-lupin-fixer", name: "Shrub lupin", scientificName: "Lupinus arboreus", layer: "nitrogen-fixer examples", role: "nitrogen-fixer candidate" }
+];
+
+FOREST_GARDEN_REFERENCE_EXAMPLES.forEach(function (entry) {
+  PLANT_PROFILES[entry.id] = {
+    name: entry.name,
+    scientificName: entry.scientificName,
+    profileStatus: "Source-verified as a forest-garden example only; a species-level site-care profile is not established.",
+    scopeNote: "The Agroforestry Research Trust lists this taxon as an example in a forest-garden layer. It does not establish Atlantic Canada suitability or compatibility with other selected plants.",
+    sourceIds: ["forest-gardening"],
+    layerRole: entry.role ? entry.role + " (source example)" : "Example in the source's " + entry.layer + " list",
+    facts: [
+      { category: "Verified reference", text: "The source includes this taxon as an example for " + entry.layer + "." }
+    ],
+    unknowns: [
+      "Species-level light, soil, moisture, mature dimensions, and maintenance for the exact local plant.",
+      "Atlantic Canada hardiness, availability, ecological status, and site suitability.",
+      "Compatibility, yield effects, pest control, or nutrient transfer to neighboring plants."
+    ]
+  };
+});
+
+Object.assign(PLANT_PROFILES, {
+  appleTree: {
+    name: "Apple",
+    scientificName: "Malus domestica",
+    profileStatus: "General cultivation facts from Minnesota Extension; not an Atlantic Canada home-orchard recommendation.",
+    scopeNote: "The growing notes are Minnesota-specific. New Brunswick resources linked here cover commercial orchard context and site selection, not a home-orchard cultivar list.",
+    sourceIds: ["umn-apples", "gnb-apples", "gnb-apple-site"],
+    facts: [
+      { category: "Sun, soil, and size", text: "The Minnesota source says apple trees need at least 8 hours of sun, soil pH 6–7, and well-drained soil without standing water. Tree size depends strongly on rootstock." },
+      { category: "Regional source scope", text: "New Brunswick's linked apple resources provide commercial orchard and site-selection context; they do not establish which cultivar or rootstock suits a particular home property." }
+    ],
+    unknowns: [
+      "Atlantic Canada home-orchard cultivar and rootstock performance, hardiness, and disease resistance.",
+      "Bloom overlap and pollination needs for the chosen cultivars.",
+      "The property's soil test, drainage, frost exposure, and suitable rootstock."
+    ]
+  },
+  wildGinger: {
+    name: "Canada wild ginger",
+    scientificName: "Asarum canadense",
+    profileStatus: "Botanical distribution and habitat facts from Native Plant Trust; not a food-use or Atlantic-wide recommendation.",
+    scopeNote: "The source covers New England, including Maine. It does not establish occurrence or suitability throughout Atlantic Canada.",
+    sourceIds: ["gobotany-canadense", "forest-gardening"],
+    facts: [
+      { category: "Habitat", text: "The botanical source describes the species in rich, moist forests in much of New England, including Maine." },
+      { category: "Identity", text: "The source notes that Canada wild ginger is unrelated to culinary ginger." },
+      { category: "Forest-garden reference", text: "The Agroforestry Research Trust lists wild gingers (Asarum spp.) among ground-cover examples." }
+    ],
+    unknowns: ["Province-specific native status, site suitability, mature dimensions, and propagation.", "Do not infer that the plant is a culinary ginger or food crop."]
+  },
+  wintergreen: {
+    name: "Eastern spicy-wintergreen",
+    scientificName: "Gaultheria procumbens",
+    profileStatus: "Botanical distribution and habitat facts from Native Plant Trust; not a food-use or Atlantic-wide recommendation.",
+    scopeNote: "The source covers New England and reports habitat associations; it does not establish suitability for a particular Atlantic Canadian site.",
+    sourceIds: ["gobotany-procumbens", "forest-gardening"],
+    facts: [
+      { category: "Habitat", text: "The botanical source reports this species in the understory of acidic forests throughout New England." },
+      { category: "Forest-garden reference", text: "The Agroforestry Research Trust lists Gaultheria spp. among ground-cover examples." }
+    ],
+    unknowns: ["Province-specific native status, site soil test, care, mature dimensions, and propagation.", "Do not infer edibility or medicinal safety from a botanical profile."]
+  },
+  swampMilkweed: {
+    name: "Swamp milkweed",
+    scientificName: "Asclepias incarnata",
+    profileStatus: "Botanical range and habitat facts from Native Plant Trust; not a general rain-garden recommendation.",
+    scopeNote: "The source covers New England, including Maine. A wetland association does not establish suitability for every rain garden or Atlantic Canadian property.",
+    sourceIds: ["gobotany-incarnata"],
+    facts: [
+      { category: "Habitat", text: "The botanical source describes wetlands, marshes, wet shores, and wetland margins as habitat." }
+    ],
+    unknowns: ["Province-specific occurrence, garden performance, mature dimensions, soil and water tolerances, and wildlife effects at a particular site."]
+  },
+  wildBergamot: {
+    name: "Wild bergamot",
+    scientificName: "Monarda fistulosa",
+    profileStatus: "Botanical range and ecology facts from Native Plant Trust; not an Atlantic-wide native-plant recommendation.",
+    scopeNote: "The source covers New England, not every Atlantic Canadian province or ecoregion.",
+    sourceIds: ["gobotany-fistulosa"],
+    facts: [
+      { category: "Range and ecology", text: "The source reports native varieties in New England and notes attraction of butterflies." },
+      { category: "Variety caution", text: "The source notes that one variety, M. fistulosa var. rubra, is an escaped cultivar; confirm plant identity before selection." }
+    ],
+    unknowns: ["Province-specific native status, cultivar identity, site-care requirements, and measured wildlife benefit on a specific property."]
+  },
+  commonComfrey: {
+    name: "Common comfrey",
+    scientificName: "Symphytum officinale",
+    profileStatus: "Species-specific facts from NC State Extension; not an Atlantic Canada planting or invasive-status recommendation.",
+    scopeNote: "The safety and propagation notes are specific to Symphytum officinale and must not be generalized to all comfrey species. Atlantic Canada status and local use are not established.",
+    sourceIds: ["ncstate-comfrey", "forest-gardening"],
+    warnings: ["Do not present as an edible plant: the source says common comfrey is no longer considered safe for consumption. Check local ecological status before planting."],
+    facts: [
+      { category: "Propagation and spread", text: "The source notes that common comfrey can spread from root pieces." },
+      { category: "Forest-garden reference", text: "The Agroforestry Research Trust lists comfreys as herbaceous examples, but does not establish a companion benefit for a specific planting." }
+    ],
+    unknowns: ["Atlantic Canada invasive status, cultivar, site-care requirements, and suitability near food crops."]
+  }
+});
+
+PLANT_PROFILES.blueberryGroup.sourceIds.push("gnb-wild-blueberries");
+PLANT_PROFILES.currantGroup.sourceIds.push("gnb-small-fruits");
+PLANT_PROFILES.raspberry.sourceIds.push("gnb-small-fruits");
+PLANT_PROFILES.potato.sourceIds.push("gnb-potatoes");
 
 const DESIGN_PERSPECTIVES = [
   {

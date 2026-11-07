@@ -234,6 +234,7 @@
           <div class="detail-field" id="detail-field">
             <label for="detail-select" id="detail-label">Plant, variety, or setup</label>
             <select id="detail-select" name="detail" required></select>
+            <button class="species-name-trigger detail-species-trigger" id="detail-species-trigger" type="button" hidden></button>
             <p class="detail-caution" id="detail-caution"></p>
           </div>
           <fieldset class="contents-fieldset" id="contents-fieldset" hidden>
@@ -278,7 +279,7 @@
 
     <section class="sources-panel" aria-labelledby="sources-title">
       <h2 id="sources-title">Where these examples come from</h2>
-      <p>Plant cards show only facts explicitly included from a linked source. Some menu examples have only a source pointer, not a verified species profile or local suitability data. The guild summary describes selected layers and roles; it does not prove that the plants are compatible or beneficial together. Minnesota and Maine guidance is not an Atlantic Canada recommendation.</p>
+      <p>Plant cards show only source-backed notes and identify what those sources do not establish. Some cards verify only that a plant is listed as a forest-garden layer example; they are not full care guides. A citation does not establish local suitability, companion benefits, or complete species coverage. The guild summary describes selected layers and roles, not proven compatibility. Minnesota and Maine guidance is not an Atlantic Canada recommendation.</p>
       <ul id="reference-list"></ul>
     </section>
 
@@ -297,9 +298,10 @@
     <button class="species-card-close" id="species-card-close" type="button" aria-label="Close plant information">×</button>
     <h2 id="species-card-title"></h2>
     <p class="species-card-scientific" id="species-card-scientific"></p>
-    <ul id="species-card-facts"></ul>
+    <p class="species-card-status" id="species-card-status"></p>
+    <div id="species-card-facts"></div>
     <p class="species-card-caveat" id="species-card-caveat"></p>
-    <a id="species-card-source" href="#" target="_blank" rel="noopener noreferrer"></a>
+    <div class="species-card-sources" id="species-card-sources"></div>
   </aside>
 
   <script src="data.js"></script>

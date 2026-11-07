@@ -30,7 +30,17 @@
         <h1 id="tagline">Understand your land. Design your future.</h1>
         <p class="welcome-copy" id="pitch">A practical planning companion for people turning a piece of land into a more productive, resilient home.</p>
       </div>
-      <a class="button button-dark" href="#property">Explore the sample property <span aria-hidden="true">↘</span></a>
+      <div class="welcome-actions">
+        <a class="button button-dark" href="#property">Open the property map <span aria-hidden="true">↘</span></a>
+        <label class="theme-control" for="interface-theme">Interface style
+          <select id="interface-theme" aria-describedby="theme-status">
+            <option value="field">Field journal · moss and warm paper</option>
+            <option value="coastal">Coastal study · sea glass and ink</option>
+            <option value="studio">Garden studio · clay and linen</option>
+          </select>
+        </label>
+        <p class="theme-status" id="theme-status" role="status" aria-live="polite"></p>
+      </div>
     </section>
 
     <section class="snapshot" aria-label="Sample property snapshot">
@@ -66,14 +76,19 @@
           <p class="eyebrow">Start with context</p>
           <h2 id="site-brief-title">Property brief &amp; pre-planning checks</h2>
         </div>
-        <p class="section-hint">Record what you know and what still needs checking.</p>
+        <p class="section-hint">Edit this sample property's context when you need it.</p>
       </div>
+      <details class="brief-disclosure" id="brief-disclosure">
+        <summary>
+          <span>Edit property brief &amp; pre-planning checks</span>
+          <span class="brief-disclosure-status" id="brief-disclosure-status">No brief saved yet</span>
+        </summary>
       <div class="site-brief-grid">
         <form class="panel site-brief-form" id="site-brief-form">
           <div class="panel-heading">
             <div>
               <h3>Goals and working assumptions</h3>
-              <p class="muted">Optional context for your own planning; no AI or recommendations are generated.</p>
+              <p class="muted">This updates the current sample property; it does not create another property. No AI or recommendations are generated.</p>
             </div>
           </div>
           <label for="brief-region">Province or territory</label>
@@ -97,6 +112,15 @@
               <label><input type="checkbox" name="goals" value="household-resilience"> Household resilience and skills</label>
             </div>
           </fieldset>
+
+          <label for="brief-landscape-style">Landscape character preference</label>
+          <select id="brief-landscape-style" name="landscapeStyle">
+            <option value="">Not recorded</option>
+            <option value="naturalistic">Naturalistic · layered, informal composition</option>
+            <option value="formal">Formal · geometric structure and clear edges</option>
+            <option value="productive">Productive · kitchen-garden and homestead focus</option>
+          </select>
+          <p class="brief-style-note">Aesthetic preference only; this does not establish plant suitability or predict ecological outcomes.</p>
 
           <div class="brief-pair">
             <div>
@@ -141,7 +165,7 @@
           </select>
           <label for="brief-notes">Other goals, limits, or assumptions <span class="optional-label">(optional)</span></label>
           <textarea id="brief-notes" name="notes" rows="3" maxlength="500" placeholder="Keep notes general; avoid private details or exact addresses."></textarea>
-          <p class="site-brief-save" id="site-brief-save" role="status" aria-live="polite">Brief is stored only in this browser.</p>
+          <p class="site-brief-save" id="site-brief-save" role="status" aria-live="polite">Changes are not saved until you choose Save.</p>
         </form>
 
         <article class="panel preflight-panel">
@@ -211,6 +235,14 @@
           <button class="reset-brief-button" id="reset-brief" type="button" hidden>Forget unreadable saved brief</button>
         </article>
       </div>
+        <div class="brief-actions">
+          <p class="site-brief-save" id="brief-storage-note">Your brief and checks stay in this browser.</p>
+          <div>
+            <button class="button button-dark" id="save-site-brief" type="button">Save brief &amp; checks</button>
+            <button class="button button-secondary" id="cancel-site-brief" type="button">Cancel changes</button>
+          </div>
+        </div>
+      </details>
     </section>
 
     <section class="workspace" id="property">
@@ -456,7 +488,7 @@
     <p>Student prototype for BSAD 281 at St. Francis Xavier University. Not a real company — all data is fictional.</p>
   </footer>
 
-  <aside class="species-card" id="species-card" role="region" aria-live="polite" aria-label="Plant information" hidden>
+  <aside class="species-card" id="species-card" role="region" aria-live="polite" aria-label="Plant information; closes after a short period away from the card" hidden>
     <button class="species-card-close" id="species-card-close" type="button" aria-label="Close plant information">×</button>
     <h2 id="species-card-title"></h2>
     <p class="species-card-scientific" id="species-card-scientific"></p>

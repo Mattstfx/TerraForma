@@ -72,8 +72,8 @@ const PROPERTY = {
       featureId: "rain-garden",
       feature: "Rain garden",
       location: "South low corner",
-      variety: "Site-appropriate planting (research first)",
-      note: "Explore suitable plants and confirm site conditions before building.",
+      variety: "Rain-garden site screening; no planting recommendation",
+      note: "Investigate the runoff source, site constraints, infiltration, overflow, and local requirements before choosing a design or plants.",
       polygon: [[352, 300], [376, 300], [376, 324], [352, 324]]
     }
   ]
@@ -100,9 +100,9 @@ const PLAN_CATALOG = [
     category: "Growing",
     defaultAreaM2: 30,
     options: [
-      "Blueberries — verify soil acidity, cultivar, and local suitability",
-      "Currants — select a locally suitable species and cultivar",
-      "Raspberries — choose a cultivar and plan for spread and support"
+      "Blueberries — species group, soil test, and cultivar not recorded",
+      "Currants — species and cultivar not selected; verify locally",
+      "Raspberries — cultivar and support plan not selected"
     ]
   },
   {
@@ -119,7 +119,7 @@ const PLAN_CATALOG = [
     category: "Experimental",
     defaultAreaM2: 24,
     options: [
-      "Dwarf apple trees trained at about 45° along a fence (research rootstock, spacing, support, and pruning)"
+      "Dwarf apple trees trained at about 45° along a fence (experimental; rootstock, spacing, support, and pruning need local review)"
     ]
   },
   {
@@ -127,7 +127,7 @@ const PLAN_CATALOG = [
     name: "Food forest",
     category: "Growing",
     defaultAreaM2: 100,
-    options: ["Layered edible planting (choose locally suitable species)"]
+    options: ["Layered planting concept — verify each candidate species locally"]
   },
   {
     id: "pollinator-patch",
@@ -135,8 +135,8 @@ const PLAN_CATALOG = [
     category: "Habitat",
     defaultAreaM2: 35,
     options: [
-      "Native flowering plants (select for the local ecoregion)",
-      "Season-long bloom mix (check bloom times and plant suitability)"
+      "Pollinator planting concept — select species only after regional checks",
+      "Bloom-sequence concept — verify each species and flowering period locally"
     ]
   },
   {
@@ -145,8 +145,8 @@ const PLAN_CATALOG = [
     category: "Habitat",
     defaultAreaM2: 25,
     options: [
-      "Native shrub and flower edge for pollinators and birds",
-      "Small bird or bat shelter (confirm species needs and placement)"
+      "Habitat-edge concept — no plant species or wildlife benefit verified",
+      "Shelter concept — target species and placement not established"
     ]
   },
   {
@@ -165,7 +165,7 @@ const PLAN_CATALOG = [
     name: "Rain garden",
     category: "Water",
     defaultAreaM2: 45,
-    options: ["Site-appropriate planting (research first)"]
+    options: ["Site-screening concept (no planting recommendation)"]
   },
   {
     id: "compost-area",
@@ -193,7 +193,7 @@ const PLAN_CATALOG = [
     name: "Native planting border",
     category: "Habitat",
     defaultAreaM2: 30,
-    options: ["Native species chosen for the site and region"]
+    options: ["Border concept — species not selected; verify regional status and site fit"]
   }
 ];
 
@@ -396,26 +396,29 @@ const FACILITY_CONTENTS = {
   },
   "rain-garden": {
     type: "components",
-    title: "Choose a source-backed species to investigate",
+    title: "Choose site-screening questions",
     options: [
-      { id: "swamp-milkweed", name: "Swamp milkweed (Asclepias incarnata)", scientificName: "Asclepias incarnata", profileId: "swampMilkweed" }
+      { id: "runoff-path", name: "Trace the runoff source, entry point, and flow path" },
+      { id: "site-constraints", name: "Check foundations, utilities, wells, septic areas, and tree roots" },
+      { id: "infiltration", name: "Assess soil drainage, slope, and infiltration with local guidance" },
+      { id: "overflow", name: "Identify a safe overflow route and downstream effects" }
     ]
   },
   "pollinator-patch": {
     type: "components",
-    title: "Choose a documented flowering-plant example to investigate",
+    title: "Choose a documented example to investigate (not a local recommendation)",
     options: [
-      { id: "wild-bergamot", name: "Wild bergamot (Monarda fistulosa)", scientificName: "Monarda fistulosa", profileId: "wildBergamot" }
+      { id: "wild-bergamot", name: "Wild bergamot (Monarda fistulosa) — New England reference; local status unverified", scientificName: "Monarda fistulosa", profileId: "wildBergamot" }
     ]
   },
   "beneficial-habitat": {
     type: "components",
-    title: "Choose habitat components",
+    title: "Choose habitat concepts to investigate",
     options: [
-      { id: "native-edge", name: "Locally native flowering shrub edge" },
-      { id: "water-source", name: "Shallow, safely maintained water source" },
-      { id: "nest-box", name: "Species-appropriate nest box" },
-      { id: "deadwood", name: "Retained deadwood / log habitat (where safe)" }
+      { id: "native-edge", name: "Shrub edge — identify and verify a locally native species first" },
+      { id: "water-source", name: "Water source — check wildlife needs, maintenance, and safety" },
+      { id: "nest-box", name: "Nest box — identify a target species and confirm its requirements" },
+      { id: "deadwood", name: "Retained deadwood — assess location, habitat value, and site safety" }
     ]
   },
   "pest-exclusion": {
@@ -439,10 +442,10 @@ const FACILITY_CONTENTS = {
   },
   "native-border": {
     type: "components",
-    title: "Choose a documented species to investigate",
+    title: "Choose a New England reference example (regional status unverified)",
     options: [
-      { id: "wild-bergamot", name: "Wild bergamot (Monarda fistulosa)", scientificName: "Monarda fistulosa", profileId: "wildBergamot" },
-      { id: "swamp-milkweed", name: "Swamp milkweed (Asclepias incarnata)", scientificName: "Asclepias incarnata", profileId: "swampMilkweed" }
+      { id: "wild-bergamot", name: "Wild bergamot (Monarda fistulosa) — verify provincial status", scientificName: "Monarda fistulosa", profileId: "wildBergamot" },
+      { id: "swamp-milkweed", name: "Swamp milkweed (Asclepias incarnata) — verify provincial status", scientificName: "Asclepias incarnata", profileId: "swampMilkweed" }
     ]
   }
 };
@@ -465,6 +468,12 @@ const REFERENCE_SOURCES = [
     label: "University of Maine Cooperative Extension: Renovating old apple trees",
     url: "https://extension.umaine.edu/publications/2409e/",
     note: "Discusses gradual pruning and cautions against severe renovation in one go."
+  },
+  {
+    id: "umaine-rain-garden",
+    label: "University of Maine Cooperative Extension: Adding a Rain Garden",
+    url: "https://extension.umaine.edu/publications/2702e/",
+    note: "Maine-specific site-screening guidance. It identifies constraints including foundations, utilities, wells, septic/leach fields, tree roots, and poorly drained sites; do not transfer its dimensions or rules to Atlantic Canada."
   },
   {
     id: "umn-vegetable-planting",

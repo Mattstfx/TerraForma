@@ -3,6 +3,10 @@
 
   const storageKey = "terraforma-sample-plan";
   const siteBriefStorageKey = "terraforma-site-brief";
+  const interfaceThemeStorageKey = "terraforma-interface-theme";
+  const interfaceThemes = ["field", "coastal", "studio"];
+  const landscapeStyles = ["", "naturalistic", "formal", "productive"];
+  const speciesCardDismissDelay = 8000;
   const preflightCheckIds = ["boundary", "utilities", "well-septic", "water", "soil", "rules", "access"];
   const svgNamespace = "http://www.w3.org/2000/svg";
   const elements = {
@@ -68,7 +72,14 @@
     preflightCount: document.getElementById("preflight-count"),
     preflightProgress: document.getElementById("preflight-progress"),
     preflightSave: document.getElementById("preflight-save"),
-    resetBrief: document.getElementById("reset-brief")
+    resetBrief: document.getElementById("reset-brief"),
+    saveSiteBrief: document.getElementById("save-site-brief"),
+    cancelSiteBrief: document.getElementById("cancel-site-brief"),
+    briefDisclosure: document.getElementById("brief-disclosure"),
+    briefDisclosureStatus: document.getElementById("brief-disclosure-status"),
+    briefStorageNote: document.getElementById("brief-storage-note"),
+    interfaceTheme: document.getElementById("interface-theme"),
+    themeStatus: document.getElementById("theme-status")
   };
 
   let selectedZoneId = PROPERTY.zones[0].id;
@@ -82,6 +93,9 @@
   });
   let storageAvailable = true;
   let siteBriefStorageAvailable = true;
+  let savedSiteBrief = null;
+  let speciesCardTimer = null;
+  let speciesCardAnchor = null;
   let pendingPlanItem = null;
   let drawingPoints = [];
   let keyboardCursor = { x: 320, y: 215 };
@@ -114,10 +128,53 @@
     return option;
   }
 
+  function blankSiteBrief() {
+    const checks = {};
+    preflightCheckIds.forEach(function (id) {
+      checks[id] = { status: "open", note: "" };
+    });
+    return {
+      version: 1,
+      region: "",
+      landscapeStyle: "",
+      goals: [],
+      time: "",
+      budget: "",
+      water: "",
+      soil: "",
+      notes: "",
+      checks: checks
+    };
+  }
+
+  function applySiteBrief(brief) {
+    ["region", "time", "budget", "water", "soil"].forEach(function (key) {
+      elements.siteBriefForm.elements.namedItem(key).value = brief[key];
+    });
+    elements.siteBriefForm.elements.namedItem("landscapeStyle").value = brief.landscapeStyle || "";
+    elements.siteBriefForm.elements.namedItem("notes").value = brief.notes;
+    elements.siteBriefForm.querySelectorAll('input[name="goals"]').forEach(function (input) {
+      input.checked = brief.goals.includes(input.value);
+    });
+    preflightCheckIds.forEach(function (id) {
+      elements.preflightChecks.querySelector('[data-check="' + id + '"]').value = brief.checks[id].status;
+      elements.preflightChecks.querySelector('[data-check-note="' + id + '"]').value = brief.checks[id].note;
+    });
+    updatePreflightProgress();
+  }
+
   function readSiteBrief() {
     try {
       const saved = window.localStorage.getItem(siteBriefStorageKey);
-      if (saved === null) return;
+      if (saved === null) {
+        savedSiteBrief = blankSiteBrief();
+        applySiteBrief(savedSiteBrief);
+        elements.siteBriefSave.textContent = "No saved brief yet. Changes are saved only when you choose Save.";
+        elements.preflightSave.textContent = "No saved check statuses yet.";
+        elements.briefDisclosureStatus.textContent = "No brief saved yet";
+        return;
+      }
+
       const parsed = JSON.parse(saved);
       const validSelections = {
         region: ["", "new-brunswick", "nova-scotia", "prince-edward-island", "newfoundland-and-labrador", "other"],
@@ -126,10 +183,11 @@
         water: ["", "reliable", "seasonal", "none", "needs-review"],
         soil: ["", "current-test", "old-test", "untested", "concern"]
       };
-      if (!parsed || parsed.version !== 1 || typeof parsed !== "object" ||
+      if (!parsed || parsed.version !== 1 || typeof parsed !== "object" || Array.isArray(parsed) ||
           !Object.keys(validSelections).every(function (key) {
             return validSelections[key].includes(parsed[key]);
           }) ||
+          (parsed.landscapeStyle !== undefined && !landscapeStyles.includes(parsed.landscapeStyle)) ||
           !Array.isArray(parsed.goals) ||
           !parsed.goals.every(function (goal) {
             return ["vegetables", "fruit", "habitat", "water-soil", "lower-maintenance", "household-resilience"].includes(goal);
@@ -144,20 +202,13 @@
         throw new Error("The saved property brief has an unexpected format.");
       }
 
-      Object.keys(validSelections).forEach(function (key) {
-        const field = elements.siteBriefForm.elements.namedItem(key);
-        if (field) field.value = parsed[key];
+      savedSiteBrief = Object.assign(blankSiteBrief(), parsed, {
+        landscapeStyle: parsed.landscapeStyle || ""
       });
-      elements.siteBriefForm.elements.namedItem("notes").value = parsed.notes;
-      elements.siteBriefForm.querySelectorAll('input[name="goals"]').forEach(function (input) {
-        input.checked = parsed.goals.includes(input.value);
-      });
-      preflightCheckIds.forEach(function (id) {
-        elements.preflightChecks.querySelector('[data-check="' + id + '"]').value = parsed.checks[id].status;
-        elements.preflightChecks.querySelector('[data-check-note="' + id + '"]').value = parsed.checks[id].note;
-      });
+      applySiteBrief(savedSiteBrief);
       elements.siteBriefSave.textContent = "Saved property brief loaded from this browser.";
       elements.preflightSave.textContent = "Saved check statuses loaded from this browser.";
+      elements.briefDisclosureStatus.textContent = "Saved on this device";
     } catch (error) {
       siteBriefStorageAvailable = false;
       elements.siteBriefSave.textContent = "Could not load the saved property brief. The form is not saved; check browser storage before continuing.";
@@ -165,6 +216,7 @@
       elements.preflightSave.textContent = "Could not load saved check statuses.";
       elements.preflightSave.classList.add("storage-error");
       elements.resetBrief.hidden = false;
+      elements.briefDisclosure.open = true;
       console.error("TerraForma could not read the property brief:", error);
     }
     updatePreflightProgress();
@@ -182,6 +234,7 @@
     return {
       version: 1,
       region: formData.get("region"),
+      landscapeStyle: formData.get("landscapeStyle") || "",
       goals: formData.getAll("goals"),
       time: formData.get("time"),
       budget: formData.get("budget"),
@@ -192,27 +245,58 @@
     };
   }
 
+  function updateSiteBriefDirtyState() {
+    const isDirty = JSON.stringify(collectSiteBrief()) !== JSON.stringify(savedSiteBrief);
+    elements.siteBriefSave.textContent = isDirty
+      ? "Unsaved changes. Save or cancel before leaving this section."
+      : "No unsaved changes. The saved brief stays in this browser.";
+    elements.preflightSave.textContent = isDirty
+      ? "Check edits are not saved yet."
+      : "No unsaved check changes.";
+    elements.briefStorageNote.textContent = isDirty
+      ? "Unsaved changes"
+      : "Your brief and checks stay in this browser.";
+  }
+
   function saveSiteBrief() {
     updatePreflightProgress();
     if (!siteBriefStorageAvailable) {
       elements.siteBriefSave.textContent = "Could not save this brief in browser storage. Changes may be lost when you leave.";
       elements.preflightSave.textContent = "Could not save check statuses in browser storage.";
+      elements.briefStorageNote.textContent = "Save failed; browser storage is unavailable.";
+      elements.briefStorageNote.classList.add("storage-error");
       return;
     }
     try {
-      window.localStorage.setItem(siteBriefStorageKey, JSON.stringify(collectSiteBrief()));
+      const nextSiteBrief = collectSiteBrief();
+      window.localStorage.setItem(siteBriefStorageKey, JSON.stringify(nextSiteBrief));
+      savedSiteBrief = nextSiteBrief;
       elements.siteBriefSave.textContent = "Property brief saved only in this browser.";
       elements.preflightSave.textContent = "Check statuses saved only in this browser.";
+      elements.briefStorageNote.textContent = "Saved on this device.";
+      elements.briefStorageNote.classList.remove("storage-error");
       elements.siteBriefSave.classList.remove("storage-error");
       elements.preflightSave.classList.remove("storage-error");
+      elements.briefDisclosureStatus.textContent = "Saved on this device";
+      elements.briefDisclosure.open = false;
     } catch (error) {
       siteBriefStorageAvailable = false;
       elements.siteBriefSave.textContent = "Could not save this brief in browser storage. Changes may be lost when you leave.";
       elements.preflightSave.textContent = "Could not save check statuses in browser storage.";
+      elements.briefStorageNote.textContent = "Save failed; browser storage is unavailable.";
+      elements.briefStorageNote.classList.add("storage-error");
       elements.siteBriefSave.classList.add("storage-error");
       elements.preflightSave.classList.add("storage-error");
       console.error("TerraForma could not save the property brief:", error);
     }
+  }
+
+  function cancelSiteBriefChanges() {
+    applySiteBrief(savedSiteBrief || blankSiteBrief());
+    elements.siteBriefSave.textContent = "Unsaved changes canceled.";
+    elements.preflightSave.textContent = "Unsaved check changes canceled.";
+    elements.briefStorageNote.textContent = "Changes canceled.";
+    elements.briefDisclosure.open = false;
   }
 
   function updatePreflightProgress() {
@@ -233,21 +317,60 @@
     try {
       window.localStorage.removeItem(siteBriefStorageKey);
       siteBriefStorageAvailable = true;
-      elements.siteBriefForm.reset();
-      preflightCheckIds.forEach(function (id) {
-        elements.preflightChecks.querySelector('[data-check="' + id + '"]').value = "open";
-        elements.preflightChecks.querySelector('[data-check-note="' + id + '"]').value = "";
-      });
-      elements.siteBriefSave.textContent = "Started a blank brief. It is stored only in this browser when you make changes.";
-      elements.preflightSave.textContent = "Check statuses are stored only in this browser.";
+      savedSiteBrief = blankSiteBrief();
+      applySiteBrief(savedSiteBrief);
+      elements.siteBriefSave.textContent = "Started a blank brief. Save it when ready.";
+      elements.preflightSave.textContent = "No saved check statuses yet.";
+      elements.briefDisclosureStatus.textContent = "No brief saved yet";
+      elements.briefStorageNote.textContent = "Blank brief; not saved yet.";
       elements.siteBriefSave.classList.remove("storage-error");
       elements.preflightSave.classList.remove("storage-error");
+      elements.briefStorageNote.classList.remove("storage-error");
       elements.resetBrief.hidden = true;
-      updatePreflightProgress();
     } catch (error) {
       elements.siteBriefSave.textContent = "Could not remove the unreadable saved brief from browser storage.";
       elements.siteBriefSave.classList.add("storage-error");
       console.error("TerraForma could not reset the property brief:", error);
+    }
+  }
+
+  function applyInterfaceTheme(theme) {
+    document.body.dataset.theme = theme;
+    elements.interfaceTheme.value = theme;
+  }
+
+  function readInterfaceTheme() {
+    try {
+      const savedTheme = window.localStorage.getItem(interfaceThemeStorageKey) || "field";
+      if (!interfaceThemes.includes(savedTheme)) {
+        throw new Error("The saved interface theme is not supported.");
+      }
+      applyInterfaceTheme(savedTheme);
+      elements.themeStatus.textContent = "Theme preference is stored in this browser.";
+    } catch (error) {
+      applyInterfaceTheme("field");
+      elements.themeStatus.textContent = "Could not load the saved theme; using Field journal.";
+      elements.themeStatus.classList.add("storage-error");
+      console.error("TerraForma could not read the interface theme:", error);
+    }
+  }
+
+  function saveInterfaceTheme() {
+    const theme = elements.interfaceTheme.value;
+    if (!interfaceThemes.includes(theme)) {
+      elements.themeStatus.textContent = "Choose one of the listed interface styles.";
+      elements.themeStatus.classList.add("storage-error");
+      return;
+    }
+    applyInterfaceTheme(theme);
+    try {
+      window.localStorage.setItem(interfaceThemeStorageKey, theme);
+      elements.themeStatus.textContent = "Theme saved on this device.";
+      elements.themeStatus.classList.remove("storage-error");
+    } catch (error) {
+      elements.themeStatus.textContent = "Theme changed for this visit but could not be saved in browser storage.";
+      elements.themeStatus.classList.add("storage-error");
+      console.error("TerraForma could not save the interface theme:", error);
     }
   }
 
@@ -269,7 +392,7 @@
 
   function updateFeatureDetails() {
     const feature = getCatalogItem(elements.featureSelect.value);
-    elements.speciesCard.hidden = true;
+    closeSpeciesCard();
     elements.detailSelect.replaceChildren();
     elements.contentsOptions.replaceChildren();
     elements.guildOptions.replaceChildren();
@@ -359,7 +482,61 @@
     elements.speciesCard.style.top = top + "px";
   }
 
+  function clearSpeciesCardTimer() {
+    if (speciesCardTimer !== null) {
+      window.clearTimeout(speciesCardTimer);
+      speciesCardTimer = null;
+    }
+  }
+
+  function closeSpeciesCard() {
+    clearSpeciesCardTimer();
+    elements.speciesCard.hidden = true;
+    speciesCardAnchor = null;
+  }
+
+  function speciesCardHasPointerOrFocus() {
+    const activeElement = document.activeElement;
+    return elements.speciesCard.matches(":hover") ||
+      elements.speciesCard.contains(activeElement) ||
+      Boolean(speciesCardAnchor && (
+        speciesCardAnchor.matches(":hover") || speciesCardAnchor === activeElement
+      ));
+  }
+
+  function scheduleSpeciesCardDismissal() {
+    clearSpeciesCardTimer();
+    speciesCardTimer = window.setTimeout(function checkSpeciesCardActivity() {
+      if (elements.speciesCard.hidden) return;
+      if (speciesCardHasPointerOrFocus()) {
+        speciesCardTimer = window.setTimeout(checkSpeciesCardActivity, 1000);
+        return;
+      }
+      closeSpeciesCard();
+    }, speciesCardDismissDelay);
+  }
+
+  function bindSpeciesTrigger(button) {
+    button.addEventListener("mouseenter", function () {
+      showSpeciesCard(button.speciesOption || {}, button);
+    });
+    button.addEventListener("focus", function () {
+      showSpeciesCard(button.speciesOption || {}, button);
+    });
+    button.addEventListener("click", function (event) {
+      event.stopPropagation();
+      showSpeciesCard(button.speciesOption || {}, button);
+    });
+    button.addEventListener("pointerenter", clearSpeciesCardTimer);
+    button.addEventListener("pointerleave", scheduleSpeciesCardDismissal);
+    button.addEventListener("blur", function () {
+      window.setTimeout(scheduleSpeciesCardDismissal, 0);
+    });
+  }
+
   function showSpeciesCard(option, anchor) {
+    clearSpeciesCardTimer();
+    speciesCardAnchor = anchor;
     const optionProfile = option && option.profileId ? PLANT_PROFILES[option.profileId] : null;
     const profile = Object.assign({}, optionProfile || {}, option && option.profile || {}, option || {});
     const sourceIds = new Set(profile.sourceIds || []);
@@ -454,6 +631,7 @@
       elements.speciesCardSources.appendChild(wrapper);
     });
     elements.speciesCard.hidden = false;
+    scheduleSpeciesCardDismissal();
     requestAnimationFrame(function () { positionSpeciesCard(anchor); });
   }
 
@@ -463,16 +641,7 @@
     button.className = "species-name-trigger";
     button.textContent = label;
     button.speciesOption = option;
-    button.addEventListener("mouseenter", function () {
-      showSpeciesCard(button.speciesOption || {}, button);
-    });
-    button.addEventListener("focus", function () {
-      showSpeciesCard(button.speciesOption || {}, button);
-    });
-    button.addEventListener("click", function (event) {
-      event.stopPropagation();
-      showSpeciesCard(button.speciesOption || {}, button);
-    });
+    bindSpeciesTrigger(button);
     return button;
   }
 
@@ -516,6 +685,8 @@
       ? "Choose crops and optionally enter days to maturity from your seed packet. Hover, focus, or tap a crop name for its sourced profile."
       : isGuild
         ? "This menu uses one seven-layer forest-garden framework; other frameworks may group layers differently, and not every layer must be planted. A plant can occupy one physical layer and also have a separate function. Examples cite a framework, not local suitability or proven companion benefits."
+        : feature.id === "rain-garden"
+          ? "These are investigation prompts, not build dimensions or approval. The University of Maine source linked below is Maine-specific. Standing water alone does not establish that this site is suitable for a rain garden."
         : isCultivars
           ? "These cultivar notes come from a Minnesota source and are not an Atlantic Canada recommendation. Confirm local fit and graft compatibility."
           : isManualCultivar
@@ -602,8 +773,14 @@
         checkbox.value = option.id;
         checkbox.dataset.optionName = option.name;
         checkbox.setAttribute("aria-label", "Add " + option.name + " to this feature");
-        const trigger = createSpeciesTrigger(option, option.name);
-        row.append(checkbox, trigger);
+        const contentName = option.profileId || option.scientificName
+          ? createSpeciesTrigger(option, option.name)
+          : document.createElement("span");
+        contentName.className = option.profileId || option.scientificName
+          ? "species-name-trigger"
+          : "contents-option-name";
+        contentName.textContent = option.name;
+        row.append(checkbox, contentName);
         if (option.maturityEditable && isPlants) {
           const days = document.createElement("input");
           days.type = "number";
@@ -630,6 +807,9 @@
   }
 
   function getDetailCaution(feature) {
+    if (feature.id === "rain-garden") {
+      return "Do not infer suitability from the sample wet-area observation. Check runoff source, drainage, overflow, utilities, wells, septic areas, nearby foundations and tree roots with locally appropriate guidance; the cited rain-garden bulletin is Maine-specific.";
+    }
     if (feature.id === "fruit-tree" || feature.id === "apple-guild") {
       return "Cultivar and rootstock performance vary by site; confirm hardiness, pollination, disease resistance, and mature size with local sources.";
     }
@@ -1443,34 +1623,24 @@
     renderFeatureContents(feature);
     elements.detailCaution.textContent = getDetailCaution(feature);
   });
-  elements.detailSpeciesTrigger.addEventListener("mouseenter", function () {
-    if (elements.detailSpeciesTrigger.speciesOption) {
-      showSpeciesCard(elements.detailSpeciesTrigger.speciesOption, elements.detailSpeciesTrigger);
-    }
-  });
-  elements.detailSpeciesTrigger.addEventListener("focus", function () {
-    if (elements.detailSpeciesTrigger.speciesOption) {
-      showSpeciesCard(elements.detailSpeciesTrigger.speciesOption, elements.detailSpeciesTrigger);
-    }
-  });
-  elements.detailSpeciesTrigger.addEventListener("click", function () {
-    if (elements.detailSpeciesTrigger.speciesOption) {
-      showSpeciesCard(elements.detailSpeciesTrigger.speciesOption, elements.detailSpeciesTrigger);
-    }
-  });
+  bindSpeciesTrigger(elements.detailSpeciesTrigger);
   elements.autoSelect.addEventListener("click", autoSelectContents);
-  elements.speciesCardClose.addEventListener("click", function () {
-    elements.speciesCard.hidden = true;
+  elements.speciesCardClose.addEventListener("click", closeSpeciesCard);
+  elements.speciesCard.addEventListener("pointerenter", clearSpeciesCardTimer);
+  elements.speciesCard.addEventListener("pointerleave", scheduleSpeciesCardDismissal);
+  elements.speciesCard.addEventListener("focusin", clearSpeciesCardTimer);
+  elements.speciesCard.addEventListener("focusout", function () {
+    window.setTimeout(scheduleSpeciesCardDismissal, 0);
   });
   document.addEventListener("pointerdown", function (event) {
     if (!elements.speciesCard.contains(event.target) &&
         !(event.target.closest && event.target.closest(".species-name-trigger"))) {
-      elements.speciesCard.hidden = true;
+      closeSpeciesCard();
     }
   });
   document.addEventListener("keydown", function (event) {
     if (event.key === "Escape" && !elements.speciesCard.hidden) {
-      elements.speciesCard.hidden = true;
+      closeSpeciesCard();
     }
   });
   elements.planForm.addEventListener("submit", function (event) {
@@ -1585,15 +1755,18 @@
 
   elements.siteBriefForm.addEventListener("submit", function (event) {
     event.preventDefault();
-    saveSiteBrief();
   });
-  elements.siteBriefForm.addEventListener("input", saveSiteBrief);
-  elements.siteBriefForm.addEventListener("change", saveSiteBrief);
-  elements.preflightChecks.addEventListener("input", saveSiteBrief);
-  elements.preflightChecks.addEventListener("change", saveSiteBrief);
+  elements.siteBriefForm.addEventListener("input", updateSiteBriefDirtyState);
+  elements.siteBriefForm.addEventListener("change", updateSiteBriefDirtyState);
+  elements.preflightChecks.addEventListener("input", updateSiteBriefDirtyState);
+  elements.preflightChecks.addEventListener("change", updateSiteBriefDirtyState);
+  elements.saveSiteBrief.addEventListener("click", saveSiteBrief);
+  elements.cancelSiteBrief.addEventListener("click", cancelSiteBriefChanges);
   elements.resetBrief.addEventListener("click", resetUnreadableSiteBrief);
+  elements.interfaceTheme.addEventListener("change", saveInterfaceTheme);
 
   readSavedPlan();
+  readInterfaceTheme();
   readSiteBrief();
   updatePreflightProgress();
   populateFeatureOptions();

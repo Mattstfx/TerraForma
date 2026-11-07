@@ -51,6 +51,13 @@
     formError: document.getElementById("form-error"),
     drawingToolbar: document.getElementById("drawing-toolbar"),
     drawingStatus: document.getElementById("drawing-status"),
+    drawingShape: document.getElementById("drawing-shape"),
+    drawingSnap: document.getElementById("drawing-snap"),
+    drawingDimensions: document.getElementById("drawing-dimensions"),
+    drawingWidthLabel: document.getElementById("drawing-width-label"),
+    drawingWidth: document.getElementById("drawing-width"),
+    drawingDepth: document.getElementById("drawing-depth"),
+    drawingDepthLabel: document.getElementById("drawing-depth-label"),
     undoPoint: document.getElementById("undo-point"),
     finishDrawing: document.getElementById("finish-drawing"),
     cancelDrawing: document.getElementById("cancel-drawing"),
@@ -99,6 +106,7 @@
   let pendingPlanItem = null;
   let drawingPoints = [];
   let keyboardCursor = { x: 320, y: 215 };
+  let drawingShape = "freeform";
 
   function localDateValue(date) {
     return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0") +
@@ -1079,20 +1087,105 @@
     return node;
   }
 
+  function mapUnitsPerMeter() {
+    return 1 / Math.sqrt(PROPERTY.mapAreaM2PerUnit);
+  }
+
+  function snapMapPoint(point) {
+    const gridMeters = Number(elements.drawingSnap.value);
+    if (!gridMeters) return point;
+    const gridUnits = gridMeters * mapUnitsPerMeter();
+    return point.map(function (coordinate) {
+      return Math.round(coordinate / gridUnits) * gridUnits;
+    });
+  }
+
+  function specifiedDrawingDimensions() {
+    const width = elements.drawingWidth.value === "" ? null : Number(elements.drawingWidth.value);
+    const depth = elements.drawingDepth.value === "" ? null : Number(elements.drawingDepth.value);
+    return {
+      width: Number.isFinite(width) && width > 0 ? width : null,
+      depth: Number.isFinite(depth) && depth > 0 ? depth : null
+    };
+  }
+
+  function shapePolygon() {
+    if (drawingShape === "freeform") return drawingPoints;
+    if (!drawingPoints.length) return [];
+
+    const anchor = drawingPoints[0];
+    const endpoint = drawingPoints[1] || keyboardCursor;
+    const dimensions = specifiedDrawingDimensions();
+    const directionX = endpoint[0] < anchor[0] ? -1 : 1;
+    const directionY = endpoint[1] < anchor[1] ? -1 : 1;
+    let widthUnits = Math.abs(endpoint[0] - anchor[0]);
+    let depthUnits = Math.abs(endpoint[1] - anchor[1]);
+
+    if (dimensions.width !== null) widthUnits = dimensions.width * mapUnitsPerMeter();
+    if (drawingShape === "square") {
+      depthUnits = dimensions.width !== null
+        ? widthUnits
+        : Math.min(widthUnits, depthUnits);
+    } else if (dimensions.depth !== null) {
+      depthUnits = dimensions.depth * mapUnitsPerMeter();
+    }
+
+    return [
+      anchor,
+      [anchor[0] + directionX * widthUnits, anchor[1]],
+      [anchor[0] + directionX * widthUnits, anchor[1] + directionY * depthUnits],
+      [anchor[0], anchor[1] + directionY * depthUnits]
+    ];
+  }
+
+  function syncDrawingControls() {
+    const isRectangle = drawingShape === "rectangle";
+    const isSquare = drawingShape === "square";
+    elements.drawingDimensions.hidden = !isRectangle && !isSquare;
+    elements.drawingDepthLabel.hidden = !isRectangle;
+    elements.drawingWidthLabel.childNodes[0].textContent = isSquare ? "Side length (m) " : "Width (m) ";
+  }
+
+  function minimumDrawingPoints() {
+    return drawingShape === "freeform" ? 3 : 2;
+  }
+
+  function updateDrawingStatus() {
+    const needed = minimumDrawingPoints();
+    elements.finishDrawing.disabled = drawingPoints.length < needed;
+    if (drawingPoints.length) {
+      elements.drawingStatus.textContent = drawingPoints.length + " of " + needed +
+        " required point" + (needed === 1 ? "" : "s") + " placed. " +
+        (drawingShape === "freeform"
+          ? "Add outline points, undo, or finish."
+          : "Place the opposite corner; adjust dimensions or snap settings if needed.");
+    } else {
+      elements.drawingStatus.textContent = drawingShape === "freeform"
+        ? "Click or tap at least three points inside the boundary to outline this feature."
+        : "Place the first corner inside the boundary, then the opposite corner. Optional dimensions set the scaled size.";
+    }
+  }
+
   function renderDraft() {
     const oldDraft = document.getElementById("drawing-preview");
     if (oldDraft) oldDraft.remove();
     if (!pendingPlanItem) return;
 
     const group = svgElement("g", { id: "drawing-preview", "aria-hidden": "true" });
-    if (drawingPoints.length >= 2) {
+    const draftPolygon = shapePolygon();
+    if (drawingShape !== "freeform" && draftPolygon.length >= 3) {
+      group.appendChild(svgElement("polygon", {
+        points: draftPolygon.map(function (point) { return point.join(","); }).join(" "),
+        class: "drawing-line"
+      }));
+    } else if (drawingPoints.length >= 2) {
       const tag = drawingPoints.length >= 3 ? "polygon" : "polyline";
       group.appendChild(svgElement(tag, {
         points: drawingPoints.map(function (point) { return point.join(","); }).join(" "),
         class: "drawing-line"
       }));
     }
-    drawingPoints.forEach(function (point) {
+    (drawingShape === "freeform" ? drawingPoints : drawingPoints.slice(0, 1)).forEach(function (point) {
       group.appendChild(svgElement("circle", {
         cx: point[0],
         cy: point[1],
@@ -1195,8 +1288,20 @@
       title.textContent = item.feature;
       const location = document.createElement("p");
       location.className = "plan-location";
+      const bounds = item.polygon.reduce(function (result, point) {
+        result.minX = Math.min(result.minX, point[0]);
+        result.maxX = Math.max(result.maxX, point[0]);
+        result.minY = Math.min(result.minY, point[1]);
+        result.maxY = Math.max(result.maxY, point[1]);
+        return result;
+      }, { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity });
+      const dimensions = item.shape && item.shape !== "freeform"
+        ? " · about " +
+          Math.round((bounds.maxX - bounds.minX) / mapUnitsPerMeter() * 10) / 10 + " × " +
+          Math.round((bounds.maxY - bounds.minY) / mapUnitsPerMeter() * 10) / 10 + " m"
+        : "";
       location.textContent = item.location + " · about " +
-        Math.round(polygonArea(item.polygon) * PROPERTY.mapAreaM2PerUnit) + " m²";
+        Math.round(polygonArea(item.polygon) * PROPERTY.mapAreaM2PerUnit) + " m²" + dimensions;
       const variety = document.createElement("p");
       variety.className = "plan-variety";
       variety.textContent = item.variety || "Planning option to research";
@@ -1387,7 +1492,8 @@
             }
             : null,
           rotationDays: Number.isInteger(item.rotationDays) ? item.rotationDays : null,
-          scheduleStartDate: typeof item.scheduleStartDate === "string" ? item.scheduleStartDate : ""
+          scheduleStartDate: typeof item.scheduleStartDate === "string" ? item.scheduleStartDate : "",
+          shape: ["freeform", "rectangle", "square"].includes(item.shape) ? item.shape : "freeform"
         });
       });
     } catch (error) {
@@ -1522,12 +1628,14 @@
   function beginDrawing(item) {
     pendingPlanItem = item;
     drawingPoints = [];
+    drawingShape = elements.drawingShape.value;
     keyboardCursor = { x: 320, y: 215 };
     elements.drawingToolbar.hidden = false;
-    elements.drawingStatus.textContent = "Click or tap at least three points inside the boundary to outline " +
-      item.feature + ". Arrow keys and Enter also place points. The rough catalogue footprint is " +
+    syncDrawingControls();
+    updateDrawingStatus();
+    elements.drawingStatus.textContent += " Drawing " + item.feature +
+      ". The rough catalogue footprint is " +
       getCatalogItem(item.featureId).defaultAreaM2 + " m²; the saved estimate comes from your drawing.";
-    elements.finishDrawing.disabled = true;
     showFormError("");
     renderDraft();
     const previousScrollBehavior = document.documentElement.style.scrollBehavior;
@@ -1556,23 +1664,37 @@
     const scale = Math.min(rectangle.width / 640, rectangle.height / 430);
     const offsetX = (rectangle.width - 640 * scale) / 2;
     const offsetY = (rectangle.height - 430 * scale) / 2;
-    return [
+    return snapMapPoint([
       Math.max(0, Math.min(640, (event.clientX - rectangle.left - offsetX) / scale)),
       Math.max(0, Math.min(430, (event.clientY - rectangle.top - offsetY) / scale))
-    ];
+    ]);
   }
 
   function addDrawingPoint(point) {
     if (!pendingPlanItem) return;
-    drawingPoints.push(point);
-    elements.finishDrawing.disabled = drawingPoints.length < 3;
-    elements.drawingStatus.textContent = drawingPoints.length + " point" +
-      (drawingPoints.length === 1 ? "" : "s") + " placed. Add more, undo, or finish the area.";
+    if (drawingShape !== "freeform" && drawingPoints.length >= 2) {
+      elements.drawingStatus.textContent = "Both corners are set. Finish the area or undo the second corner to redraw it.";
+      return;
+    }
+    drawingPoints.push(snapMapPoint(point));
+    updateDrawingStatus();
     renderDraft();
   }
 
   function validateDrawing(points) {
-    if (points.length < 3) return "Add at least three points to outline an area.";
+    if (drawingShape !== "freeform" && elements.drawingWidth.value &&
+        !elements.drawingWidth.checkValidity()) {
+      return "Enter a width between 1 and 500 metres, or leave it blank to draw the size.";
+    }
+    if (drawingShape === "rectangle" && elements.drawingDepth.value &&
+        !elements.drawingDepth.checkValidity()) {
+      return "Enter a depth between 1 and 500 metres, or leave it blank to draw the size.";
+    }
+    if (points.length < minimumDrawingPoints()) {
+      return drawingShape === "freeform"
+        ? "Add at least three points to outline an area."
+        : "Place both corners of the shape.";
+    }
     if (points.some(function (point, index) {
       const next = points[(index + 1) % points.length];
       return Math.hypot(point[0] - next[0], point[1] - next[1]) < 1;
@@ -1592,16 +1714,18 @@
 
   function finishDrawing() {
     if (!pendingPlanItem) return;
-    const error = validateDrawing(drawingPoints);
+    const finalPoints = shapePolygon();
+    const error = validateDrawing(finalPoints);
     if (error) {
       elements.drawingStatus.textContent = error;
       return;
     }
-    const zone = nearestZone(drawingPoints);
+    const zone = nearestZone(finalPoints);
     const savedItem = Object.assign({}, pendingPlanItem, {
       location: "Near " + zone.label,
       note: pendingPlanItem.note || "A starting idea to research and adapt to the actual site.",
-      polygon: drawingPoints.map(function (point) { return point.slice(); }),
+      polygon: finalPoints.map(function (point) { return point.slice(); }),
+      shape: drawingShape,
       createdAt: new Date().toISOString()
     });
     planItems.push(savedItem);
@@ -1717,9 +1841,31 @@
         event.target.closest(".map-marker, .planned-area, .planned-area-label, .north-arrow"))) return;
     addDrawingPoint(pointerToMapPoint(event));
   });
+  elements.mapFrame.addEventListener("pointermove", function (event) {
+    if (!pendingPlanItem) return;
+    const pointer = pointerToMapPoint(event);
+    keyboardCursor = { x: pointer[0], y: pointer[1] };
+    if (drawingShape !== "freeform" && drawingPoints.length < 2) renderDraft();
+  });
+  elements.drawingShape.addEventListener("change", function () {
+    drawingShape = elements.drawingShape.value;
+    drawingPoints = [];
+    syncDrawingControls();
+    updateDrawingStatus();
+    renderDraft();
+  });
+  elements.drawingSnap.addEventListener("change", function () {
+    const snappedCursor = snapMapPoint([keyboardCursor.x, keyboardCursor.y]);
+    keyboardCursor = { x: snappedCursor[0], y: snappedCursor[1] };
+    renderDraft();
+  });
+  elements.drawingWidth.addEventListener("input", renderDraft);
+  elements.drawingDepth.addEventListener("input", renderDraft);
   elements.mapSvg.addEventListener("keydown", function (event) {
     if (!pendingPlanItem) return;
-    const step = event.shiftKey ? 20 : 8;
+    const gridMeters = Number(elements.drawingSnap.value);
+    const step = gridMeters ? gridMeters * mapUnitsPerMeter() :
+      event.shiftKey ? 20 : 8;
     const directions = {
       ArrowLeft: [-step, 0],
       ArrowRight: [step, 0],
@@ -1728,8 +1874,11 @@
     };
     if (directions[event.key]) {
       event.preventDefault();
-      keyboardCursor.x = Math.max(0, Math.min(640, keyboardCursor.x + directions[event.key][0]));
-      keyboardCursor.y = Math.max(0, Math.min(430, keyboardCursor.y + directions[event.key][1]));
+      const snappedCursor = snapMapPoint([
+        Math.max(0, Math.min(640, keyboardCursor.x + directions[event.key][0])),
+        Math.max(0, Math.min(430, keyboardCursor.y + directions[event.key][1]))
+      ]);
+      keyboardCursor = { x: snappedCursor[0], y: snappedCursor[1] };
       renderDraft();
     } else if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
@@ -1738,10 +1887,7 @@
   });
   elements.undoPoint.addEventListener("click", function () {
     drawingPoints.pop();
-    elements.finishDrawing.disabled = drawingPoints.length < 3;
-    elements.drawingStatus.textContent = drawingPoints.length
-      ? drawingPoints.length + " points placed. Add more, undo, or finish the area."
-      : "All points removed. Click or tap the map to start the outline.";
+    updateDrawingStatus();
     renderDraft();
   });
   elements.cancelDrawing.addEventListener("click", function () {

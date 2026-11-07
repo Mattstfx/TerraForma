@@ -309,6 +309,32 @@
           </div>
           <div class="drawing-toolbar" id="drawing-toolbar" hidden>
             <p id="drawing-status" role="status" aria-live="polite">Click the map to outline this feature using at least three points.</p>
+            <div class="drawing-controls">
+              <label for="drawing-shape">Footprint shape
+                <select id="drawing-shape">
+                  <option value="freeform">Freeform</option>
+                  <option value="rectangle">Rectangle · 2 corners</option>
+                  <option value="square">Square · 2 corners</option>
+                </select>
+              </label>
+              <label for="drawing-snap">Snap map points
+                <select id="drawing-snap">
+                  <option value="0">Off</option>
+                  <option value="1">1 m grid</option>
+                  <option value="5">5 m grid</option>
+                  <option value="10">10 m grid</option>
+                </select>
+              </label>
+              <div class="drawing-dimensions" id="drawing-dimensions" hidden>
+                <label for="drawing-width" id="drawing-width-label">Width (m) <span class="optional-label">optional</span>
+                  <input id="drawing-width" type="number" min="1" max="500" step="0.5" inputmode="decimal" placeholder="Draw with 2 corners">
+                </label>
+                <label for="drawing-depth" id="drawing-depth-label">Depth (m) <span class="optional-label">optional</span>
+                  <input id="drawing-depth" type="number" min="1" max="500" step="0.5" inputmode="decimal" placeholder="Draw with 2 corners">
+                </label>
+                <p>Enter dimensions to set exact scaled proportions, or leave them blank and draw the corners. The demo map is illustrative, not a survey.</p>
+              </div>
+            </div>
             <div class="drawing-actions">
               <button class="map-action-button" id="undo-point" type="button">Undo point</button>
               <button class="map-action-button map-action-primary" id="finish-drawing" type="button" disabled>Finish area</button>
@@ -465,7 +491,7 @@
           <label for="plan-note">Planning note <span class="optional-label">(optional)</span></label>
           <textarea id="plan-note" name="note" rows="3" maxlength="240" placeholder="What should you observe or research?"></textarea>
           <button class="button button-dark" type="submit">Draw on map <span aria-hidden="true">↗</span></button>
-          <p class="form-footnote">Click at least three points inside the sample boundary. Avoid overlapping areas. An outline is a concept only—not a safety review, permit, or construction approval. No account or payment required.</p>
+          <p class="form-footnote">Draw inside the sample boundary with freeform, rectangle, or square tools. Approximate dimensions use this illustrative map scale, not a survey; avoid overlapping areas.</p>
           <p class="form-error" id="form-error" role="alert" hidden></p>
         </form>
       </div>

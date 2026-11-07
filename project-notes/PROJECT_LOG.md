@@ -12,6 +12,14 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 ### Session — 2026-11-07 — driver: student
 
+- **Goal for this session:** Make planned map footprints more configurable, including exact scaled bed dimensions and snapping.
+- **What worked:** Added freeform, axis-aligned rectangle, and square drawing modes. Rectangle/square footprints can be drawn from two corners or given dimensions in metres; selected dimensions are shown with the saved feature. Added optional 1 m, 5 m, and 10 m point snapping, with matching keyboard movement. Existing freeform drawing remains the default.
+- **Accuracy, privacy, and scope notes:** Dimensions are scaled estimates against the fictional demo map, not surveyed or georeferenced measurements. Specified shapes still must fit inside the sample boundary, avoid other plans, and satisfy area-capacity checks. Saved shape metadata is optional and older saved plan records remain readable.
+- **What we checked:** JavaScript syntax, diff whitespace, freeform minimum-point behavior, 8 × 4 m rectangle area and label, 6 × 6 m square area, 5 m grid snapping of the placed anchor, and the absence of invalid SVG preview coordinates. Browser tests restored the user's prior local plan data after checking.
+- **Committed?** no — not committed yet.
+
+### Session — 2026-11-07 — driver: student
+
 - **Goal for this session:** Reduce first-use overwhelm, clarify property-brief editing, add restrained style choices, and make broad planting menus more honest.
 - **What worked:** Collapsed the brief and pre-planning checks behind a progressive-disclosure control. Replaced automatic saves with explicit Save and Cancel actions; both update the existing sample property's brief, not a new property. Added separate interface themes and a saved landscape-character preference. Added an 8-second plant-card dismissal that pauses while the trigger/card is hovered or focused. Reframed rain-garden menu choices as site-screening questions and added a Maine-specific Extension source and site constraints; renamed other broad habitat choices so they do not imply verified local species or wildlife benefits.
 - **Accuracy, privacy, and scope notes:** Existing version-1 briefs without a landscape-style field still load. Theme and brief data remain local to the browser, and plan storage stays independent. The rain-garden bulletin is Maine-specific; its dimensions or rules are not generalized to Atlantic Canada, and standing water alone does not establish suitability. No plant photos were added: exact taxon, growth-stage identification, image rights, and per-image attribution have not yet been verified across the catalog. A curated, licensed image set remains a follow-up; no generic or unverified photos were substituted.

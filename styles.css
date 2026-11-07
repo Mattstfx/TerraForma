@@ -401,6 +401,15 @@ main {
 .map-frame.is-terrain-view .illustration-context,
 .map-frame.is-terrain-view .map-markers,
 .map-frame.is-terrain-view .north-arrow { display: none; }
+.map-frame.is-terrain-preview #property-boundary,
+.map-frame.is-terrain-preview #plan-areas { display: none; }
+.map-frame.is-georeferenced-terrain .parcel {
+  fill: rgb(214 224 201 / 14%);
+  stroke: #f5f0d7;
+  stroke-width: 3;
+  stroke-dasharray: 8 6;
+  vector-effect: non-scaling-stroke;
+}
 .property-grid.is-terrain-view { grid-template-columns: minmax(0, 1fr); }
 .property-grid.is-terrain-view .observation-panel { display: none; }
 #map-legend[hidden], #map-footer-legend[hidden] { display: none; }

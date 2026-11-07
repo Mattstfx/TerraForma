@@ -10,7 +10,8 @@ const STARTUP = {
 const PROPERTY = {
   name: "Cedar Ridge Homestead",
   location: "Illustrative property · Atlantic Canada",
-  area: "2.4 acres",
+  area: 2.4,
+  areaUnit: "acres",
   areaNote: "Fictional example, not a measured parcel",
   areaM2: 9712,
   mapAreaM2PerUnit: 0.0705855,
@@ -77,6 +78,18 @@ const PROPERTY = {
       polygon: [[352, 300], [376, 300], [376, 324], [352, 324]]
     }
   ]
+};
+
+const TERRAIN_DEMO_PROPERTY = {
+  id: "waverley-terrain-demo",
+  name: "Waverley Terrain Test",
+  location: "Waverley area · Halifax Regional Municipality, Nova Scotia",
+  area: 2.4,
+  areaUnit: "acres",
+  areaNote: "Synthetic demo parcel; outline not drawn yet",
+  mapBoundary: [],
+  zones: [],
+  initialPlan: []
 };
 
 const PLAN_CATALOG = [
@@ -180,6 +193,18 @@ const PLAN_CATALOG = [
     category: "Infrastructure",
     defaultAreaM2: 20,
     options: ["Small greenhouse (confirm access, wind, and drainage)"]
+  },
+  {
+    id: "building-footprint",
+    name: "Building footprint",
+    category: "Infrastructure",
+    defaultAreaM2: 120,
+    options: [
+      "Existing house / dwelling",
+      "Proposed house / dwelling",
+      "Existing outbuilding / workshop",
+      "Proposed outbuilding / workshop"
+    ]
   },
   {
     id: "garden-path",

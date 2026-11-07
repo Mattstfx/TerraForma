@@ -50,7 +50,16 @@
           <h2 id="property-name">Cedar Ridge Homestead</h2>
           <p class="muted" id="property-location">Illustrative property · Atlantic Canada</p>
         </div>
-        <span class="demo-label" id="property-profile-status">Fictional demo data</span>
+        <div class="property-workspace-picker">
+          <label for="property-workspace">Property workspace
+            <select id="property-workspace">
+              <option value="waverley-terrain-demo">Waverley terrain test · new</option>
+              <option value="cedar-ridge">Cedar Ridge · archived demo</option>
+            </select>
+          </label>
+          <span class="demo-label" id="property-profile-status">Fictional demo data</span>
+          <p class="property-workspace-status" id="property-workspace-status" role="status" aria-live="polite"></p>
+        </div>
       </div>
 
       <div class="stats" aria-label="Sample property data">
@@ -64,7 +73,7 @@
         </article>
         <article class="stat">
           <span class="stat-icon" aria-hidden="true">✳</span>
-          <div><p class="stat-label">Planning ideas</p><p class="stat-value"><span id="plan-count">2</span> proposed features</p></div>
+          <div><p class="stat-label">Map features</p><p class="stat-value"><span id="plan-count">2</span> mapped features</p></div>
         </article>
       </div>
       <p class="snapshot-note" id="area-note">Sample dashboard · Area is illustrative, not a measured parcel.</p>
@@ -74,7 +83,7 @@
           <span class="property-profile-save-state" id="property-profile-save-state">Using fictional sample details</span>
         </summary>
         <form class="property-profile-form" id="property-profile-form">
-          <p class="property-profile-caveat">These are user-entered planning details only. The map boundary, terrain, and observation locations remain fictional and are not tied to your real parcel. Do not enter a street address.</p>
+          <p class="property-profile-caveat" id="property-profile-caveat">These are user-entered planning details only. Do not enter a street address. The terrain demo is regional data and is not tied to a real property boundary.</p>
           <div class="property-profile-fields">
             <label for="profile-name">Property name
               <input id="profile-name" name="name" type="text" maxlength="60" required>
@@ -284,7 +293,7 @@
           <p class="eyebrow">Explore your place</p>
           <h2>Property map</h2>
         </div>
-        <p class="section-hint">Choose a marker to see a sample observation.</p>
+        <p class="section-hint" id="map-section-hint">Choose a marker to see a sample observation.</p>
       </div>
 
       <div class="property-grid">
@@ -308,16 +317,16 @@
               </select>
             </label>
             <p class="terrain-data-note" id="terrain-status" role="status" aria-live="polite">
-              Terrain preview uses a fixed Halifax-area test window. It does not locate a property or prove land ownership/access.
+              Real regional terrain data; the new test parcel is synthetic, not a surveyed or legal property.
             </p>
           </div>
           <p class="terrain-data-source" id="terrain-source" hidden>
             Elevation source: <a href="https://ftp.maps.canada.ca/pub/elevation/dem_mne/HRDEMmosaic_mosaiqueMNEHR/" target="_blank" rel="noreferrer">Natural Resources Canada HRDEM Mosaic</a> under the
             <a href="https://open.canada.ca/en/open-government-licence-canada" target="_blank" rel="noreferrer">Open Government Licence — Canada</a>.
-            The fixed Halifax-area request contains no user-entered property location. The overlay is regional terrain data, not a parcel boundary or permission to access land.
+            The fixed Waverley-area request contains no user-entered property location. The overlay is regional terrain data, not a parcel boundary or permission to access land.
           </p>
 
-          <div class="map-frame" role="group" aria-label="Illustrative planning map with an optional real Halifax-area terrain data preview">
+          <div class="map-frame" role="group" aria-label="Illustrative planning map with optional Waverley-area terrain data">
             <svg class="site-map" id="site-map" viewBox="0 0 640 430" role="group" tabindex="0" aria-labelledby="map-title map-description" aria-label="Interactive illustrative property map. While drawing a feature or property outline, use arrow keys and Enter to add points.">
               <title id="map-title">Illustrative map · Cedar Ridge Homestead</title>
               <desc id="map-description">A fictional, not-to-scale property drawing with wooded edges, a clearing, a path, and a low corner.</desc>
@@ -332,14 +341,14 @@
               </defs>
               <rect width="640" height="430" rx="18" class="map-ground"></rect>
               <image id="terrain-raster" class="terrain-raster" x="0" y="0" width="640" height="430" preserveAspectRatio="none" aria-hidden="true"></image>
-              <path class="parcel illustration-context" id="property-boundary" d="M90 55 L319 45 L554 91 L527 344 L293 380 L76 331 Z"></path>
+              <path class="parcel" id="property-boundary" d="M90 55 L319 45 L554 91 L527 344 L293 380 L76 331 Z"></path>
               <path class="tree-zone illustration-context" d="M101 76 C163 57 224 76 284 66 L272 116 C216 126 163 105 102 125 Z"></path>
               <path class="tree-zone illustration-context" d="M494 88 C522 105 534 129 527 167 L511 300 C492 287 486 270 490 245 Z"></path>
               <path class="field-zone illustration-context" d="M145 145 C226 119 341 132 421 144 L407 256 C327 269 234 260 155 280 Z"></path>
               <path class="field-lines illustration-context" d="M145 145 C226 119 341 132 421 144 L407 256 C327 269 234 260 155 280 Z"></path>
               <path class="pathway illustration-context" d="M312 71 C301 129 323 170 300 218 C279 260 316 297 301 356"></path>
               <path class="water-zone illustration-context" d="M300 294 C349 276 414 291 476 315 L470 348 C413 337 361 358 309 361 C293 342 291 318 300 294 Z"></path>
-              <g id="plan-areas" class="illustration-context" aria-label="Planned feature areas"></g>
+              <g id="plan-areas" aria-label="Planned feature areas"></g>
               <path class="stream illustration-context" d="M322 329 C355 315 395 326 427 318 C447 313 460 323 477 326"></path>
               <g class="tree-symbol illustration-context" aria-hidden="true">
                 <circle cx="124" cy="156" r="19"></circle><circle cx="468" cy="183" r="23"></circle>
@@ -371,7 +380,7 @@
               <button class="map-action-button map-action-primary" id="save-boundary" type="button" hidden>Save outline</button>
               <button class="map-action-button" id="cancel-boundary" type="button" hidden>Cancel outline</button>
             </div>
-            <p class="boundary-editor-status" id="boundary-editor-status" role="status" aria-live="polite">Using illustrative sample outline.</p>
+            <p class="boundary-editor-status" id="boundary-editor-status" role="status" aria-live="polite">Draw and save a synthetic test boundary to enable planning on this terrain map.</p>
           </div>
           <div class="drawing-toolbar" id="drawing-toolbar" hidden>
             <p id="drawing-status" role="status" aria-live="polite">Click the map to outline this feature using at least three points.</p>
@@ -494,21 +503,21 @@
         <article class="panel plan-list-panel">
           <div class="plan-list-heading">
             <div>
-              <h3>Proposed features</h3>
-              <p class="muted">Early ideas to explore, not professional recommendations.</p>
+              <h3>Mapped features</h3>
+              <p class="muted">Existing site elements and proposed ideas for the active workspace.</p>
             </div>
-            <span class="plan-total" id="plan-total">2 ideas</span>
+            <span class="plan-total" id="plan-total">2 features</span>
           </div>
           <div class="capacity-meter">
             <div class="capacity-label">
-              <strong>Illustrative planned land use</strong>
+              <strong>Approximate mapped land use</strong>
               <span id="capacity-summary">Calculating…</span>
             </div>
             <progress id="capacity-progress" max="100" value="0" aria-label="Illustrative share of property area assigned to planned features">0%</progress>
-            <p>Approximate area only. This drawing is not a survey; dimensions and capacity are fictional estimates.</p>
+            <p>Approximate area only. These drawings are not a survey; compare the boundary with verified property dimensions.</p>
           </div>
           <div class="plan-list" id="plan-list" aria-live="polite"></div>
-          <p class="storage-message" id="storage-message" role="status">Your planning ideas are stored only in this browser.</p>
+          <p class="storage-message" id="storage-message" role="status">Your mapped features are stored only in this browser.</p>
         </article>
 
         <form class="panel add-plan-panel" id="plan-form">
@@ -557,7 +566,7 @@
           <label for="plan-note">Planning note <span class="optional-label">(optional)</span></label>
           <textarea id="plan-note" name="note" rows="3" maxlength="240" placeholder="What should you observe or research?"></textarea>
           <button class="button button-dark" type="submit">Draw on map <span aria-hidden="true">↗</span></button>
-          <p class="form-footnote">Draw inside the sample boundary with freeform, rectangle, or square tools. Approximate dimensions use this illustrative map scale, not a survey; avoid overlapping areas.</p>
+          <p class="form-footnote">Draw inside the active property's boundary with freeform, rectangle, or square tools. New terrain-test footprints align to the fixed Waverley-area map; they are not a survey. Avoid overlapping areas.</p>
           <p class="form-error" id="form-error" role="alert" hidden></p>
         </form>
       </div>

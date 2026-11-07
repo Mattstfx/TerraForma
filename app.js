@@ -1,10 +1,21 @@
 (function () {
   "use strict";
 
-  const storageKey = "terraforma-sample-plan";
-  const siteBriefStorageKey = "terraforma-site-brief";
-  const propertyProfileStorageKey = "terraforma-property-profile";
-  const propertyBoundaryStorageKey = "terraforma-property-boundary";
+  const activeProjectStorageKey = "terraforma-active-project";
+  const projectStorageKeys = {
+    "cedar-ridge": {
+      plan: "terraforma-sample-plan",
+      brief: "terraforma-site-brief",
+      profile: "terraforma-property-profile",
+      boundary: "terraforma-property-boundary"
+    },
+    "waverley-terrain-demo": {
+      plan: "terraforma-waverley-plan",
+      brief: "terraforma-waverley-site-brief",
+      profile: "terraforma-waverley-profile",
+      boundary: "terraforma-waverley-boundary"
+    }
+  };
   const squareMetersPerAcre = 4046.8564224;
   const squareMetersPerHectare = 10000;
   const interfaceThemeStorageKey = "terraforma-interface-theme";
@@ -14,27 +25,27 @@
   const preflightCheckIds = ["boundary", "utilities", "well-septic", "water", "soil", "rules", "access"];
   const svgNamespace = "http://www.w3.org/2000/svg";
   const terrainServiceUrl = "https://datacube.services.geo.ca/ows/elevation";
-  const terrainDemoBounds = "44.62,-63.69,44.70,-63.57";
+  const terrainDemoBounds = "44.797825,-63.63956,44.802175,-63.63044";
   const terrainLayerDetails = {
     "dtm-hillshade": {
       label: "Bare-earth terrain hillshade",
-      description: "Natural Resources Canada HRDEM bare-earth terrain hillshade for the Halifax-area demo window."
+      description: "Natural Resources Canada HRDEM bare-earth terrain hillshade for the Waverley-area test window."
     },
     dtm: {
       label: "Bare-earth elevation colors",
       style: "default",
       legend: "https://datacube.services.geo.ca/assets/legend/legend_elevation_color.png",
-      description: "Natural Resources Canada HRDEM bare-earth elevation color layer for the Halifax-area demo window."
+      description: "Natural Resources Canada HRDEM bare-earth elevation color layer for the Waverley-area test window."
     },
     "dtm-slope": {
       label: "Bare-earth slope",
       style: "default",
       legend: "https://datacube.services.geo.ca/assets/legend/legend_elevation_slope_color.png",
-      description: "Natural Resources Canada HRDEM bare-earth slope layer for the Halifax-area demo window."
+      description: "Natural Resources Canada HRDEM bare-earth slope layer for the Waverley-area test window."
     },
     "dsm-hillshade": {
       label: "Surface hillshade",
-      description: "Natural Resources Canada HRDEM surface hillshade for the Halifax-area demo window, including mapped trees and structures where available."
+      description: "Natural Resources Canada HRDEM surface hillshade for the Waverley-area test window, including mapped trees and structures where available."
     }
   };
   const elements = {
@@ -45,6 +56,7 @@
     mapTitle: document.getElementById("map-title"),
     mapDescription: document.getElementById("map-description"),
     mapContext: document.getElementById("map-context"),
+    mapSectionHint: document.getElementById("map-section-hint"),
     mapLegend: document.getElementById("map-legend"),
     mapFooterLegend: document.getElementById("map-footer-legend"),
     mapScaleNote: document.getElementById("map-scale-note"),
@@ -140,6 +152,7 @@
     propertyArea: document.getElementById("property-area"),
     areaNote: document.getElementById("area-note"),
     propertyProfileStatus: document.getElementById("property-profile-status"),
+    propertyProfileCaveat: document.getElementById("property-profile-caveat"),
     propertyProfileDisclosure: document.getElementById("property-profile-disclosure"),
     propertyProfileForm: document.getElementById("property-profile-form"),
     profileName: document.getElementById("profile-name"),
@@ -148,32 +161,68 @@
     profileAreaUnit: document.getElementById("profile-area-unit"),
     propertyProfileSaveState: document.getElementById("property-profile-save-state"),
     propertyProfileStatusMessage: document.getElementById("property-profile-status-message"),
+    propertyWorkspace: document.getElementById("property-workspace"),
+    propertyWorkspaceStatus: document.getElementById("property-workspace-status"),
     savePropertyProfile: document.getElementById("save-property-profile"),
     cancelPropertyProfile: document.getElementById("cancel-property-profile")
   };
 
-  let selectedZoneId = PROPERTY.zones[0].id;
+  let activeProjectId = "waverley-terrain-demo";
+  try {
+    const savedProjectId = window.localStorage.getItem(activeProjectStorageKey);
+    if (savedProjectId && projectStorageKeys[savedProjectId]) activeProjectId = savedProjectId;
+  } catch (error) {
+    console.error("TerraForma could not read the active property workspace:", error);
+  }
+  const ACTIVE_PROPERTY = activeProjectId === "waverley-terrain-demo"
+    ? TERRAIN_DEMO_PROPERTY
+    : PROPERTY;
+
+  function currentStorageKey(type) {
+    return projectStorageKeys[activeProjectId][type];
+  }
+
+  function canEditCurrentMap() {
+    return activeProjectId === "waverley-terrain-demo"
+      ? activeMapView !== "illustrative"
+      : activeMapView === "illustrative";
+  }
+
+  function terrainDemoMapAreaM2PerUnit() {
+    const bounds = terrainDemoBounds.split(",").map(Number);
+    const widthMeters = (bounds[3] - bounds[1]) * 111320 * Math.cos((bounds[0] + bounds[2]) / 2 * Math.PI / 180);
+    const heightMeters = (bounds[2] - bounds[0]) * 111320;
+    return (widthMeters / 640) * (heightMeters / 430);
+  }
+
+  function clonePlanItems(items) {
+    return items.map(function (item) {
+      return Object.assign({}, item, {
+        polygon: item.polygon.map(function (point) { return point.slice(); }),
+        guildPlants: (item.guildPlants || []).slice()
+      });
+    });
+  }
+
+  let selectedZoneId = ACTIVE_PROPERTY.zones.length ? ACTIVE_PROPERTY.zones[0].id : null;
   let selectedPerspectiveId = DESIGN_PERSPECTIVES[0].id;
   let selectedPlanId = null;
-  let planItems = PROPERTY.initialPlan.map(function (item) {
-    return Object.assign({}, item, {
-      polygon: item.polygon.map(function (point) { return point.slice(); }),
-      guildPlants: []
-    });
-  });
+  let planItems = clonePlanItems(ACTIVE_PROPERTY.initialPlan);
   let storageAvailable = true;
   let siteBriefStorageAvailable = true;
   let savedSiteBrief = null;
   let savedPropertyProfile = {
-    name: PROPERTY.name,
-    location: "",
-    area: 2.4,
-    areaUnit: "acres"
+    name: ACTIVE_PROPERTY.name,
+    location: ACTIVE_PROPERTY.id === "waverley-terrain-demo" ? ACTIVE_PROPERTY.location : "",
+    area: ACTIVE_PROPERTY.area || 2.4,
+    areaUnit: ACTIVE_PROPERTY.areaUnit || "acres"
   };
   let propertyProfileIsSaved = false;
-  let propertyAreaM2 = PROPERTY.areaM2;
-  let propertyBoundary = PROPERTY.mapBoundary.map(function (point) { return point.slice(); });
-  let propertyMapAreaM2PerUnit = PROPERTY.mapAreaM2PerUnit;
+  let propertyAreaM2 = ACTIVE_PROPERTY.areaM2 || ACTIVE_PROPERTY.area * squareMetersPerAcre;
+  let propertyBoundary = ACTIVE_PROPERTY.mapBoundary.map(function (point) { return point.slice(); });
+  let propertyMapAreaM2PerUnit = activeProjectId === "waverley-terrain-demo"
+    ? terrainDemoMapAreaM2PerUnit()
+    : ACTIVE_PROPERTY.mapAreaM2PerUnit;
   let speciesCardTimer = null;
   let speciesCardAnchor = null;
   let pendingPlanItem = null;
@@ -182,7 +231,7 @@
   let boundaryPoints = [];
   let keyboardCursor = { x: 320, y: 215 };
   let drawingShape = "freeform";
-  let activeMapView = "illustrative";
+  let activeMapView = activeProjectId === "waverley-terrain-demo" ? "dtm-hillshade" : "illustrative";
 
   function localDateValue(date) {
     return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0") +
@@ -198,7 +247,7 @@
   document.title = STARTUP.name + " — Land planning, made thoughtful";
   document.getElementById("tagline").textContent = STARTUP.tagline;
   document.getElementById("pitch").textContent = STARTUP.pitch;
-  document.getElementById("observation-count").textContent = PROPERTY.zones.length;
+  document.getElementById("observation-count").textContent = ACTIVE_PROPERTY.zones.length;
   elements.scheduleStartDate.value = localDateValue(new Date());
 
   function makeOption(label, value) {
@@ -210,10 +259,10 @@
 
   function defaultPropertyProfile() {
     return {
-      name: PROPERTY.name,
-      location: "",
-      area: 2.4,
-      areaUnit: "acres"
+      name: ACTIVE_PROPERTY.name,
+      location: ACTIVE_PROPERTY.id === "waverley-terrain-demo" ? ACTIVE_PROPERTY.location : "",
+      area: ACTIVE_PROPERTY.area || 2.4,
+      areaUnit: ACTIVE_PROPERTY.areaUnit || "acres"
     };
   }
 
@@ -234,7 +283,9 @@
 
   function applyPropertyProfile(profile, isSaved) {
     propertyAreaM2 = areaInSquareMeters(profile);
-    propertyMapAreaM2PerUnit = propertyAreaM2 / polygonArea(propertyBoundary);
+    if (activeProjectId === "cedar-ridge" && propertyBoundary.length >= 3) {
+      propertyMapAreaM2PerUnit = propertyAreaM2 / polygonArea(propertyBoundary);
+    }
     elements.propertyProfileStatusMessage.classList.remove("storage-error");
     elements.propertyName.textContent = profile.name;
     if (activeMapView === "illustrative") {
@@ -259,22 +310,35 @@
 
   function updatePropertyMapCaveat(profile, isSaved) {
     const terrainView = activeMapView !== "illustrative";
-    elements.propertyLocation.textContent = profile.location
+    const terrainLabel = activeProjectId === "waverley-terrain-demo"
+      ? "Waverley-area test map"
+      : "Waverley-area regional preview";
+    elements.propertyLocation.textContent = activeProjectId === "waverley-terrain-demo"
+      ? "Synthetic demo property · " + ACTIVE_PROPERTY.location
+      : profile.location
       ? "User-entered general location · " + profile.location +
-        (terrainView ? " · map preview remains a fixed Halifax demo area" : "")
+        (terrainView ? " · terrain preview remains a fixed " + terrainLabel : "")
       : terrainView
-        ? "Fixed Halifax terrain demo · not linked to this property's location"
-        : isSaved ? "General location not recorded · map is illustrative" : PROPERTY.location;
+        ? "Fixed " + terrainLabel + " · not linked to this property's location"
+        : isSaved ? "General location not recorded · map is illustrative" : ACTIVE_PROPERTY.location;
     elements.areaNote.textContent = terrainView
-      ? "User-entered area estimate. Real regional elevation data is previewed from Halifax; the property boundary and plans are not georeferenced to that area."
+      ? activeProjectId === "waverley-terrain-demo"
+        ? "Synthetic test workspace. Draw the parcel outline to place features; starting area is an estimate, not a surveyed or calculated parcel size."
+        : "User-entered area estimate. Real regional elevation data is previewed from " + terrainLabel +
+          "; the property boundary and plans are not georeferenced to that area."
       : isSaved
         ? "User-entered area estimate. Map shape, terrain, and observation locations remain fictional; drawn feature sizes are approximate."
-        : "Sample dashboard · " + PROPERTY.areaNote + ".";
+        : "Sample dashboard · " + ACTIVE_PROPERTY.areaNote + ".";
     elements.propertyProfileStatus.textContent = isSaved
       ? terrainView
         ? "User-provided details · regional terrain preview separate"
         : "User-provided details · illustrative map"
-      : "Fictional demo data";
+      : activeProjectId === "waverley-terrain-demo"
+        ? "Synthetic test property · real terrain"
+        : "Fictional demo data";
+    elements.propertyProfileCaveat.textContent = activeProjectId === "waverley-terrain-demo"
+      ? "The Waverley terrain is real regional elevation data, but this test property and any drawn outline are synthetic unless you replace them with a location you are authorized to use. It does not show ownership or grant access. Do not enter a street address."
+      : "These are user-entered planning details only. The map boundary, terrain, and observation locations remain fictional and are not tied to your real parcel. Do not enter a street address.";
   }
 
   function terrainMapUrl(layer) {
@@ -297,23 +361,32 @@
   }
 
   function setMapView(view) {
+    if (activeProjectId === "waverley-terrain-demo" && view === "illustrative") {
+      view = "dtm-hillshade";
+      elements.terrainLayer.value = view;
+    }
     const isTerrain = view !== "illustrative";
+    const isGeoreferencedTerrain = activeProjectId === "waverley-terrain-demo" && isTerrain;
     activeMapView = view;
     elements.mapFrame.classList.toggle("is-terrain-view", isTerrain);
+    elements.mapFrame.classList.toggle("is-terrain-preview", isTerrain && !isGeoreferencedTerrain);
+    elements.mapFrame.classList.toggle("is-georeferenced-terrain", isGeoreferencedTerrain);
     elements.propertyGrid.classList.toggle("is-terrain-view", isTerrain);
     elements.terrainSource.hidden = !isTerrain;
     elements.terrainLegend.hidden = !isTerrain || !terrainLayerDetails[view].legend;
     updatePropertyMapCaveat(savedPropertyProfile, propertyProfileIsSaved);
     elements.mapLegend.hidden = isTerrain;
-    elements.mapFooterLegend.hidden = isTerrain;
-    elements.editBoundary.disabled = isTerrain;
-    elements.saveBoundary.disabled = isTerrain;
-    elements.cancelBoundary.disabled = isTerrain;
+    elements.mapFooterLegend.hidden = isTerrain && !isGeoreferencedTerrain;
+    elements.editBoundary.disabled = isTerrain && !isGeoreferencedTerrain;
+    elements.saveBoundary.disabled = isTerrain && !isGeoreferencedTerrain;
+    elements.cancelBoundary.disabled = isTerrain && !isGeoreferencedTerrain;
     elements.mapFrame.setAttribute("aria-label", isTerrain
-      ? "Real Natural Resources Canada terrain data preview for Halifax, Nova Scotia. This is not a property boundary."
+      ? "Real Natural Resources Canada terrain data preview for the Waverley area, Nova Scotia. This is not a legal parcel boundary."
       : "Illustrative property map with three selectable observation locations.");
     elements.mapSvg.setAttribute("aria-label", isTerrain
-      ? "Regional Halifax-area terrain data preview. Planning features and observations are hidden because they are not georeferenced to this area."
+      ? isGeoreferencedTerrain
+        ? "Waverley-area terrain test map. Draw a synthetic parcel boundary and place plan features in this fixed map area."
+        : "Regional Waverley-area terrain data preview. Planning features and observations are hidden because they are not georeferenced to this area."
       : "Interactive illustrative property map. While drawing a feature or property outline, use arrow keys and Enter to add points.");
 
     if (!isTerrain) {
@@ -323,7 +396,7 @@
       elements.mapContext.textContent = "Illustrative layout · Not to scale";
       elements.mapScaleNote.textContent = "Illustrative, not measured";
       elements.terrainStatus.textContent =
-        "Terrain preview uses a fixed Halifax-area test window. It does not locate a property or prove land ownership/access.";
+        "Terrain layers use a fixed Waverley-area test window. The terrain is real; the demo property and boundary are synthetic.";
       elements.boundaryEditorNote.textContent =
         "The terrain illustration stays fictional. Edit the outline to match a sketch; it is not georeferenced or a surveyed boundary.";
       elements.terrainRaster.removeAttribute("href");
@@ -332,10 +405,11 @@
     }
 
     const details = terrainLayerDetails[view];
-    elements.mapTitle.textContent = "NRCan HRDEM terrain · Halifax-area demo window";
-    elements.mapDescription.textContent =
-      details.description + " This regional data preview does not show a property boundary or permission to access land.";
-    elements.mapContext.textContent = "Real elevation data · Halifax Regional Municipality, Nova Scotia · regional preview";
+    elements.mapTitle.textContent = "NRCan HRDEM terrain · Waverley-area demo window";
+    elements.mapDescription.textContent = isGeoreferencedTerrain
+      ? details.description + " This is a fixed regional test window with a synthetic, user-drawn parcel boundary."
+      : details.description + " This regional data preview does not show a property boundary or permission to access land.";
+    elements.mapContext.textContent = "Real elevation data · Waverley area, Nova Scotia · regional preview";
     elements.mapScaleNote.textContent = "Regional context · not a parcel map";
     elements.boundaryEditorNote.textContent =
       "Outline drawing is turned off in this terrain preview because the current sketch belongs to the illustrative map, not this real-world location.";
@@ -349,13 +423,63 @@
       elements.terrainLegendImage.removeAttribute("src");
       elements.terrainLegendImage.alt = "";
     }
+    if (isGeoreferencedTerrain) {
+      elements.mapFooterLegend.textContent = "Synthetic demo parcel outline · Planned footprints";
+      elements.boundaryEditorNote.textContent =
+        "Draw a synthetic test boundary directly over this real terrain. It is not a legal parcel, verified ownership boundary, or permission to access land.";
+      elements.terrainStatus.textContent =
+        "Real NRCan elevation data · Waverley-area test window. Draw a synthetic boundary here to start; this map does not show parcel ownership.";
+    }
   }
+
+  function switchPropertyWorkspace() {
+    if (pendingPlanItem || boundaryEditing) {
+      elements.propertyWorkspace.value = activeProjectId;
+      elements.propertyWorkspaceStatus.textContent = "Finish or cancel the current map drawing before switching workspaces.";
+      return;
+    }
+    if (JSON.stringify(collectPropertyProfile()) !== JSON.stringify(savedPropertyProfile) ||
+        (savedSiteBrief && JSON.stringify(collectSiteBrief()) !== JSON.stringify(savedSiteBrief))) {
+      elements.propertyWorkspace.value = activeProjectId;
+      elements.propertyWorkspaceStatus.textContent = "Save or cancel unsaved property details and site-brief changes before switching.";
+      return;
+    }
+    try {
+      window.localStorage.setItem(activeProjectStorageKey, elements.propertyWorkspace.value);
+      window.location.reload();
+    } catch (error) {
+      elements.propertyWorkspace.value = activeProjectId;
+      elements.propertyWorkspaceStatus.textContent = "Could not switch property workspaces in browser storage.";
+      console.error("TerraForma could not switch property workspaces:", error);
+    }
+  }
+
+  function updatePropertyWorkspaceControls() {
+    elements.propertyWorkspace.value = activeProjectId;
+    if (activeProjectId === "waverley-terrain-demo") {
+      elements.propertyWorkspaceStatus.textContent =
+        "New synthetic test property · Cedar Ridge remains archived and available.";
+      elements.mapSectionHint.textContent =
+        "Draw a synthetic boundary, then add building or landscape footprints. Terrain layers show regional elevation only.";
+    } else {
+      elements.propertyWorkspaceStatus.textContent =
+        "Archived demo workspace · saved plans and sketches are preserved separately.";
+      elements.mapSectionHint.textContent = "Choose a marker to see a sample observation.";
+    }
+    const illustrativeOption = elements.terrainLayer.querySelector('option[value="illustrative"]');
+    illustrativeOption.hidden = activeProjectId === "waverley-terrain-demo";
+    elements.terrainLayer.value = activeMapView;
+    setMapView(activeMapView);
+  }
+
+  elements.propertyWorkspace.addEventListener("change", switchPropertyWorkspace);
 
   elements.terrainRaster.addEventListener("load", function () {
     if (activeMapView !== elements.terrainRaster.dataset.layer) return;
     const details = terrainLayerDetails[activeMapView];
-    elements.terrainStatus.textContent = details.label +
-      " loaded for the fixed Halifax-area demo window. Terrain is real; planning overlays are hidden because they are not georeferenced here.";
+    elements.terrainStatus.textContent = activeProjectId === "waverley-terrain-demo"
+      ? details.label + " loaded for the Waverley-area demo window. Terrain is real; the editable parcel outline is synthetic."
+      : details.label + " loaded for the fixed Waverley-area demo window. Terrain is real; planning overlays are hidden because they are not georeferenced here.";
   });
   elements.terrainRaster.addEventListener("error", function () {
     if (activeMapView !== elements.terrainRaster.dataset.layer) return;
@@ -367,7 +491,7 @@
     savedPropertyProfile = defaultPropertyProfile();
     propertyProfileIsSaved = false;
     try {
-      const saved = window.localStorage.getItem(propertyProfileStorageKey);
+      const saved = window.localStorage.getItem(currentStorageKey("profile"));
       if (saved === null) {
         applyPropertyProfile(savedPropertyProfile, false);
         return;
@@ -402,7 +526,10 @@
   }
 
   function renderPropertyBoundary(points) {
-    if (!points || points.length < 3) return;
+    if (!points || points.length < 3) {
+      elements.propertyBoundary.removeAttribute("d");
+      return;
+    }
     elements.propertyBoundary.setAttribute("d", "M" + points.map(function (point) {
       return point[0] + " " + point[1];
     }).join(" L") + " Z");
@@ -410,8 +537,17 @@
 
   function readPropertyBoundary() {
     try {
-      const saved = window.localStorage.getItem(propertyBoundaryStorageKey);
-      if (saved === null) return;
+      const saved = window.localStorage.getItem(currentStorageKey("boundary"));
+      if (saved === null) {
+        renderPropertyBoundary(propertyBoundary);
+        elements.editBoundary.textContent = propertyBoundary.length >= 3
+          ? "Edit property outline"
+          : "Draw property outline";
+        elements.boundaryEditorStatus.textContent = activeProjectId === "waverley-terrain-demo"
+          ? "Draw and save a synthetic test boundary to enable planning on this terrain map."
+          : "Using illustrative sample outline.";
+        return;
+      }
       const parsed = JSON.parse(saved);
       if (!Array.isArray(parsed) || parsed.length < 3 || parsed.length > 100 ||
           !parsed.every(function (point) {
@@ -425,18 +561,27 @@
       }
       propertyBoundary = parsed.map(function (point) { return point.slice(); });
       renderPropertyBoundary(propertyBoundary);
-      elements.boundaryEditorStatus.textContent = "Saved custom outline loaded. Map background remains fictional.";
+      elements.editBoundary.textContent = "Edit property outline";
+      elements.boundaryEditorStatus.textContent = activeProjectId === "waverley-terrain-demo"
+        ? "Saved synthetic test outline loaded over real Waverley-area terrain."
+        : "Saved custom outline loaded. Map background remains fictional.";
     } catch (error) {
-      elements.boundaryEditorStatus.textContent =
-        "Could not load the saved outline; the illustrative sample outline is shown.";
+      elements.editBoundary.textContent = propertyBoundary.length >= 3
+        ? "Edit property outline"
+        : "Draw property outline";
+      elements.boundaryEditorStatus.textContent = activeProjectId === "waverley-terrain-demo"
+        ? "Could not load the saved outline. No test boundary is available; redraw and save it."
+        : "Could not load the saved outline; the default workspace outline is shown.";
       elements.boundaryEditorStatus.classList.add("storage-error");
       console.error("TerraForma could not read the property boundary:", error);
     }
-    propertyMapAreaM2PerUnit = propertyAreaM2 / polygonArea(propertyBoundary);
+    if (activeProjectId === "cedar-ridge" && propertyBoundary.length >= 3) {
+      propertyMapAreaM2PerUnit = propertyAreaM2 / polygonArea(propertyBoundary);
+    }
   }
 
   function beginBoundaryEdit() {
-    if (activeMapView !== "illustrative") {
+    if (!canEditCurrentMap()) {
       elements.boundaryEditorStatus.textContent = "Switch to the illustrative planning map before editing its sketch outline.";
       return;
     }
@@ -452,7 +597,9 @@
     elements.saveBoundary.hidden = false;
     elements.cancelBoundary.hidden = false;
     elements.boundaryEditorStatus.textContent =
-      "Click at least three points around the property, staying inside the map canvas. Existing planned areas must remain inside the new outline.";
+      activeProjectId === "waverley-terrain-demo"
+        ? "Click at least three points to sketch a synthetic parcel over the terrain. Existing planned features must remain inside it."
+        : "Click at least three points around the property, staying inside the map canvas. Existing planned areas must remain inside the new outline.";
     elements.mapSvg.focus({ preventScroll: true });
   }
 
@@ -524,7 +671,7 @@
     }
 
     try {
-      window.localStorage.setItem(propertyBoundaryStorageKey, JSON.stringify(propertyBoundary));
+      window.localStorage.setItem(currentStorageKey("boundary"), JSON.stringify(propertyBoundary));
     } catch (error) {
       propertyBoundary = previousBoundary;
       elements.boundaryEditorStatus.textContent =
@@ -533,16 +680,20 @@
       console.error("TerraForma could not save the property boundary:", error);
       return;
     }
-    propertyMapAreaM2PerUnit = propertyAreaM2 / polygonArea(propertyBoundary);
+    if (activeProjectId === "cedar-ridge") {
+      propertyMapAreaM2PerUnit = propertyAreaM2 / polygonArea(propertyBoundary);
+    }
     renderPropertyBoundary(propertyBoundary);
+    elements.editBoundary.textContent = "Edit property outline";
     boundaryEditing = false;
     boundaryPoints = [];
     elements.mapFrame.classList.remove("is-editing-boundary");
     elements.editBoundary.hidden = false;
     elements.saveBoundary.hidden = true;
     elements.cancelBoundary.hidden = true;
-    elements.boundaryEditorStatus.textContent =
-      "Custom outline saved in this browser. The terrain and basemap are still fictional.";
+    elements.boundaryEditorStatus.textContent = activeProjectId === "waverley-terrain-demo"
+      ? "Synthetic parcel outline saved on the Waverley terrain test map. It is not a legal parcel boundary."
+      : "Custom outline saved in this browser. The terrain and basemap are still fictional.";
     elements.boundaryEditorStatus.classList.remove("storage-error");
     renderPlan();
   }
@@ -567,7 +718,7 @@
       return;
     }
     try {
-      window.localStorage.setItem(propertyProfileStorageKey, JSON.stringify({
+      window.localStorage.setItem(currentStorageKey("profile"), JSON.stringify({
         version: 1,
         name: nextProfile.name,
         location: nextProfile.location,
@@ -630,7 +781,7 @@
 
   function readSiteBrief() {
     try {
-      const saved = window.localStorage.getItem(siteBriefStorageKey);
+      const saved = window.localStorage.getItem(currentStorageKey("brief"));
       if (saved === null) {
         savedSiteBrief = blankSiteBrief();
         applySiteBrief(savedSiteBrief);
@@ -734,7 +885,7 @@
     }
     try {
       const nextSiteBrief = collectSiteBrief();
-      window.localStorage.setItem(siteBriefStorageKey, JSON.stringify(nextSiteBrief));
+      window.localStorage.setItem(currentStorageKey("brief"), JSON.stringify(nextSiteBrief));
       savedSiteBrief = nextSiteBrief;
       elements.siteBriefSave.textContent = "Property brief saved only in this browser.";
       elements.preflightSave.textContent = "Check statuses saved only in this browser.";
@@ -780,7 +931,7 @@
   function resetUnreadableSiteBrief() {
     if (!window.confirm("The saved property brief could not be read. Forget that saved brief and start with a blank one?")) return;
     try {
-      window.localStorage.removeItem(siteBriefStorageKey);
+      window.localStorage.removeItem(currentStorageKey("brief"));
       siteBriefStorageAvailable = true;
       savedSiteBrief = blankSiteBrief();
       applySiteBrief(savedSiteBrief);
@@ -1381,7 +1532,7 @@
   }
 
   function getZoneById(id) {
-    return PROPERTY.zones.find(function (zone) { return zone.id === id; });
+    return ACTIVE_PROPERTY.zones.find(function (zone) { return zone.id === id; });
   }
 
   function selectZone(id) {
@@ -1399,7 +1550,7 @@
 
   function renderZonePicker() {
     elements.zonePicker.replaceChildren();
-    PROPERTY.zones.forEach(function (zone) {
+    ACTIVE_PROPERTY.zones.forEach(function (zone) {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "zone-button" + (zone.id === selectedZoneId ? " is-selected" : "");
@@ -1412,7 +1563,7 @@
 
   function renderMapMarkers() {
     elements.mapMarkers.replaceChildren();
-    PROPERTY.zones.forEach(function (zone) {
+    ACTIVE_PROPERTY.zones.forEach(function (zone) {
       const marker = document.createElement("button");
       marker.type = "button";
       marker.className = "map-marker" + (zone.id === selectedZoneId ? " is-selected" : "");
@@ -1715,12 +1866,13 @@
   }
 
   function nearestZone(points) {
+    if (!ACTIVE_PROPERTY.zones.length) return { label: "outlined test parcel" };
     const center = points.reduce(function (result, point) {
       result.x += point[0] / points.length;
       result.y += point[1] / points.length;
       return result;
     }, { x: 0, y: 0 });
-    return PROPERTY.zones.reduce(function (closest, zone) {
+    return ACTIVE_PROPERTY.zones.reduce(function (closest, zone) {
       const x = (zone.x / 100) * 640;
       const y = (zone.y / 100) * 430;
       const distance = Math.hypot(center.x - x, center.y - y);
@@ -1733,12 +1885,12 @@
   function renderPlan() {
     elements.planList.replaceChildren();
     elements.planCount.textContent = planItems.length;
-    elements.planTotal.textContent = planItems.length + (planItems.length === 1 ? " idea" : " ideas");
+    elements.planTotal.textContent = planItems.length + (planItems.length === 1 ? " feature" : " features");
 
     if (planItems.length === 0) {
       const empty = document.createElement("p");
       empty.className = "empty-plan";
-      empty.textContent = "No planning ideas yet. Add one to start shaping this sample property.";
+      empty.textContent = "No mapped features yet. Draw a property outline, then add a house, garden, or other feature.";
       elements.planList.appendChild(empty);
     }
 
@@ -1901,7 +2053,7 @@
 
   function readSavedPlan() {
     try {
-      const saved = window.localStorage.getItem(storageKey);
+      const saved = window.localStorage.getItem(currentStorageKey("plan"));
       if (saved === null) return;
       const parsed = JSON.parse(saved);
       if (!Array.isArray(parsed) || !parsed.every(function (item) {
@@ -1915,7 +2067,7 @@
 
       const occupied = [];
       planItems = parsed.map(function (item, index) {
-        const sample = PROPERTY.initialPlan.find(function (entry) { return entry.id === item.id; });
+        const sample = ACTIVE_PROPERTY.initialPlan.find(function (entry) { return entry.id === item.id; });
         let polygon = Array.isArray(item.polygon) && item.polygon.length >= 3 &&
           item.polygon.every(function (point) {
             return Array.isArray(point) && point.length === 2 &&
@@ -1990,8 +2142,8 @@
   function savePlan() {
     if (!storageAvailable) return false;
     try {
-      window.localStorage.setItem(storageKey, JSON.stringify(planItems));
-      elements.storageMessage.textContent = "Your planning ideas are stored only in this browser.";
+      window.localStorage.setItem(currentStorageKey("plan"), JSON.stringify(planItems));
+      elements.storageMessage.textContent = "Your mapped features are stored only in this browser.";
       elements.storageMessage.classList.remove("storage-error");
       return true;
     } catch (error) {
@@ -2173,13 +2325,13 @@
     })) return "Two outline points are too close together. Move or undo one of them.";
     if (polygonArea(points) < 4) return "This outline is too small to estimate. Draw a larger area.";
     if (hasSelfIntersection(points)) return "The outline crosses itself. Undo points and draw a simple shape.";
-    if (!isInsideProperty(points)) return "Every part of the footprint must stay inside the sample property boundary.";
+    if (!isInsideProperty(points)) return "Every part of the footprint must stay inside the drawn property boundary.";
     if (planItems.some(function (item) { return polygonsOverlap(item.polygon, points); })) {
       return "This footprint overlaps or touches another planned area. Choose a separate part of the map.";
     }
     const estimate = polygonArea(points) * propertyMapAreaM2PerUnit;
     if (usedAreaM2(planItems) + estimate > propertyAreaM2) {
-      return "This area would exceed the sample property's illustrative remaining capacity.";
+      return "This area would exceed the remaining property planning capacity.";
     }
     return "";
   }
@@ -2250,8 +2402,12 @@
   });
   elements.planForm.addEventListener("submit", function (event) {
     event.preventDefault();
-    if (activeMapView !== "illustrative") {
+    if (!canEditCurrentMap()) {
       showFormError("Switch back to the illustrative planning map before drawing a feature; the terrain preview is not georeferenced to this plan.");
+      return;
+    }
+    if (activeProjectId === "waverley-terrain-demo" && propertyBoundary.length < 3) {
+      showFormError("Draw and save a synthetic test-property outline on the terrain map before placing buildings or other features.");
       return;
     }
     if (boundaryEditing) {
@@ -2326,7 +2482,7 @@
   });
 
   elements.mapFrame.addEventListener("click", function (event) {
-    if (activeMapView !== "illustrative") return;
+    if (!canEditCurrentMap()) return;
     if (boundaryEditing) {
       if (boundaryPoints.length >= 100) {
         elements.boundaryEditorStatus.textContent = "The outline has reached its 100-point limit. Save it or cancel and redraw more simply.";
@@ -2343,7 +2499,7 @@
     addDrawingPoint(pointerToMapPoint(event));
   });
   elements.mapFrame.addEventListener("pointermove", function (event) {
-    if (activeMapView !== "illustrative") return;
+    if (!canEditCurrentMap()) return;
     if (boundaryEditing) return;
     if (!pendingPlanItem) return;
     const pointer = pointerToMapPoint(event);
@@ -2437,11 +2593,12 @@
   elements.resetBrief.addEventListener("click", resetUnreadableSiteBrief);
   elements.interfaceTheme.addEventListener("change", saveInterfaceTheme);
 
-  readSavedPlan();
   readPropertyBoundary();
   readPropertyProfile();
+  readSavedPlan();
   readInterfaceTheme();
   readSiteBrief();
+  updatePropertyWorkspaceControls();
   updatePreflightProgress();
   populateFeatureOptions();
   renderReferenceList();

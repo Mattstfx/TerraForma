@@ -312,7 +312,8 @@
                 <option value="illustrative">Illustrative planning map</option>
                 <option value="dtm-hillshade">Real terrain · hillshade (bare earth)</option>
                 <option value="dtm">Real terrain · elevation colors</option>
-                <option value="dtm-slope">Real terrain · slope</option>
+                <option value="dtm-slope">Real terrain · slope (grayscale)</option>
+                <option value="dtm-slope-color">Real terrain · slope (color)</option>
                 <option value="dsm-hillshade">Real surface · trees and structures</option>
               </select>
             </label>
@@ -341,6 +342,7 @@
               </defs>
               <rect width="640" height="430" rx="18" class="map-ground"></rect>
               <image id="terrain-raster" class="terrain-raster" x="0" y="0" width="640" height="430" preserveAspectRatio="none" aria-hidden="true"></image>
+              <image id="terrain-relief-overlay" class="terrain-relief-overlay" x="0" y="0" width="640" height="430" preserveAspectRatio="none" aria-hidden="true"></image>
               <path class="parcel" id="property-boundary" d="M90 55 L319 45 L554 91 L527 344 L293 380 L76 331 Z"></path>
               <path class="tree-zone illustration-context" d="M101 76 C163 57 224 76 284 66 L272 116 C216 126 163 105 102 125 Z"></path>
               <path class="tree-zone illustration-context" d="M494 88 C522 105 534 129 527 167 L511 300 C492 287 486 270 490 245 Z"></path>
@@ -366,6 +368,42 @@
             <div class="map-markers" id="map-markers"></div>
             <span class="north-arrow" aria-hidden="true">N <span>↑</span></span>
           </div>
+          <div class="map-navigation" aria-label="Map navigation">
+            <button class="map-action-button" id="map-zoom-out" type="button" aria-label="Zoom out">−</button>
+            <output id="map-zoom-level" aria-live="polite">100%</output>
+            <button class="map-action-button" id="map-zoom-in" type="button" aria-label="Zoom in">+</button>
+            <button class="map-action-button" id="map-zoom-reset" type="button">Reset view</button>
+            <button class="map-action-button" id="map-pan-toggle" type="button" aria-pressed="false">Pan map</button>
+          </div>
+          <p class="map-navigation-hint" id="map-navigation-hint">Select a footprint to edit it; drag it to move. Turn on Pan map to move the view.</p>
+          <section class="footprint-editor" id="footprint-editor" aria-labelledby="footprint-editor-title" hidden>
+            <div class="footprint-editor-heading">
+              <h4 id="footprint-editor-title">Edit selected footprint</h4>
+              <button class="map-action-button" id="clear-footprint-selection" type="button">Done</button>
+            </div>
+            <p id="footprint-editor-name"></p>
+            <div class="footprint-editor-fields">
+              <label for="footprint-shape">Shape
+                <select id="footprint-shape">
+                  <option value="rectangle">Rectangle</option>
+                  <option value="square">Square</option>
+                  <option value="circle">Circle · trees and guilds</option>
+                  <option value="freeform">Freeform</option>
+                </select>
+              </label>
+              <label for="footprint-width">Width (m)
+                <input id="footprint-width" type="number" min="0.5" max="500" step="0.5" required>
+              </label>
+              <label for="footprint-depth">Depth (m)
+                <input id="footprint-depth" type="number" min="0.5" max="500" step="0.5" required>
+              </label>
+              <label for="footprint-rotation">Rotation (degrees)
+                <input id="footprint-rotation" type="number" min="-360" max="360" step="1" value="0">
+              </label>
+            </div>
+            <button class="map-action-button map-action-primary" id="apply-footprint-edits" type="button">Apply footprint changes</button>
+            <p class="footprint-editor-status" id="footprint-editor-status" role="status" aria-live="polite"></p>
+          </section>
           <div class="map-footer" id="map-footer">
             <p id="map-footer-legend"><span class="legend-swatch woods-swatch"></span> Tree line <span class="legend-swatch field-swatch"></span> Open area <span class="legend-swatch planned-swatch"></span> Planned footprint</p>
             <span id="map-scale-note">Illustrative, not measured</span>
@@ -390,6 +428,7 @@
                   <option value="freeform">Freeform</option>
                   <option value="rectangle">Rectangle · 2 corners</option>
                   <option value="square">Square · 2 corners</option>
+                  <option value="circle">Circle · 2 corners</option>
                 </select>
               </label>
               <label for="drawing-snap">Snap map points

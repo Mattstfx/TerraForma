@@ -33,13 +33,21 @@
     },
     dtm: {
       label: "Bare-earth elevation colors",
-      style: "default",
+      style: "elevation_color",
       legend: "https://datacube.services.geo.ca/assets/legend/legend_elevation_color.png",
       description: "Natural Resources Canada HRDEM bare-earth elevation color layer for the Waverley-area test window."
     },
     "dtm-slope": {
-      label: "Bare-earth slope",
-      style: "default",
+      label: "Bare-earth slope (grayscale)",
+      layer: "dtm-slope",
+      style: "slope_grey",
+      legend: "https://datacube.services.geo.ca/assets/legend/legend_elevation_slope_grey.png",
+      description: "Natural Resources Canada HRDEM bare-earth slope layer for the Waverley-area test window."
+    },
+    "dtm-slope-color": {
+      label: "Bare-earth slope (color)",
+      layer: "dtm-slope",
+      style: "slope_color",
       legend: "https://datacube.services.geo.ca/assets/legend/legend_elevation_slope_color.png",
       description: "Natural Resources Canada HRDEM bare-earth slope layer for the Waverley-area test window."
     },
@@ -57,11 +65,27 @@
     mapDescription: document.getElementById("map-description"),
     mapContext: document.getElementById("map-context"),
     mapSectionHint: document.getElementById("map-section-hint"),
+    mapZoomIn: document.getElementById("map-zoom-in"),
+    mapZoomOut: document.getElementById("map-zoom-out"),
+    mapZoomReset: document.getElementById("map-zoom-reset"),
+    mapZoomLevel: document.getElementById("map-zoom-level"),
+    mapPanToggle: document.getElementById("map-pan-toggle"),
+    mapNavigationHint: document.getElementById("map-navigation-hint"),
+    footprintEditor: document.getElementById("footprint-editor"),
+    footprintEditorName: document.getElementById("footprint-editor-name"),
+    footprintShape: document.getElementById("footprint-shape"),
+    footprintWidth: document.getElementById("footprint-width"),
+    footprintDepth: document.getElementById("footprint-depth"),
+    footprintRotation: document.getElementById("footprint-rotation"),
+    applyFootprintEdits: document.getElementById("apply-footprint-edits"),
+    clearFootprintSelection: document.getElementById("clear-footprint-selection"),
+    footprintEditorStatus: document.getElementById("footprint-editor-status"),
     mapLegend: document.getElementById("map-legend"),
     mapFooterLegend: document.getElementById("map-footer-legend"),
     mapScaleNote: document.getElementById("map-scale-note"),
     terrainLayer: document.getElementById("terrain-layer"),
     terrainRaster: document.getElementById("terrain-raster"),
+    terrainReliefOverlay: document.getElementById("terrain-relief-overlay"),
     terrainStatus: document.getElementById("terrain-status"),
     terrainSource: document.getElementById("terrain-source"),
     terrainLegend: document.getElementById("terrain-legend"),
@@ -199,7 +223,8 @@
     return items.map(function (item) {
       return Object.assign({}, item, {
         polygon: item.polygon.map(function (point) { return point.slice(); }),
-        guildPlants: (item.guildPlants || []).slice()
+        guildPlants: (item.guildPlants || []).slice(),
+        rotationDegrees: Number.isFinite(item.rotationDegrees) ? item.rotationDegrees : 0
       });
     });
   }
@@ -232,6 +257,10 @@
   let keyboardCursor = { x: 320, y: 215 };
   let drawingShape = "freeform";
   let activeMapView = activeProjectId === "waverley-terrain-demo" ? "dtm-hillshade" : "illustrative";
+  let mapViewBox = { x: 0, y: 0, width: 640, height: 430 };
+  let mapPanActive = false;
+  let mapPanDrag = null;
+  let footprintDrag = null;
 
   function localDateValue(date) {
     return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0") +
@@ -348,7 +377,7 @@
       SERVICE: "WMS",
       VERSION: "1.3.0",
       REQUEST: "GetMap",
-      LAYERS: layer,
+      LAYERS: details.layer || layer,
       STYLES: details.style || "",
       CRS: "EPSG:4326",
       BBOX: terrainDemoBounds,
@@ -400,6 +429,8 @@
       elements.boundaryEditorNote.textContent =
         "The terrain illustration stays fictional. Edit the outline to match a sketch; it is not georeferenced or a surveyed boundary.";
       elements.terrainRaster.removeAttribute("href");
+      elements.terrainReliefOverlay.removeAttribute("href");
+      elements.mapFrame.classList.remove("is-elevation-color");
       elements.terrainLegendImage.removeAttribute("src");
       return;
     }
@@ -416,6 +447,14 @@
     elements.terrainStatus.textContent = "Loading " + details.label + " from Natural Resources Canada…";
     elements.terrainRaster.setAttribute("href", terrainMapUrl(view));
     elements.terrainRaster.dataset.layer = view;
+    if (view === "dtm") {
+      elements.mapFrame.classList.add("is-elevation-color");
+      elements.terrainReliefOverlay.setAttribute("href", terrainMapUrl("dtm-hillshade"));
+      elements.terrainReliefOverlay.dataset.layer = view;
+    } else {
+      elements.mapFrame.classList.remove("is-elevation-color");
+      elements.terrainReliefOverlay.removeAttribute("href");
+    }
     if (details.legend) {
       elements.terrainLegendImage.src = details.legend;
       elements.terrainLegendImage.alt = details.label + " legend from Natural Resources Canada.";
@@ -589,6 +628,7 @@
       elements.boundaryEditorStatus.textContent = "Finish or cancel the current feature drawing before editing the property outline.";
       return;
     }
+    setMapPanMode(false);
     boundaryEditing = true;
     boundaryPoints = [];
     keyboardCursor = { x: 320, y: 215 };
@@ -600,6 +640,7 @@
       activeProjectId === "waverley-terrain-demo"
         ? "Click at least three points to sketch a synthetic parcel over the terrain. Existing planned features must remain inside it."
         : "Click at least three points around the property, staying inside the map canvas. Existing planned areas must remain inside the new outline.";
+    elements.mapFrame.scrollIntoView({ behavior: "smooth", block: "center" });
     elements.mapSvg.focus({ preventScroll: true });
   }
 
@@ -1653,7 +1694,7 @@
       const start = points[index];
       const end = points[(index + 1) % points.length];
       const segmentLength = Math.hypot(end[0] - start[0], end[1] - start[1]);
-      const steps = Math.max(1, Math.ceil(segmentLength / 2));
+      const steps = Math.max(1, Math.ceil(segmentLength / 0.5));
       for (let step = 0; step <= steps; step += 1) {
         const ratio = step / steps;
         const sample = [
@@ -1710,6 +1751,52 @@
     return 1 / Math.sqrt(propertyMapAreaM2PerUnit);
   }
 
+  function constrainedMapViewBox(viewBox) {
+    const width = Math.max(120, Math.min(640, viewBox.width));
+    const height = width * 430 / 640;
+    return {
+      x: Math.max(0, Math.min(640 - width, viewBox.x)),
+      y: Math.max(0, Math.min(430 - height, viewBox.y)),
+      width: width,
+      height: height
+    };
+  }
+
+  function updateMapViewBox(viewBox) {
+    mapViewBox = constrainedMapViewBox(viewBox);
+    elements.mapSvg.setAttribute("viewBox", [
+      mapViewBox.x,
+      mapViewBox.y,
+      mapViewBox.width,
+      mapViewBox.height
+    ].join(" "));
+    elements.mapZoomLevel.textContent = Math.round(640 / mapViewBox.width * 100) + "%";
+    elements.mapZoomOut.disabled = mapViewBox.width >= 640;
+    elements.mapZoomIn.disabled = mapViewBox.width <= 120;
+    elements.mapZoomReset.disabled = mapViewBox.width === 640 && mapViewBox.x === 0 && mapViewBox.y === 0;
+  }
+
+  function zoomMap(factor) {
+    const width = mapViewBox.width * factor;
+    const height = width * 430 / 640;
+    updateMapViewBox({
+      x: mapViewBox.x + (mapViewBox.width - width) / 2,
+      y: mapViewBox.y + (mapViewBox.height - height) / 2,
+      width: width,
+      height: height
+    });
+  }
+
+  function setMapPanMode(active) {
+    mapPanActive = active;
+    elements.mapFrame.classList.toggle("is-pan-active", active);
+    elements.mapPanToggle.setAttribute("aria-pressed", active ? "true" : "false");
+    elements.mapPanToggle.textContent = active ? "Pan mode on" : "Pan map";
+    elements.mapNavigationHint.textContent = active
+      ? "Drag the map to move the view. Turn off Pan map to select or draw footprints."
+      : "Select a footprint to edit it; drag it to move. Turn on Pan map to move the view.";
+  }
+
   function snapMapPoint(point) {
     const gridMeters = Number(elements.drawingSnap.value);
     if (!gridMeters) return point;
@@ -1749,6 +1836,16 @@
       depthUnits = dimensions.depth * mapUnitsPerMeter();
     }
 
+    if (drawingShape === "circle") {
+      const diameter = dimensions.width !== null
+        ? widthUnits
+        : Math.min(widthUnits, depthUnits);
+      return circlePolygon(
+        [(anchor[0] + endpoint[0]) / 2, (anchor[1] + endpoint[1]) / 2],
+        diameter
+      );
+    }
+
     return [
       anchor,
       [anchor[0] + directionX * widthUnits, anchor[1]],
@@ -1757,12 +1854,105 @@
     ];
   }
 
+  function polygonCenter(points) {
+    return points.reduce(function (center, point) {
+      center.x += point[0] / points.length;
+      center.y += point[1] / points.length;
+      return center;
+    }, { x: 0, y: 0 });
+  }
+
+  function rotatePoint(point, center, degrees) {
+    const radians = degrees * Math.PI / 180;
+    const x = point[0] - center.x;
+    const y = point[1] - center.y;
+    return [
+      center.x + x * Math.cos(radians) - y * Math.sin(radians),
+      center.y + x * Math.sin(radians) + y * Math.cos(radians)
+    ];
+  }
+
+  function circlePolygon(center, diameter) {
+    return Array.from({ length: 32 }, function (_, index) {
+      const angle = index * Math.PI * 2 / 32;
+      return [
+        center[0] + Math.cos(angle) * diameter / 2,
+        center[1] + Math.sin(angle) * diameter / 2
+      ];
+    });
+  }
+
+  function polygonBounds(points) {
+    return points.reduce(function (bounds, point) {
+      bounds.minX = Math.min(bounds.minX, point[0]);
+      bounds.maxX = Math.max(bounds.maxX, point[0]);
+      bounds.minY = Math.min(bounds.minY, point[1]);
+      bounds.maxY = Math.max(bounds.maxY, point[1]);
+      return bounds;
+    }, { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity });
+  }
+
+  function footprintDimensions(item) {
+    const center = polygonCenter(item.polygon);
+    const rotation = Number.isFinite(item.rotationDegrees) ? item.rotationDegrees : 0;
+    const localPoints = item.polygon.map(function (point) {
+      return rotatePoint(point, center, -rotation);
+    });
+    const bounds = polygonBounds(localPoints);
+    const width = (bounds.maxX - bounds.minX) / mapUnitsPerMeter();
+    const depth = (bounds.maxY - bounds.minY) / mapUnitsPerMeter();
+    return {
+      width: Math.max(0.5, Math.round(width * 2) / 2),
+      depth: Math.max(0.5, Math.round(depth * 2) / 2)
+    };
+  }
+
+  function resizedFootprint(item, shape, widthMeters, depthMeters, rotationDegrees) {
+    const center = polygonCenter(item.polygon);
+    const widthUnits = widthMeters * mapUnitsPerMeter();
+    const depthUnits = depthMeters * mapUnitsPerMeter();
+    if (shape === "circle") {
+      return circlePolygon([center.x, center.y], widthUnits);
+    }
+
+    if (shape === "rectangle" || shape === "square") {
+      const depth = shape === "square" ? widthUnits : depthUnits;
+      return [
+        [-widthUnits / 2, -depth / 2],
+        [widthUnits / 2, -depth / 2],
+        [widthUnits / 2, depth / 2],
+        [-widthUnits / 2, depth / 2]
+      ].map(function (point) {
+        return rotatePoint([center.x + point[0], center.y + point[1]], center, rotationDegrees);
+      });
+    }
+
+    const oldRotation = Number.isFinite(item.rotationDegrees) ? item.rotationDegrees : 0;
+    const localPoints = item.polygon.map(function (point) {
+      return rotatePoint(point, center, -oldRotation);
+    });
+    const bounds = polygonBounds(localPoints);
+    const oldWidth = bounds.maxX - bounds.minX;
+    const oldDepth = bounds.maxY - bounds.minY;
+    if (oldWidth <= 0 || oldDepth <= 0) return [];
+    return localPoints.map(function (point) {
+      const resized = [
+        center.x + (point[0] - center.x) * widthUnits / oldWidth,
+        center.y + (point[1] - center.y) * depthUnits / oldDepth
+      ];
+      return rotatePoint(resized, center, rotationDegrees);
+    });
+  }
+
   function syncDrawingControls() {
     const isRectangle = drawingShape === "rectangle";
     const isSquare = drawingShape === "square";
-    elements.drawingDimensions.hidden = !isRectangle && !isSquare;
+    const isCircle = drawingShape === "circle";
+    elements.drawingDimensions.hidden = !isRectangle && !isSquare && !isCircle;
     elements.drawingDepthLabel.hidden = !isRectangle;
-    elements.drawingWidthLabel.childNodes[0].textContent = isSquare ? "Side length (m) " : "Width (m) ";
+    elements.drawingWidthLabel.childNodes[0].textContent = isSquare
+      ? "Side length (m) "
+      : isCircle ? "Diameter (m) " : "Width (m) ";
   }
 
   function minimumDrawingPoints() {
@@ -1781,7 +1971,7 @@
     } else {
       elements.drawingStatus.textContent = drawingShape === "freeform"
         ? "Click or tap at least three points inside the boundary to outline this feature."
-        : "Place the first corner inside the boundary, then the opposite corner. Optional dimensions set the scaled size.";
+        : "Place two opposite corners inside the boundary. Optional dimensions set the scaled size.";
     }
   }
 
@@ -1908,20 +2098,19 @@
       title.textContent = item.feature;
       const location = document.createElement("p");
       location.className = "plan-location";
-      const bounds = item.polygon.reduce(function (result, point) {
-        result.minX = Math.min(result.minX, point[0]);
-        result.maxX = Math.max(result.maxX, point[0]);
-        result.minY = Math.min(result.minY, point[1]);
-        result.maxY = Math.max(result.maxY, point[1]);
-        return result;
-      }, { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity });
-      const dimensions = item.shape && item.shape !== "freeform"
-        ? " · about " +
-          Math.round((bounds.maxX - bounds.minX) / mapUnitsPerMeter() * 10) / 10 + " × " +
-          Math.round((bounds.maxY - bounds.minY) / mapUnitsPerMeter() * 10) / 10 + " m"
+      const itemDimensions = footprintDimensions(item);
+      const dimensions = item.shape === "circle"
+        ? " · about " + itemDimensions.width + " m diameter"
+        : item.shape === "square"
+          ? " · about " + itemDimensions.width + " m square"
+          : item.shape && item.shape !== "freeform"
+            ? " · about " + itemDimensions.width + " × " + itemDimensions.depth + " m"
+            : "";
+      const rotation = Number.isFinite(item.rotationDegrees) && item.rotationDegrees !== 0
+        ? " · rotated " + item.rotationDegrees + "°"
         : "";
       location.textContent = item.location + " · about " +
-        Math.round(polygonArea(item.polygon) * propertyMapAreaM2PerUnit) + " m²" + dimensions;
+        Math.round(polygonArea(item.polygon) * propertyMapAreaM2PerUnit) + " m²" + dimensions + rotation;
       const variety = document.createElement("p");
       variety.className = "plan-variety";
       variety.textContent = item.variety || "Planning option to research";
@@ -2040,13 +2229,134 @@
       elements.planList.appendChild(article);
     });
     renderMapAreas();
+    updateFootprintEditor();
     updateCapacity();
+  }
+
+  function updateFootprintEditor() {
+    const item = planItems.find(function (entry) { return entry.id === selectedPlanId; });
+    elements.footprintEditor.hidden = !item;
+    if (!item) return;
+    const dimensions = footprintDimensions(item);
+    elements.footprintEditorName.textContent = item.feature + " · " + (item.variety || "Selected footprint");
+    elements.footprintShape.value = ["rectangle", "square", "circle", "freeform"].includes(item.shape)
+      ? item.shape
+      : "freeform";
+    elements.footprintWidth.value = dimensions.width;
+    elements.footprintDepth.value = dimensions.depth;
+    elements.footprintDepth.disabled = item.shape === "circle" || item.shape === "square";
+    elements.footprintRotation.value = Number.isFinite(item.rotationDegrees) ? item.rotationDegrees : 0;
+    elements.footprintEditorStatus.textContent = "Drag the selected footprint on the map to move it. Dimensions are approximate map measurements.";
+  }
+
+  function validateFootprintEdit(itemId, points) {
+    if (points.length < 3 || polygonArea(points) < 4) {
+      return "The footprint is too small. Increase its dimensions before applying.";
+    }
+    if (hasSelfIntersection(points)) return "The footprint crosses itself. Change its shape or dimensions.";
+    if (!isInsideProperty(points)) return "The entire footprint must stay inside the property boundary.";
+    if (planItems.some(function (item) {
+      return item.id !== itemId && polygonsOverlap(item.polygon, points);
+    })) return "This footprint overlaps or touches another mapped feature.";
+    const otherArea = planItems.reduce(function (total, item) {
+      return total + (item.id === itemId ? 0 : polygonArea(item.polygon) * propertyMapAreaM2PerUnit);
+    }, 0);
+    if (otherArea + polygonArea(points) * propertyMapAreaM2PerUnit > propertyAreaM2) {
+      return "This footprint would exceed the entered property-area estimate.";
+    }
+    return "";
+  }
+
+  function finishFootprintDrag(commit) {
+    if (!footprintDrag) return;
+    const drag = footprintDrag;
+    footprintDrag = null;
+    if (!drag.moved) return;
+    const item = planItems.find(function (entry) { return entry.id === drag.id; });
+    if (!item) return;
+    const error = commit ? validateFootprintEdit(item.id, item.polygon) : "Move canceled.";
+    if (error) {
+      item.polygon = drag.originalPolygon;
+      renderPlan();
+      elements.footprintEditorStatus.textContent = error;
+      return;
+    }
+    if (!savePlan()) {
+      item.polygon = drag.originalPolygon;
+      renderPlan();
+      elements.footprintEditorStatus.textContent = "Could not save this move. The footprint was returned to its prior position.";
+      return;
+    }
+    renderPlan();
+    elements.footprintEditorStatus.textContent = "Footprint moved and saved on this device.";
+  }
+
+  function applyFootprintEdits() {
+    const item = planItems.find(function (entry) { return entry.id === selectedPlanId; });
+    if (!item) return;
+    if (!elements.footprintWidth.checkValidity() ||
+        !elements.footprintDepth.checkValidity() ||
+        !elements.footprintRotation.checkValidity()) {
+      elements.footprintEditorStatus.textContent =
+        "Enter widths and depths from 0.5 to 500 metres and a rotation from −360° to 360°.";
+      return;
+    }
+    const shape = elements.footprintShape.value;
+    const width = Number(elements.footprintWidth.value);
+    const depth = shape === "circle" || shape === "square"
+      ? width
+      : Number(elements.footprintDepth.value);
+    const rotationDegrees = Number(elements.footprintRotation.value);
+    const polygon = resizedFootprint(item, shape, width, depth, rotationDegrees);
+    const error = validateFootprintEdit(item.id, polygon);
+    if (error) {
+      elements.footprintEditorStatus.textContent = error;
+      return;
+    }
+    const previous = {
+      polygon: item.polygon,
+      shape: item.shape,
+      rotationDegrees: item.rotationDegrees
+    };
+    item.polygon = polygon;
+    item.shape = shape;
+    item.rotationDegrees = rotationDegrees;
+    if (!savePlan()) {
+      item.polygon = previous.polygon;
+      item.shape = previous.shape;
+      item.rotationDegrees = previous.rotationDegrees;
+      renderPlan();
+      elements.footprintEditorStatus.textContent = "Could not save these changes. The footprint is unchanged.";
+      return;
+    }
+    renderPlan();
+    elements.footprintEditorStatus.textContent = "Footprint changes saved on this device.";
+  }
+
+  function centerMapOnFootprint(item) {
+    const dimensions = footprintDimensions(item);
+    const widthUnits = Math.max(
+      (dimensions.width * mapUnitsPerMeter()) * 2.4,
+      (dimensions.depth * mapUnitsPerMeter()) * 2.4,
+      160
+    );
+    const width = Math.min(640, widthUnits);
+    const height = width * 430 / 640;
+    const center = polygonCenter(item.polygon);
+    updateMapViewBox({
+      x: center.x - width / 2,
+      y: center.y - height / 2,
+      width: width,
+      height: height
+    });
   }
 
   function selectPlan(id, scrollToMap) {
     selectedPlanId = id;
     renderPlan();
     if (scrollToMap) {
+      const selectedItem = planItems.find(function (item) { return item.id === id; });
+      if (selectedItem) centerMapOnFootprint(selectedItem);
       document.getElementById("property").scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }
@@ -2113,7 +2423,13 @@
             : null,
           rotationDays: Number.isInteger(item.rotationDays) ? item.rotationDays : null,
           scheduleStartDate: typeof item.scheduleStartDate === "string" ? item.scheduleStartDate : "",
-          shape: ["freeform", "rectangle", "square"].includes(item.shape) ? item.shape : "freeform"
+          shape: ["freeform", "rectangle", "square", "circle"].includes(item.shape)
+            ? item.shape
+            : "freeform",
+          rotationDegrees: Number.isFinite(item.rotationDegrees) &&
+            item.rotationDegrees >= -360 && item.rotationDegrees <= 360
+            ? item.rotationDegrees
+            : 0
         });
       });
     } catch (error) {
@@ -2246,11 +2562,14 @@
   }
 
   function beginDrawing(item) {
+    setMapPanMode(false);
+    selectedPlanId = null;
     pendingPlanItem = item;
     drawingPoints = [];
     drawingShape = elements.drawingShape.value;
     keyboardCursor = { x: 320, y: 215 };
     elements.drawingToolbar.hidden = false;
+    renderPlan();
     syncDrawingControls();
     updateDrawingStatus();
     elements.drawingStatus.textContent += " Drawing " + item.feature +
@@ -2258,10 +2577,7 @@
       getCatalogItem(item.featureId).defaultAreaM2 + " m²; the saved estimate comes from your drawing.";
     showFormError("");
     renderDraft();
-    const previousScrollBehavior = document.documentElement.style.scrollBehavior;
-    document.documentElement.style.scrollBehavior = "auto";
-    document.getElementById("property").scrollIntoView({ behavior: "auto", block: "start" });
-    document.documentElement.style.scrollBehavior = previousScrollBehavior;
+    elements.mapFrame.scrollIntoView({ behavior: "smooth", block: "center" });
     elements.mapSvg.focus({ preventScroll: true });
   }
 
@@ -2284,13 +2600,15 @@
   }
 
   function pointerToRawMapPoint(event) {
-    const rectangle = elements.mapSvg.getBoundingClientRect();
-    const scale = Math.min(rectangle.width / 640, rectangle.height / 430);
-    const offsetX = (rectangle.width - 640 * scale) / 2;
-    const offsetY = (rectangle.height - 430 * scale) / 2;
+    const transform = elements.mapSvg.getScreenCTM();
+    if (!transform) throw new Error("The property map is not ready to receive pointer input.");
+    const point = elements.mapSvg.createSVGPoint();
+    point.x = event.clientX;
+    point.y = event.clientY;
+    const mapPoint = point.matrixTransform(transform.inverse());
     return [
-      Math.max(0, Math.min(640, (event.clientX - rectangle.left - offsetX) / scale)),
-      Math.max(0, Math.min(430, (event.clientY - rectangle.top - offsetY) / scale))
+      Math.max(0, Math.min(640, mapPoint.x)),
+      Math.max(0, Math.min(430, mapPoint.y))
     ];
   }
 
@@ -2350,6 +2668,7 @@
       note: pendingPlanItem.note || "A starting idea to research and adapt to the actual site.",
       polygon: finalPoints.map(function (point) { return point.slice(); }),
       shape: drawingShape,
+      rotationDegrees: 0,
       createdAt: new Date().toISOString()
     });
     planItems.push(savedItem);
@@ -2483,6 +2802,7 @@
 
   elements.mapFrame.addEventListener("click", function (event) {
     if (!canEditCurrentMap()) return;
+    if (mapPanActive) return;
     if (boundaryEditing) {
       if (boundaryPoints.length >= 100) {
         elements.boundaryEditorStatus.textContent = "The outline has reached its 100-point limit. Save it or cancel and redraw more simply.";
@@ -2498,13 +2818,107 @@
         event.target.closest(".map-marker, .planned-area, .planned-area-label, .north-arrow"))) return;
     addDrawingPoint(pointerToMapPoint(event));
   });
-  elements.mapFrame.addEventListener("pointermove", function (event) {
+  elements.mapSvg.addEventListener("pointerdown", function (event) {
+    if (event.button !== 0) return;
+    if (mapPanActive && !boundaryEditing && !pendingPlanItem) {
+      const rectangle = elements.mapSvg.getBoundingClientRect();
+      const scale = Math.min(rectangle.width / mapViewBox.width, rectangle.height / mapViewBox.height);
+      mapPanDrag = {
+        pointerId: event.pointerId,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        viewBox: Object.assign({}, mapViewBox),
+        unitsPerPixel: 1 / scale,
+        moved: false
+      };
+      elements.mapSvg.setPointerCapture(event.pointerId);
+      event.preventDefault();
+      return;
+    }
+    if (!canEditCurrentMap() || mapPanActive || boundaryEditing || pendingPlanItem) return;
+    const target = event.target.closest && event.target.closest("[data-plan-id]");
+    if (!target) return;
+    const id = target.getAttribute("data-plan-id");
+    const item = planItems.find(function (entry) { return entry.id === id; });
+    if (!item) return;
+    selectPlan(id, false);
+    footprintDrag = {
+      id: id,
+      startPoint: pointerToRawMapPoint(event),
+      originalPolygon: item.polygon.map(function (point) { return point.slice(); }),
+      moved: false
+    };
+    elements.mapSvg.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  });
+  elements.mapSvg.addEventListener("pointermove", function (event) {
+    if (mapPanDrag) {
+      const deltaX = (event.clientX - mapPanDrag.clientX) * mapPanDrag.unitsPerPixel;
+      const deltaY = (event.clientY - mapPanDrag.clientY) * mapPanDrag.unitsPerPixel;
+      mapPanDrag.moved = mapPanDrag.moved || Math.hypot(deltaX, deltaY) > 2;
+      updateMapViewBox({
+        x: mapPanDrag.viewBox.x - deltaX,
+        y: mapPanDrag.viewBox.y - deltaY,
+        width: mapPanDrag.viewBox.width,
+        height: mapPanDrag.viewBox.height
+      });
+      return;
+    }
+    if (footprintDrag) {
+      const point = pointerToRawMapPoint(event);
+      const deltaX = point[0] - footprintDrag.startPoint[0];
+      const deltaY = point[1] - footprintDrag.startPoint[1];
+      if (Math.hypot(deltaX, deltaY) > 1) footprintDrag.moved = true;
+      const item = planItems.find(function (entry) { return entry.id === footprintDrag.id; });
+      if (item && footprintDrag.moved) {
+        item.polygon = footprintDrag.originalPolygon.map(function (original) {
+          return [original[0] + deltaX, original[1] + deltaY];
+        });
+        renderMapAreas();
+      }
+      return;
+    }
     if (!canEditCurrentMap()) return;
     if (boundaryEditing) return;
     if (!pendingPlanItem) return;
     const pointer = pointerToMapPoint(event);
     keyboardCursor = { x: pointer[0], y: pointer[1] };
     if (drawingShape !== "freeform" && drawingPoints.length < 2) renderDraft();
+  });
+  elements.mapSvg.addEventListener("pointerup", function () {
+    if (mapPanDrag) {
+      mapPanDrag = null;
+      return;
+    }
+    finishFootprintDrag(true);
+  });
+  elements.mapSvg.addEventListener("pointercancel", function () {
+    mapPanDrag = null;
+    finishFootprintDrag(false);
+  });
+  elements.mapZoomIn.addEventListener("click", function () { zoomMap(0.8); });
+  elements.mapZoomOut.addEventListener("click", function () { zoomMap(1.25); });
+  elements.mapZoomReset.addEventListener("click", function () {
+    updateMapViewBox({ x: 0, y: 0, width: 640, height: 430 });
+  });
+  elements.mapPanToggle.addEventListener("click", function () {
+    if (pendingPlanItem || boundaryEditing) return;
+    setMapPanMode(!mapPanActive);
+  });
+  elements.footprintShape.addEventListener("change", function () {
+    const fixedAspect = ["circle", "square"].includes(elements.footprintShape.value);
+    elements.footprintDepth.disabled = fixedAspect;
+    if (fixedAspect) elements.footprintDepth.value = elements.footprintWidth.value;
+  });
+  elements.footprintWidth.addEventListener("input", function () {
+    if (elements.footprintDepth.disabled) {
+      elements.footprintDepth.value = elements.footprintWidth.value;
+    }
+  });
+  elements.applyFootprintEdits.addEventListener("click", applyFootprintEdits);
+  elements.clearFootprintSelection.addEventListener("click", function () {
+    selectedPlanId = null;
+    renderPlan();
   });
   elements.drawingShape.addEventListener("change", function () {
     drawingShape = elements.drawingShape.value;
@@ -2603,6 +3017,7 @@
   populateFeatureOptions();
   renderReferenceList();
   selectZone(selectedZoneId);
+  updateMapViewBox(mapViewBox);
   renderPlan();
   renderPerspective();
 })();

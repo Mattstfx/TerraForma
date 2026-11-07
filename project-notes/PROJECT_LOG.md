@@ -12,6 +12,22 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 ### Session — 2026-11-07 — driver: student
 
+- **Goal for this session:** Make the property map easier to navigate and footprints easier to place and revise.
+- **What changed:** Added zoom controls, reset, and an explicit pan mode; map pointer coordinates now use the SVG transform so drawing stays aligned while zoomed. Selecting a footprint opens editable shape, dimensions, and rotation controls; users can drag it to move, and choose a circle for round guilds/trees. “Show on map” centers and zooms to a feature. Out-of-boundary, overlapping, and over-capacity edits are rejected, with failed moves reverted. Boundary and drawing tools scroll the map into view before editing.
+- **Validation:** In an isolated browser profile, verified boundary creation, zoomed drawing, rectangle sizing and rotation, circle creation/editing, plan persistence, selecting map footprints, panning, focus-to-feature, and rejection/reversion of out-of-boundary edits. `node --check` and `git diff --check` passed.
+- **Limitations:** Footprints are approximate 2D plan shapes, not construction drawings or survey measurements. No map-data resolution or area estimate supports inch-level accuracy.
+- **Committed?** no — not committed yet.
+
+### Session — 2026-11-07 — driver: student
+
+- **Goal for this session:** Improve terrain-layer readability and make the synthetic parcel boundary stand out on the Waverley map.
+- **What changed:** Elevation colors now use NRCan's named `elevation_color` style with a semi-transparent bare-earth hillshade overlay. Slope now defaults to NRCan's grayscale `slope_grey` style, with its colored `slope_color` view still available. The synthetic boundary uses a dark dashed stroke with a light halo for contrast over varied terrain.
+- **Source and scope:** The available styles and their legend assets were confirmed in NRCan's WMS GetCapabilities response. Elevation/slope remain regional data layers, not parcel survey or inch-accurate drainage evidence.
+- **What we checked:** JavaScript syntax, diff formatting, and the service's published style names and legend URLs.
+- **Committed?** no — not committed yet.
+
+### Session — 2026-11-07 — driver: student
+
 - **Goal for this session:** Establish a separate terrain-backed test workspace without representing real land ownership, and preserve Cedar Ridge as an archived demo.
 - **What worked:** The fixed Natural Resources Canada HRDEM Mosaic WMS preview now covers a Waverley-area test window and offers bare-earth hillshade, elevation colors, bare-earth slope, and surface hillshade (trees/structures where available). The new Waverley workspace starts with no property outline, observations, or planned features. Users can draw and save a synthetic test boundary over the terrain, then add existing or proposed house/outbuilding footprints and other features. The archived Cedar Ridge workspace retains its separate plan, profile, brief, and boundary storage.
 - **Source and privacy:** The HRDEM product specification points to the [Open Government Licence — Canada](https://open.canada.ca/en/open-government-licence-canada). The app requests only the fixed demo bounding box from the [NRCan HRDEM WMS](https://datacube.services.geo.ca/ows/elevation); it does not transmit the user's entered location. The Waverley terrain is real regional context, not a real homestead parcel, surveyed boundary, verified ownership, building inventory, or permission to access land. Footprints are manually placed 2D planning shapes, not detected structures or 3D buildings.

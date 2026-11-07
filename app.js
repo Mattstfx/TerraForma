@@ -4,6 +4,7 @@
   const storageKey = "terraforma-sample-plan";
   const siteBriefStorageKey = "terraforma-site-brief";
   const propertyProfileStorageKey = "terraforma-property-profile";
+  const propertyBoundaryStorageKey = "terraforma-property-boundary";
   const squareMetersPerAcre = 4046.8564224;
   const squareMetersPerHectare = 10000;
   const interfaceThemeStorageKey = "terraforma-interface-theme";
@@ -17,6 +18,7 @@
     mapFrame: document.querySelector(".map-frame"),
     mapSvg: document.getElementById("site-map"),
     mapTitle: document.getElementById("map-title"),
+    propertyBoundary: document.getElementById("property-boundary"),
     planAreas: document.getElementById("plan-areas"),
     zonePicker: document.getElementById("zone-picker"),
     planList: document.getElementById("plan-list"),
@@ -65,6 +67,10 @@
     undoPoint: document.getElementById("undo-point"),
     finishDrawing: document.getElementById("finish-drawing"),
     cancelDrawing: document.getElementById("cancel-drawing"),
+    editBoundary: document.getElementById("edit-boundary"),
+    saveBoundary: document.getElementById("save-boundary"),
+    cancelBoundary: document.getElementById("cancel-boundary"),
+    boundaryEditorStatus: document.getElementById("boundary-editor-status"),
     capacitySummary: document.getElementById("capacity-summary"),
     capacityProgress: document.getElementById("capacity-progress"),
     perspectiveTabs: document.getElementById("perspective-tabs"),
@@ -128,11 +134,14 @@
   };
   let propertyProfileIsSaved = false;
   let propertyAreaM2 = PROPERTY.areaM2;
+  let propertyBoundary = PROPERTY.mapBoundary.map(function (point) { return point.slice(); });
   let propertyMapAreaM2PerUnit = PROPERTY.mapAreaM2PerUnit;
   let speciesCardTimer = null;
   let speciesCardAnchor = null;
   let pendingPlanItem = null;
   let drawingPoints = [];
+  let boundaryEditing = false;
+  let boundaryPoints = [];
   let keyboardCursor = { x: 320, y: 215 };
   let drawingShape = "freeform";
 
@@ -186,7 +195,7 @@
 
   function applyPropertyProfile(profile, isSaved) {
     propertyAreaM2 = areaInSquareMeters(profile);
-    propertyMapAreaM2PerUnit = propertyAreaM2 / polygonArea(PROPERTY.mapBoundary);
+    propertyMapAreaM2PerUnit = propertyAreaM2 / polygonArea(propertyBoundary);
     elements.propertyProfileStatusMessage.classList.remove("storage-error");
     elements.propertyName.textContent = profile.name;
     elements.mapTitle.textContent = "Illustrative map · " + profile.name;
@@ -224,6 +233,7 @@
         applyPropertyProfile(savedPropertyProfile, false);
         return;
       }
+
       const parsed = JSON.parse(saved);
       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed) ||
           parsed.version !== 1 || typeof parsed.name !== "string" ||
@@ -250,6 +260,148 @@
       elements.propertyProfileStatusMessage.classList.add("storage-error");
       console.error("TerraForma could not read the property profile:", error);
     }
+  }
+
+  function renderPropertyBoundary(points) {
+    if (!points || points.length < 3) return;
+    elements.propertyBoundary.setAttribute("d", "M" + points.map(function (point) {
+      return point[0] + " " + point[1];
+    }).join(" L") + " Z");
+  }
+
+  function readPropertyBoundary() {
+    try {
+      const saved = window.localStorage.getItem(propertyBoundaryStorageKey);
+      if (saved === null) return;
+      const parsed = JSON.parse(saved);
+      if (!Array.isArray(parsed) || parsed.length < 3 || parsed.length > 100 ||
+          !parsed.every(function (point) {
+            return Array.isArray(point) && point.length === 2 &&
+              Number.isFinite(point[0]) && Number.isFinite(point[1]) &&
+              point[0] >= 0 && point[0] <= 640 && point[1] >= 0 && point[1] <= 430;
+          }) ||
+          hasShortEdge(parsed) ||
+          hasSelfIntersection(parsed) || polygonArea(parsed) < 500) {
+        throw new Error("The saved property outline has an unexpected format.");
+      }
+      propertyBoundary = parsed.map(function (point) { return point.slice(); });
+      renderPropertyBoundary(propertyBoundary);
+      elements.boundaryEditorStatus.textContent = "Saved custom outline loaded. Map background remains fictional.";
+    } catch (error) {
+      elements.boundaryEditorStatus.textContent =
+        "Could not load the saved outline; the illustrative sample outline is shown.";
+      elements.boundaryEditorStatus.classList.add("storage-error");
+      console.error("TerraForma could not read the property boundary:", error);
+    }
+    propertyMapAreaM2PerUnit = propertyAreaM2 / polygonArea(propertyBoundary);
+  }
+
+  function beginBoundaryEdit() {
+    if (pendingPlanItem) {
+      elements.boundaryEditorStatus.textContent = "Finish or cancel the current feature drawing before editing the property outline.";
+      return;
+    }
+    boundaryEditing = true;
+    boundaryPoints = [];
+    keyboardCursor = { x: 320, y: 215 };
+    elements.mapFrame.classList.add("is-editing-boundary");
+    elements.editBoundary.hidden = true;
+    elements.saveBoundary.hidden = false;
+    elements.cancelBoundary.hidden = false;
+    elements.boundaryEditorStatus.textContent =
+      "Click at least three points around the property, staying inside the map canvas. Existing planned areas must remain inside the new outline.";
+    elements.mapSvg.focus({ preventScroll: true });
+  }
+
+  function renderBoundaryDraft() {
+    const oldDraft = document.getElementById("boundary-drawing-preview");
+    if (oldDraft) oldDraft.remove();
+    if (!boundaryEditing || !boundaryPoints.length) return;
+    const group = svgElement("g", { id: "boundary-drawing-preview", "aria-hidden": "true" });
+    if (boundaryPoints.length >= 2) {
+      group.appendChild(svgElement(boundaryPoints.length >= 3 ? "polygon" : "polyline", {
+        points: boundaryPoints.map(function (point) { return point.join(","); }).join(" "),
+        class: "boundary-drawing-line"
+      }));
+    }
+    boundaryPoints.forEach(function (point) {
+      group.appendChild(svgElement("circle", {
+        cx: point[0],
+        cy: point[1],
+        r: 5,
+        class: "boundary-drawing-point"
+      }));
+    });
+    elements.planAreas.appendChild(group);
+  }
+
+  function cancelBoundaryEdit() {
+    boundaryEditing = false;
+    boundaryPoints = [];
+    elements.mapFrame.classList.remove("is-editing-boundary");
+    elements.editBoundary.hidden = false;
+    elements.saveBoundary.hidden = true;
+    elements.cancelBoundary.hidden = true;
+    elements.boundaryEditorStatus.textContent = "Outline edit canceled; the saved boundary was not changed.";
+    renderMapAreas();
+  }
+
+  function saveBoundaryEdit() {
+    if (boundaryPoints.length < 3) {
+      elements.boundaryEditorStatus.textContent = "Add at least three points to outline the property.";
+      return;
+    }
+    if (boundaryPoints.length > 100) {
+      elements.boundaryEditorStatus.textContent = "The outline has too many points. Cancel and redraw it more simply.";
+      return;
+    }
+    if (hasShortEdge(boundaryPoints)) {
+      elements.boundaryEditorStatus.textContent = "Some outline points are too close together. Cancel and redraw with clearer corners.";
+      return;
+    }
+    if (hasSelfIntersection(boundaryPoints)) {
+      elements.boundaryEditorStatus.textContent = "The outline crosses itself. Cancel and redraw it without crossing lines.";
+      return;
+    }
+    if (polygonArea(boundaryPoints) < 500) {
+      elements.boundaryEditorStatus.textContent = "The outline is too small for this map. Draw a larger property area.";
+      return;
+    }
+
+    const previousBoundary = propertyBoundary;
+    propertyBoundary = boundaryPoints.map(function (point) { return point.slice(); });
+    const plansRemainInside = planItems.every(function (item) {
+      return isInsideProperty(item.polygon);
+    });
+    if (!plansRemainInside) {
+      propertyBoundary = previousBoundary;
+      elements.boundaryEditorStatus.textContent =
+        "The new outline would exclude at least one planned feature. Keep the existing features inside the outline or remove them first.";
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(propertyBoundaryStorageKey, JSON.stringify(propertyBoundary));
+    } catch (error) {
+      propertyBoundary = previousBoundary;
+      elements.boundaryEditorStatus.textContent =
+        "Could not save this outline in browser storage. The existing outline is unchanged.";
+      elements.boundaryEditorStatus.classList.add("storage-error");
+      console.error("TerraForma could not save the property boundary:", error);
+      return;
+    }
+    propertyMapAreaM2PerUnit = propertyAreaM2 / polygonArea(propertyBoundary);
+    renderPropertyBoundary(propertyBoundary);
+    boundaryEditing = false;
+    boundaryPoints = [];
+    elements.mapFrame.classList.remove("is-editing-boundary");
+    elements.editBoundary.hidden = false;
+    elements.saveBoundary.hidden = true;
+    elements.cancelBoundary.hidden = true;
+    elements.boundaryEditorStatus.textContent =
+      "Custom outline saved in this browser. The terrain and basemap are still fictional.";
+    elements.boundaryEditorStatus.classList.remove("storage-error");
+    renderPlan();
   }
 
   function updatePropertyProfileDirtyState() {
@@ -1140,6 +1292,13 @@
     return Math.abs(sum) / 2;
   }
 
+  function hasShortEdge(points) {
+    return points.some(function (point, index) {
+      const next = points[(index + 1) % points.length];
+      return Math.hypot(next[0] - point[0], next[1] - point[1]) < 1;
+    });
+  }
+
   function pointOnSegment(point, start, end) {
     const cross = (point[1] - start[1]) * (end[0] - start[0]) -
       (point[0] - start[0]) * (end[1] - start[1]);
@@ -1195,12 +1354,14 @@
   }
 
   function isInsideProperty(points) {
-    const boundary = PROPERTY.mapBoundary;
+    const boundary = propertyBoundary;
     for (let index = 0; index < points.length; index += 1) {
       const start = points[index];
       const end = points[(index + 1) % points.length];
-      for (let step = 0; step <= 4; step += 1) {
-        const ratio = step / 4;
+      const segmentLength = Math.hypot(end[0] - start[0], end[1] - start[1]);
+      const steps = Math.max(1, Math.ceil(segmentLength / 2));
+      for (let step = 0; step <= steps; step += 1) {
+        const ratio = step / steps;
         const sample = [
           start[0] + (end[0] - start[0]) * ratio,
           start[1] + (end[1] - start[1]) * ratio
@@ -1824,14 +1985,18 @@
   }
 
   function pointerToMapPoint(event) {
+    return snapMapPoint(pointerToRawMapPoint(event));
+  }
+
+  function pointerToRawMapPoint(event) {
     const rectangle = elements.mapSvg.getBoundingClientRect();
     const scale = Math.min(rectangle.width / 640, rectangle.height / 430);
     const offsetX = (rectangle.width - 640 * scale) / 2;
     const offsetY = (rectangle.height - 430 * scale) / 2;
-    return snapMapPoint([
+    return [
       Math.max(0, Math.min(640, (event.clientX - rectangle.left - offsetX) / scale)),
       Math.max(0, Math.min(430, (event.clientY - rectangle.top - offsetY) / scale))
-    ]);
+    ];
   }
 
   function addDrawingPoint(point) {
@@ -1933,6 +2098,10 @@
   });
   elements.planForm.addEventListener("submit", function (event) {
     event.preventDefault();
+    if (boundaryEditing) {
+      showFormError("Finish or cancel the property-outline edit before drawing a planned feature.");
+      return;
+    }
     const feature = getCatalogItem(elements.featureSelect.value);
     const optionIndex = Number(elements.detailSelect.value);
     if (!feature || !Number.isInteger(optionIndex) || !feature.options[optionIndex]) {
@@ -2001,11 +2170,23 @@
   });
 
   elements.mapFrame.addEventListener("click", function (event) {
+    if (boundaryEditing) {
+      if (boundaryPoints.length >= 100) {
+        elements.boundaryEditorStatus.textContent = "The outline has reached its 100-point limit. Save it or cancel and redraw more simply.";
+        return;
+      }
+      boundaryPoints.push(pointerToRawMapPoint(event));
+      elements.boundaryEditorStatus.textContent = boundaryPoints.length + " outline point" +
+        (boundaryPoints.length === 1 ? "" : "s") + " placed. Add at least three, then save.";
+      renderBoundaryDraft();
+      return;
+    }
     if (!pendingPlanItem || (event.target.closest &&
         event.target.closest(".map-marker, .planned-area, .planned-area-label, .north-arrow"))) return;
     addDrawingPoint(pointerToMapPoint(event));
   });
   elements.mapFrame.addEventListener("pointermove", function (event) {
+    if (boundaryEditing) return;
     if (!pendingPlanItem) return;
     const pointer = pointerToMapPoint(event);
     keyboardCursor = { x: pointer[0], y: pointer[1] };
@@ -2026,9 +2207,9 @@
   elements.drawingWidth.addEventListener("input", renderDraft);
   elements.drawingDepth.addEventListener("input", renderDraft);
   elements.mapSvg.addEventListener("keydown", function (event) {
-    if (!pendingPlanItem) return;
+    if (!pendingPlanItem && !boundaryEditing) return;
     const gridMeters = Number(elements.drawingSnap.value);
-    const step = gridMeters ? gridMeters * mapUnitsPerMeter() :
+    const step = !boundaryEditing && gridMeters ? gridMeters * mapUnitsPerMeter() :
       event.shiftKey ? 20 : 8;
     const directions = {
       ArrowLeft: [-step, 0],
@@ -2038,17 +2219,32 @@
     };
     if (directions[event.key]) {
       event.preventDefault();
-      const snappedCursor = snapMapPoint([
+      const nextCursor = [
         Math.max(0, Math.min(640, keyboardCursor.x + directions[event.key][0])),
         Math.max(0, Math.min(430, keyboardCursor.y + directions[event.key][1]))
-      ]);
+      ];
+      const snappedCursor = boundaryEditing ? nextCursor : snapMapPoint(nextCursor);
       keyboardCursor = { x: snappedCursor[0], y: snappedCursor[1] };
-      renderDraft();
+      if (!boundaryEditing) renderDraft();
     } else if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      addDrawingPoint([keyboardCursor.x, keyboardCursor.y]);
+      if (boundaryEditing) {
+        if (boundaryPoints.length >= 100) {
+          elements.boundaryEditorStatus.textContent = "The outline has reached its 100-point limit.";
+          return;
+        }
+        boundaryPoints.push([keyboardCursor.x, keyboardCursor.y]);
+        elements.boundaryEditorStatus.textContent = boundaryPoints.length + " outline point" +
+          (boundaryPoints.length === 1 ? "" : "s") + " placed. Add at least three, then save.";
+        renderBoundaryDraft();
+      } else {
+        addDrawingPoint([keyboardCursor.x, keyboardCursor.y]);
+      }
     }
   });
+  elements.editBoundary.addEventListener("click", beginBoundaryEdit);
+  elements.saveBoundary.addEventListener("click", saveBoundaryEdit);
+  elements.cancelBoundary.addEventListener("click", cancelBoundaryEdit);
   elements.undoPoint.addEventListener("click", function () {
     drawingPoints.pop();
     updateDrawingStatus();
@@ -2084,6 +2280,7 @@
   elements.interfaceTheme.addEventListener("change", saveInterfaceTheme);
 
   readSavedPlan();
+  readPropertyBoundary();
   readPropertyProfile();
   readInterfaceTheme();
   readSiteBrief();

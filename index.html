@@ -298,7 +298,7 @@
           </div>
 
           <div class="map-frame" role="group" aria-label="Illustrative property map with three selectable observation locations">
-            <svg class="site-map" id="site-map" viewBox="0 0 640 430" role="group" tabindex="0" aria-labelledby="map-title map-description" aria-label="Interactive illustrative property map. While drawing a feature, use arrow keys and Enter to add outline points.">
+            <svg class="site-map" id="site-map" viewBox="0 0 640 430" role="group" tabindex="0" aria-labelledby="map-title map-description" aria-label="Interactive illustrative property map. While drawing a feature or property outline, use arrow keys and Enter to add points.">
               <title id="map-title">Illustrative map · Cedar Ridge Homestead</title>
               <desc id="map-description">A fictional, not-to-scale property drawing with wooded edges, a clearing, a path, and a low corner.</desc>
               <defs>
@@ -311,7 +311,7 @@
                 </pattern>
               </defs>
               <rect width="640" height="430" rx="18" class="map-ground"></rect>
-              <path class="parcel" d="M90 55 L319 45 L554 91 L527 344 L293 380 L76 331 Z"></path>
+              <path class="parcel" id="property-boundary" d="M90 55 L319 45 L554 91 L527 344 L293 380 L76 331 Z"></path>
               <path class="tree-zone" d="M101 76 C163 57 224 76 284 66 L272 116 C216 126 163 105 102 125 Z"></path>
               <path class="tree-zone" d="M494 88 C522 105 534 129 527 167 L511 300 C492 287 486 270 490 245 Z"></path>
               <path class="field-zone" d="M145 145 C226 119 341 132 421 144 L407 256 C327 269 234 260 155 280 Z"></path>
@@ -339,6 +339,15 @@
           <div class="map-footer">
             <p><span class="legend-swatch woods-swatch"></span> Tree line <span class="legend-swatch field-swatch"></span> Open area <span class="legend-swatch planned-swatch"></span> Planned footprint</p>
             <span>Illustrative, not measured</span>
+          </div>
+          <div class="boundary-editor" id="boundary-editor">
+            <p class="boundary-editor-note">The terrain illustration stays fictional. Edit the outline to match a sketch; it is not georeferenced or a surveyed boundary.</p>
+            <div class="boundary-editor-actions">
+              <button class="map-action-button" id="edit-boundary" type="button">Edit property outline</button>
+              <button class="map-action-button map-action-primary" id="save-boundary" type="button" hidden>Save outline</button>
+              <button class="map-action-button" id="cancel-boundary" type="button" hidden>Cancel outline</button>
+            </div>
+            <p class="boundary-editor-status" id="boundary-editor-status" role="status" aria-live="polite">Using illustrative sample outline.</p>
           </div>
           <div class="drawing-toolbar" id="drawing-toolbar" hidden>
             <p id="drawing-status" role="status" aria-live="polite">Click the map to outline this feature using at least three points.</p>

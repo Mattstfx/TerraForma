@@ -370,6 +370,8 @@ main {
   aspect-ratio: 640 / 430;
 }
 
+.map-frame.is-editing-boundary .map-markers,
+.map-frame.is-editing-boundary .north-arrow { pointer-events: none; }
 .site-map { display: block; width: 100%; height: 100%; }
 .map-ground { fill: #e8eee1; }
 .parcel { fill: #d6e0c9; stroke: #667e61; stroke-width: 3; stroke-dasharray: 8 7; }
@@ -696,6 +698,26 @@ main {
 }
 .drawing-point { fill: #315d43; stroke: white; stroke-width: 2; pointer-events: none; }
 .drawing-cursor { fill: white; stroke: #315d43; stroke-width: 3; vector-effect: non-scaling-stroke; pointer-events: none; }
+.boundary-drawing-line {
+  fill: rgb(68 95 125 / 20%);
+  stroke: #3c5974;
+  stroke-width: 3;
+  stroke-dasharray: 6 4;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+.boundary-drawing-point { fill: #3c5974; stroke: white; stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: none; }
+.boundary-editor {
+  margin-top: 12px;
+  padding: 11px 12px;
+  border: 1px solid #dfe6d9;
+  border-radius: 11px;
+  background: #f5f7f1;
+}
+.boundary-editor-note, .boundary-editor-status { margin: 0; color: #68746b; font-size: 0.67rem; }
+.boundary-editor-actions { display: flex; flex-wrap: wrap; gap: 7px; margin: 9px 0 7px; }
+.boundary-editor-status[aria-live] { min-height: 1em; }
+.boundary-editor-status.storage-error { color: #8d3f32; }
 .planned-swatch { background: #dca35b; }
 .map-footer { flex-wrap: wrap; }
 .drawing-toolbar {

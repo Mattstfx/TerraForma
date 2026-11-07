@@ -12,6 +12,14 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 ### Session — 2026-11-07 — driver: student
 
+- **Goal for this session:** Make the local map's property-outline editing foundation work before adding real basemaps or terrain data.
+- **What worked:** Added point-by-point property outline editing with pointer and keyboard input, cancel/save actions, and browser-local persistence. Rejects too-small, self-crossing, malformed, or too-detailed outlines; saved plans must remain fully inside a replacement boundary. Plan drawing now checks against the current editable outline, and the illustrative scale updates when the outline changes.
+- **Accuracy, privacy, and scope notes:** This is still a schematic SVG sketch, not a georeferenced parcel, survey, terrain model, or source of elevation/sun/shade data. Drawn outline dimensions and feature sizes remain approximate. The outline uses a separate storage key and does not change plan, brief, theme, or profile data.
+- **What we checked:** JavaScript syntax, diff whitespace, pointer and keyboard drawing, save/reload, malformed-boundary fallback, preserving existing plans, refusing an outline that excludes a plan, rejecting a self-crossing outline, cancel restoration, and narrow-screen overflow.
+- **Committed?** no — not committed yet.
+
+### Session — 2026-11-07 — driver: student
+
 - **Goal for this session:** Let the student personalize the single-property planning workspace before taking on real parcel maps.
 - **What worked:** Added a separate, local-only property profile editor for name, broad general location, and approximate area in acres or hectares. Save and Cancel are explicit; the map title, area summary, feature-size estimates, and capacity meter update consistently. The area and map settings remain separate from plan and property-brief storage.
 - **Accuracy, privacy, and scope notes:** General location is user-entered and asks for no street address. The map drawing, boundary, terrain, and observation locations remain fictional. Changing acreage only rescales approximate planning calculations; it does not locate a parcel, verify a boundary, or supply real terrain data.

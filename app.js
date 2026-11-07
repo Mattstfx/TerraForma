@@ -15,10 +15,29 @@
     storageMessage: document.getElementById("storage-message"),
     featureSelect: document.getElementById("feature-select"),
     detailField: document.getElementById("detail-field"),
+    detailLabel: document.getElementById("detail-label"),
     detailSelect: document.getElementById("detail-select"),
     detailCaution: document.getElementById("detail-caution"),
-    guildFieldset: document.getElementById("guild-fieldset"),
+    contentsFieldset: document.getElementById("contents-fieldset"),
+    contentsTitle: document.getElementById("contents-title"),
+    contentsHelp: document.getElementById("contents-help"),
+    contentsOptions: document.getElementById("contents-options"),
+    fitControls: document.getElementById("fit-controls"),
+    bedExposure: document.getElementById("bed-exposure"),
+    bedWatering: document.getElementById("bed-watering"),
+    autoSelect: document.getElementById("auto-select"),
+    autoSelectNote: document.getElementById("auto-select-note"),
     guildOptions: document.getElementById("guild-options"),
+    speciesCard: document.getElementById("species-card"),
+    speciesCardTitle: document.getElementById("species-card-title"),
+    speciesCardScientific: document.getElementById("species-card-scientific"),
+    speciesCardFacts: document.getElementById("species-card-facts"),
+    speciesCardCaveat: document.getElementById("species-card-caveat"),
+    speciesCardSource: document.getElementById("species-card-source"),
+    speciesCardClose: document.getElementById("species-card-close"),
+    rotationField: document.getElementById("rotation-field"),
+    rotationDays: document.getElementById("rotation-days"),
+    scheduleStartDate: document.getElementById("schedule-start-date"),
     planNote: document.getElementById("plan-note"),
     planForm: document.getElementById("plan-form"),
     formError: document.getElementById("form-error"),
@@ -52,6 +71,17 @@
   let drawingPoints = [];
   let keyboardCursor = { x: 320, y: 215 };
 
+  function localDateValue(date) {
+    return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0") +
+      "-" + String(date.getDate()).padStart(2, "0");
+  }
+
+  function scheduleStart(item) {
+    return item.scheduleStartDate
+      ? new Date(item.scheduleStartDate + "T12:00:00")
+      : item.createdAt ? new Date(item.createdAt) : null;
+  }
+
   document.title = STARTUP.name + " — Land planning, made thoughtful";
   document.getElementById("tagline").textContent = STARTUP.tagline;
   document.getElementById("pitch").textContent = STARTUP.pitch;
@@ -60,6 +90,7 @@
   document.getElementById("property-area").textContent = PROPERTY.area;
   document.getElementById("area-note").textContent = "Sample dashboard · " + PROPERTY.areaNote + ".";
   document.getElementById("observation-count").textContent = PROPERTY.zones.length;
+  elements.scheduleStartDate.value = localDateValue(new Date());
 
   function makeOption(label, value) {
     const option = document.createElement("option");
@@ -73,19 +104,8 @@
   }
 
   function populateFeatureOptions() {
-    const categories = [];
     PLAN_CATALOG.forEach(function (item) {
-      if (categories.indexOf(item.category) === -1) categories.push(item.category);
-    });
-
-    categories.forEach(function (category) {
-      const group = document.createElement("optgroup");
-      group.label = category;
-      PLAN_CATALOG.filter(function (item) { return item.category === category; })
-        .forEach(function (item) {
-          group.appendChild(makeOption(item.name, item.id));
-        });
-      elements.featureSelect.appendChild(group);
+      elements.featureSelect.appendChild(makeOption(item.category + " · " + item.name, item.id));
     });
     updateFeatureDetails();
   }
@@ -97,36 +117,264 @@
 
   function updateFeatureDetails() {
     const feature = getCatalogItem(elements.featureSelect.value);
+    elements.speciesCard.hidden = true;
     elements.detailSelect.replaceChildren();
+    elements.contentsOptions.replaceChildren();
     elements.guildOptions.replaceChildren();
-    elements.guildFieldset.hidden = !(feature && feature.guild);
+    elements.contentsFieldset.hidden = !feature;
     elements.detailField.hidden = !feature;
+    elements.rotationField.hidden = !feature || !["garden-beds", "greenhouse"].includes(feature.id);
+    elements.autoSelectNote.textContent = "";
     if (!feature) return;
 
     feature.options.forEach(function (option, index) {
       elements.detailSelect.appendChild(makeOption(option, String(index)));
     });
 
-    if (feature.guild) {
-      APPLE_GUILD_PLANTS.forEach(function (plant) {
+    elements.detailLabel.textContent = feature.id === "fruit-tree" ? "Tree type" :
+      feature.id === "apple-guild" ? "Guild anchor" : "Primary setup";
+    elements.detailCaution.textContent = getDetailCaution(feature);
+    renderFeatureContents(feature);
+  }
+
+  function getFeatureContents(feature) {
+    const contents = FACILITY_CONTENTS[feature.id];
+    if (!contents) return null;
+    if (feature.id !== "fruit-tree") return contents;
+    const treeType = feature.options[Number(elements.detailSelect.value)] || "";
+    if (treeType.indexOf("Pear") === 0) {
+      return {
+        type: "manual-cultivar",
+        title: "Enter a pear scion / cultivar",
+        placeholder: "Use a name verified by your nursery or local source"
+      };
+    }
+    if (treeType.indexOf("European plum") === 0) {
+      return {
+        type: "manual-cultivar",
+        title: "Enter a plum scion / cultivar",
+        placeholder: "Use a name verified by your nursery or local source"
+      };
+    }
+    return contents;
+  }
+
+  function getSource(sourceId) {
+    return REFERENCE_SOURCES.find(function (source) { return source.id === sourceId; });
+  }
+
+  function positionSpeciesCard(anchor) {
+    const bounds = anchor.getBoundingClientRect();
+    const cardBounds = elements.speciesCard.getBoundingClientRect();
+    const left = Math.max(12, Math.min(window.innerWidth - cardBounds.width - 12, bounds.left));
+    const below = bounds.bottom + 8;
+    const top = below + cardBounds.height <= window.innerHeight - 12
+      ? below
+      : Math.max(12, bounds.top - cardBounds.height - 8);
+    elements.speciesCard.style.left = left + "px";
+    elements.speciesCard.style.top = top + "px";
+  }
+
+  function showSpeciesCard(option, anchor) {
+    const source = option && option.sourceId ? getSource(option.sourceId) : null;
+    elements.speciesCardTitle.textContent = option && option.name ? option.name : "Plant information";
+    elements.speciesCardScientific.textContent = option && option.scientificName
+      ? option.scientificName
+      : "";
+    elements.speciesCardScientific.hidden = !elements.speciesCardScientific.textContent;
+    elements.speciesCardFacts.replaceChildren();
+    const facts = option && Array.isArray(option.verifiedFacts)
+      ? option.verifiedFacts
+      : source
+        ? ["Listed as an example in the linked reference. This prototype has no verified species-care profile for this choice."]
+        : ["No source-verified profile is available for this choice in this prototype."];
+    facts.forEach(function (fact) {
+      const item = document.createElement("li");
+      item.textContent = fact;
+      elements.speciesCardFacts.appendChild(item);
+    });
+    const role = option && option.layerRole
+      ? "Menu placement: " + option.layerRole + ". This is a planning classification, not proof of local suitability."
+      : "";
+    const scope = option && option.sourceId && option.sourceId.indexOf("umn-") === 0
+      ? "Regional limit: this reference is Minnesota-specific and should not be treated as Atlantic Canada guidance."
+      : source
+        ? "The reference does not establish local suitability or companion compatibility."
+        : "Do not treat this menu entry as a recommendation.";
+    elements.speciesCardCaveat.textContent = [role, scope].filter(Boolean).join(" ");
+    elements.speciesCardSource.hidden = !source;
+    if (source) {
+      elements.speciesCardSource.href = source.url;
+      elements.speciesCardSource.textContent = "Source: " + source.label;
+    } else {
+      elements.speciesCardSource.removeAttribute("href");
+      elements.speciesCardSource.textContent = "";
+    }
+    elements.speciesCard.hidden = false;
+    requestAnimationFrame(function () { positionSpeciesCard(anchor); });
+  }
+
+  function createSpeciesTrigger(option, label) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "species-name-trigger";
+    button.textContent = label;
+    button.speciesOption = option;
+    button.addEventListener("mouseenter", function () {
+      showSpeciesCard(button.speciesOption || {}, button);
+    });
+    button.addEventListener("focus", function () {
+      showSpeciesCard(button.speciesOption || {}, button);
+    });
+    button.addEventListener("click", function (event) {
+      event.stopPropagation();
+      showSpeciesCard(button.speciesOption || {}, button);
+    });
+    return button;
+  }
+
+  function updateGuildSummary() {
+    const summary = document.getElementById("guild-config-summary");
+    if (!summary) return;
+    const selected = Array.from(elements.guildOptions.querySelectorAll(".guild-layer-select"))
+      .filter(function (select) { return Boolean(select.value); });
+    const nitrogenFixer = elements.guildOptions.querySelector("#nitrogen-fixer-select");
+    const fixer = nitrogenFixer && nitrogenFixer.value && nitrogenFixer.value !== "none"
+      ? NITROGEN_FIXERS.find(function (plant) { return plant.id === nitrogenFixer.value; })
+      : null;
+    const roles = selected.map(function (select) {
+      const layer = GUILD_LAYERS.find(function (entry) { return entry.id === select.dataset.layerId; });
+      const plant = layer && layer.options.find(function (entry) { return entry.id === select.value; });
+      return plant ? plant.name : "";
+    }).filter(Boolean);
+    summary.textContent = "Selected " + selected.length + " of " + GUILD_LAYERS.length +
+      " vertical layers" + (roles.length ? ": " + roles.join("; ") : ".") +
+      (fixer ? " Nitrogen-fixer candidate: " + fixer.name + "." : "") +
+      " This describes planned structure and roles only; it does not verify compatibility, nitrogen transfer, yield, wildlife effects, or regional fit.";
+  }
+
+  function renderFeatureContents(feature) {
+    const contents = getFeatureContents(feature);
+    if (!contents) {
+      elements.contentsFieldset.hidden = true;
+      return;
+    }
+    elements.contentsFieldset.hidden = false;
+    elements.contentsTitle.textContent = contents.title;
+    elements.contentsOptions.replaceChildren();
+    elements.guildOptions.replaceChildren();
+    const isGuild = contents.type === "guild";
+    const isPlants = contents.type === "plants";
+    const isCultivars = contents.type === "cultivars";
+    const isManualCultivar = contents.type === "manual-cultivar";
+    elements.fitControls.hidden = !isPlants;
+    elements.contentsHelp.textContent = isPlants
+      ? "Choose crops and optionally enter days to maturity from your seed packet. Hover, focus, or tap a crop name for its sourced profile."
+      : isGuild
+        ? "Choose candidates independently for each layer. The selected layers describe structure, not proven companions or local recommendations."
+        : isCultivars
+          ? "These cultivar notes come from a Minnesota source and are not an Atlantic Canada recommendation. Confirm local fit and graft compatibility."
+          : isManualCultivar
+            ? "No source-verified cultivar list is available here for this tree type. Enter a cultivar name from a trusted local source; the app will label it as user-provided."
+          : "Pick the parts to include in this sample feature.";
+
+    if (isGuild) {
+      GUILD_LAYERS.forEach(function (layer) {
         const label = document.createElement("label");
-        label.className = "guild-option";
+        label.className = "guild-layer-label";
+        label.textContent = layer.name;
+        const select = document.createElement("select");
+        select.className = "guild-layer-select";
+        select.dataset.layerId = layer.id;
+        select.appendChild(makeOption("Not selected", ""));
+        layer.options.forEach(function (plant) {
+          select.appendChild(makeOption(plant.name, plant.id));
+        });
+        const info = createSpeciesTrigger(null, "Plant details");
+        info.className = "species-name-trigger guild-species-trigger";
+        info.hidden = true;
+        select.addEventListener("change", function () {
+          const plant = layer.options.find(function (entry) { return entry.id === select.value; });
+          info.hidden = !plant;
+          if (plant) {
+            info.textContent = "Details: " + plant.name;
+            info.speciesOption = plant;
+          }
+          updateGuildSummary();
+        });
+        label.appendChild(select);
+        elements.guildOptions.appendChild(label);
+        elements.guildOptions.appendChild(info);
+      });
+      const nitrogenLabel = document.createElement("label");
+      nitrogenLabel.className = "guild-layer-label";
+      nitrogenLabel.textContent = "Optional functional role: nitrogen fixer";
+      const nitrogenSelect = document.createElement("select");
+      nitrogenSelect.id = "nitrogen-fixer-select";
+      nitrogenSelect.appendChild(makeOption("Not selected", ""));
+      NITROGEN_FIXERS.forEach(function (plant) {
+        nitrogenSelect.appendChild(makeOption(plant.name, plant.id));
+      });
+      nitrogenLabel.appendChild(nitrogenSelect);
+      elements.guildOptions.appendChild(nitrogenLabel);
+      nitrogenSelect.addEventListener("change", updateGuildSummary);
+      const summary = document.createElement("div");
+      summary.className = "guild-config-summary";
+      summary.id = "guild-config-summary";
+      summary.setAttribute("role", "status");
+      elements.guildOptions.appendChild(summary);
+      updateGuildSummary();
+      return;
+    }
+
+    if (isManualCultivar) {
+      const label = document.createElement("label");
+      label.className = "manual-cultivar-label";
+      label.textContent = contents.title;
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "manual-cultivar";
+      input.maxLength = 100;
+      input.placeholder = contents.placeholder;
+      input.setAttribute("aria-label", contents.title);
+      label.appendChild(input);
+      elements.contentsOptions.appendChild(label);
+    } else {
+      contents.options.forEach(function (option, index) {
+        const row = document.createElement("div");
+        row.className = "contents-option";
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
-        checkbox.name = "guild-plant";
-        checkbox.value = plant.id;
-        checkbox.checked = true;
-        const text = document.createElement("span");
-        text.append(document.createTextNode(plant.name));
-        const role = document.createElement("small");
-        role.textContent = plant.role;
-        text.appendChild(role);
-        label.append(checkbox, text);
-        elements.guildOptions.appendChild(label);
+        checkbox.id = "feature-content-" + index;
+        checkbox.name = "feature-content";
+        checkbox.value = option.id;
+        checkbox.dataset.optionName = option.name;
+        checkbox.setAttribute("aria-label", "Add " + option.name + " to this feature");
+        const trigger = createSpeciesTrigger(option, option.name);
+        row.append(checkbox, trigger);
+        if (option.maturityEditable && isPlants) {
+          const days = document.createElement("input");
+          days.type = "number";
+          days.className = "maturity-days";
+          days.min = "1";
+          days.max = "365";
+          days.placeholder = "Seed-packet days";
+          days.setAttribute("aria-label", option.name + " days to maturity from seed packet");
+          days.hidden = true;
+          checkbox.addEventListener("change", function () {
+            days.hidden = !checkbox.checked;
+            if (!checkbox.checked) days.value = "";
+          });
+          row.appendChild(days);
+        }
+        elements.contentsOptions.appendChild(row);
       });
     }
 
-    elements.detailCaution.textContent = getDetailCaution(feature);
+    if (isCultivars && feature.id === "fruit-tree" &&
+        feature.options[Number(elements.detailSelect.value)].indexOf("Multi-grafted") !== 0) {
+      elements.contentsHelp.textContent += " For a single-variety tree, select one.";
+    }
   }
 
   function getDetailCaution(feature) {
@@ -143,6 +391,138 @@
       return "Favor targeted, non-harmful physical protection; identify the pest and protect beneficial wildlife before acting.";
     }
     return "A planning example only. Check site conditions, local suitability, and requirements before building or planting.";
+  }
+
+  function autoSelectByLegacyTraits() {
+    return;
+    const feature = getCatalogItem(elements.featureSelect.value);
+    if (!feature) return;
+    const exposure = elements.bedExposure.value;
+    const watering = elements.bedWatering.value;
+
+    if (elements.contentsOptions.querySelector('input[name="feature-content"][data-water]')) {
+      const inputs = Array.from(elements.contentsOptions.querySelectorAll('input[name="feature-content"]'));
+      inputs.forEach(function (input) {
+        input.checked = input.dataset.water === targetWater &&
+          input.dataset.fertility === targetFertility;
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      if (!inputs.some(function (input) { return input.checked; })) {
+        inputs.sort(function (a, b) {
+          const score = function (input) {
+            return Math.abs(rank[input.dataset.water] - rank[targetWater]) +
+              Math.abs(rank[input.dataset.fertility] - rank[targetFertility]);
+          };
+          return score(a) - score(b);
+        });
+        if (inputs[0]) inputs[0].checked = true;
+      }
+    } else {
+      elements.guildOptions.querySelectorAll(".guild-layer-select").forEach(function (select) {
+        const layer = GUILD_LAYERS.find(function (entry) { return entry.id === select.dataset.layerId; });
+        if (!layer) return;
+        const candidates = layer.options.slice().sort(function (a, b) {
+          const score = function (plant) {
+            return Math.abs(rank[plant.water] - rank[targetWater]) +
+              Math.abs(rank[plant.fertility] - rank[targetFertility]);
+          };
+          return score(a) - score(b);
+        });
+        select.value = candidates[0] ? candidates[0].id : "";
+      });
+      const fixer = elements.guildOptions.querySelector("#nitrogen-fixer-select");
+      if (fixer) fixer.value = "clover";
+    }
+    elements.autoSelectNote.textContent =
+      "Selected from rough water/fertility tags only. This does not predict plant compatibility, yield, or fertilizer needs.";
+  }
+
+  function autoSelectContents() {
+    const exposure = elements.bedExposure.value;
+    const watering = elements.bedWatering.value;
+    const matches = [];
+    elements.contentsOptions.querySelectorAll('input[name="feature-content"]').forEach(function (input) {
+      const plant = VEGETABLE_PLANTS.find(function (entry) { return entry.id === input.value; });
+      const matchesProfile = plant && Array.isArray(plant.verifiedFacts) &&
+        Array.isArray(plant.sun) && plant.sun.includes(exposure) &&
+        Array.isArray(plant.watering) && plant.watering.includes(watering);
+      input.checked = Boolean(matchesProfile);
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+      if (matchesProfile) matches.push(plant.name);
+    });
+    elements.autoSelectNote.textContent = matches.length
+      ? "Selected only cited profiles matching both settings: " + matches.join(", ") +
+        ". Verify actual bed conditions and regional guidance; this is not a companion-planting recommendation."
+      : "No crop in this demo has a cited profile matching both settings. No crop was selected; unknown profiles are not guessed.";
+  }
+
+  function renderReferenceList() {
+    const list = document.getElementById("reference-list");
+    list.replaceChildren();
+    REFERENCE_SOURCES.forEach(function (source) {
+      const item = document.createElement("li");
+      const link = document.createElement("a");
+      link.href = source.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = source.label;
+      const note = document.createElement("span");
+      note.textContent = " — " + source.note;
+      item.append(link, note);
+      list.appendChild(item);
+    });
+  }
+
+  function collectSelectedContents(feature) {
+    const definition = getFeatureContents(feature);
+    if (!definition) return { contents: [], guildLayers: [], nitrogenFixer: "" };
+    if (definition.type === "manual-cultivar") {
+      const cultivar = elements.contentsOptions.querySelector(".manual-cultivar");
+      const name = cultivar ? cultivar.value.trim() : "";
+      return {
+        contents: name ? [{ id: "user-entered-cultivar", name: name + " (user-provided; not verified by TerraForma)", daysToHarvest: null }] : [],
+        guildLayers: [],
+        nitrogenFixer: ""
+      };
+    }
+    if (definition.type === "guild") {
+      const guildLayers = [];
+      elements.guildOptions.querySelectorAll(".guild-layer-select").forEach(function (select) {
+        if (!select.value) return;
+        const layer = GUILD_LAYERS.find(function (entry) { return entry.id === select.dataset.layerId; });
+        const plant = layer && layer.options.find(function (entry) { return entry.id === select.value; });
+        if (layer && plant) {
+          guildLayers.push({
+            layerId: layer.id,
+            layerName: layer.name.replace(/^\d+\.\s*/, ""),
+            plantId: plant.id,
+            plantName: plant.name,
+            layerRole: plant.layerRole || "",
+            sourceId: plant.sourceId || ""
+          });
+        }
+      });
+      const nitrogenSelect = elements.guildOptions.querySelector("#nitrogen-fixer-select");
+      return {
+        contents: [],
+        guildLayers: guildLayers,
+        nitrogenFixer: nitrogenSelect ? nitrogenSelect.value : ""
+      };
+    }
+
+    return {
+      contents: Array.from(elements.contentsOptions.querySelectorAll('input[name="feature-content"]:checked'))
+        .map(function (input) {
+          const daysInput = input.closest(".contents-option").querySelector(".maturity-days");
+          return {
+            id: input.value,
+            name: input.dataset.optionName,
+            daysToHarvest: daysInput && daysInput.value ? Number(daysInput.value) : null
+          };
+        }),
+      guildLayers: [],
+      nitrogenFixer: ""
+    };
   }
 
   function getZoneById(id) {
@@ -435,10 +815,84 @@
       note.textContent = item.note;
       content.append(title, location, variety, note);
 
+      if (item.contents && item.contents.length) {
+        const selected = document.createElement("p");
+        selected.className = "guild-summary";
+        selected.textContent = "Contents: " + item.contents.map(function (entry) {
+          return entry.name;
+        }).join(", ");
+        content.appendChild(selected);
+        const harvestEstimates = item.contents.filter(function (entry) {
+          return Number.isInteger(entry.daysToHarvest) && entry.daysToHarvest > 0;
+        });
+        if (harvestEstimates.length) {
+          const schedule = document.createElement("p");
+          schedule.className = "rotation-summary";
+          const start = scheduleStart(item);
+          schedule.textContent = "Estimated maturity schedule: " + harvestEstimates.map(function (entry) {
+            const maturityDate = start && !Number.isNaN(start.getTime())
+              ? " (" + new Date(start.getTime() + entry.daysToHarvest * 86400000).toLocaleDateString() + ")"
+              : "";
+            return entry.name + " · about " + entry.daysToHarvest + " days" + maturityDate;
+          }).join("; ") + ". Days are user-entered; confirm the selected variety's seed packet.";
+          content.appendChild(schedule);
+        }
+      }
+
+      if (item.bedProfile) {
+        const profile = document.createElement("p");
+        profile.className = "guild-summary";
+        const exposureName = { full: "full sun", partial: "partial shade", shade: "shade" }[item.bedProfile.exposure] || "exposure not recorded";
+        const wateringName = {
+          drip: "drip irrigation",
+          soaker: "soaker hose",
+          hand: "hand-watered soil",
+          overhead: "overhead sprinkler"
+        }[item.bedProfile.watering] || "watering method not recorded";
+        profile.textContent = "Bed settings: " + exposureName + " · " + wateringName + ".";
+        content.appendChild(profile);
+      }
+
+      if (item.guildLayers && item.guildLayers.length) {
+        const layers = document.createElement("p");
+        layers.className = "guild-summary";
+        layers.textContent = "Guild layers: " + item.guildLayers.map(function (entry) {
+          return entry.layerName + ": " + entry.plantName;
+        }).join(" · ");
+        content.appendChild(layers);
+        const limit = document.createElement("p");
+        limit.className = "guild-summary";
+        limit.textContent = "Layer selections describe structure only; they do not establish companion compatibility, benefits, or local suitability.";
+        content.appendChild(limit);
+      }
+
+      if (item.nitrogenFixer && item.nitrogenFixer !== "none") {
+        const fixer = NITROGEN_FIXERS.find(function (entry) { return entry.id === item.nitrogenFixer; });
+        if (fixer) {
+          const role = document.createElement("p");
+          role.className = "guild-summary";
+          role.textContent = "Nitrogen-fixer candidate: " + fixer.name +
+            " (not a guarantee of nitrogen transfer to nearby plants).";
+          content.appendChild(role);
+        }
+      }
+
+      if (Number.isInteger(item.rotationDays) && item.rotationDays > 0) {
+        const planted = scheduleStart(item);
+        if (planted && !Number.isNaN(planted.getTime())) {
+          const reviewDate = new Date(planted.getTime() + item.rotationDays * 86400000);
+          const rotation = document.createElement("p");
+          rotation.className = "rotation-summary";
+          rotation.textContent = "Review succession / rotation in " + item.rotationDays + " days · " +
+            reviewDate.toLocaleDateString();
+          content.appendChild(rotation);
+        }
+      }
+
       if (item.guildPlants && item.guildPlants.length) {
         const guild = document.createElement("p");
         guild.className = "guild-summary";
-        guild.textContent = "Guild companions: " + item.guildPlants.map(function (id) {
+        guild.textContent = "Legacy saved plant selections (not compatibility-verified): " + item.guildPlants.map(function (id) {
           const plant = APPLE_GUILD_PLANTS.find(function (entry) { return entry.id === id; });
           return plant ? plant.name : "";
         }).filter(Boolean).join(", ");
@@ -514,6 +968,9 @@
         occupied.push(polygon);
         const feature = getCatalogItem(item.featureId) ||
           PLAN_CATALOG.find(function (entry) { return entry.name === item.feature; }) ||
+          PLAN_CATALOG.find(function (entry) {
+            return entry.id === "fruit-tree" && item.feature.toLowerCase().indexOf("fruit tree") !== -1;
+          }) ||
           getCatalogItem("garden-beds");
         const guildPlants = Array.isArray(item.guildPlants)
           ? item.guildPlants.filter(function (id) {
@@ -524,7 +981,23 @@
           featureId: feature.id,
           polygon: polygon,
           variety: typeof item.variety === "string" ? item.variety : "Planning option to research",
-          guildPlants: guildPlants
+          guildPlants: guildPlants,
+          contents: Array.isArray(item.contents) ? item.contents.filter(function (entry) {
+            return entry && typeof entry.name === "string";
+          }) : [],
+          guildLayers: Array.isArray(item.guildLayers) ? item.guildLayers.filter(function (entry) {
+            return entry && typeof entry.layerName === "string" && typeof entry.plantName === "string";
+          }) : [],
+          bedProfile: item.bedProfile &&
+            ["full", "partial", "shade"].includes(item.bedProfile.exposure) &&
+            ["drip", "soaker", "hand", "overhead"].includes(item.bedProfile.watering)
+            ? {
+              exposure: item.bedProfile.exposure,
+              watering: item.bedProfile.watering
+            }
+            : null,
+          rotationDays: Number.isInteger(item.rotationDays) ? item.rotationDays : null,
+          scheduleStartDate: typeof item.scheduleStartDate === "string" ? item.scheduleStartDate : ""
         });
       });
     } catch (error) {
@@ -601,7 +1074,7 @@
     const addButton = document.createElement("button");
     addButton.type = "button";
     addButton.className = "idea-add-button";
-    addButton.textContent = "Draw on map";
+    addButton.textContent = "Customize this idea";
     addButton.addEventListener("click", function () { addIdeaToPlan(idea); });
     article.append(heading, reason, addButton);
     return article;
@@ -654,14 +1127,9 @@
     elements.featureSelect.value = feature.id;
     updateFeatureDetails();
     elements.planNote.value = idea.reason;
-    beginDrawing({
-      id: "plan-" + Date.now(),
-      featureId: feature.id,
-      feature: feature.name,
-      variety: feature.options[0],
-      guildPlants: feature.guild ? APPLE_GUILD_PLANTS.map(function (plant) { return plant.id; }) : [],
-      note: idea.reason
-    });
+    document.getElementById("plan").scrollIntoView({ behavior: "smooth", block: "start" });
+    elements.featureSelect.focus({ preventScroll: true });
+    showFormError("Idea loaded. Choose the plants or components to include, then draw its footprint.");
   }
 
   function pointerToMapPoint(event) {
@@ -714,7 +1182,8 @@
     const savedItem = Object.assign({}, pendingPlanItem, {
       location: "Near " + zone.label,
       note: pendingPlanItem.note || "A starting idea to research and adapt to the actual site.",
-      polygon: drawingPoints.map(function (point) { return point.slice(); })
+      polygon: drawingPoints.map(function (point) { return point.slice(); }),
+      createdAt: new Date().toISOString()
     });
     planItems.push(savedItem);
     selectedPlanId = savedItem.id;
@@ -728,6 +1197,27 @@
   }
 
   elements.featureSelect.addEventListener("change", updateFeatureDetails);
+  elements.detailSelect.addEventListener("change", function () {
+    const feature = getCatalogItem(elements.featureSelect.value);
+    if (!feature) return;
+    renderFeatureContents(feature);
+    elements.detailCaution.textContent = getDetailCaution(feature);
+  });
+  elements.autoSelect.addEventListener("click", autoSelectContents);
+  elements.speciesCardClose.addEventListener("click", function () {
+    elements.speciesCard.hidden = true;
+  });
+  document.addEventListener("pointerdown", function (event) {
+    if (!elements.speciesCard.contains(event.target) &&
+        !(event.target.closest && event.target.closest(".species-name-trigger"))) {
+      elements.speciesCard.hidden = true;
+    }
+  });
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && !elements.speciesCard.hidden) {
+      elements.speciesCard.hidden = true;
+    }
+  });
   elements.planForm.addEventListener("submit", function (event) {
     event.preventDefault();
     const feature = getCatalogItem(elements.featureSelect.value);
@@ -736,18 +1226,63 @@
       showFormError("Choose a feature and a planting or approach option first.");
       return;
     }
-    const guildPlants = Array.from(elements.guildOptions.querySelectorAll("input:checked"))
-      .map(function (input) { return input.value; });
-    if (feature.guild && guildPlants.length === 0) {
-      showFormError("Choose at least one companion plant for this sample guild.");
+    const selected = collectSelectedContents(feature);
+    const definition = getFeatureContents(feature);
+    if (definition && definition.type === "guild" &&
+        selected.guildLayers.length === 0 &&
+        (!selected.nitrogenFixer || selected.nitrogenFixer === "none")) {
+      showFormError("Choose at least one layer or role, or leave this feature unplanned.");
       return;
     }
+    if (definition && definition.type !== "guild" && selected.contents.length === 0) {
+      showFormError("Select at least one item to put in this feature.");
+      return;
+    }
+    if (selected.contents.some(function (item) {
+      return item.daysToHarvest !== null &&
+        (!Number.isInteger(item.daysToHarvest) || item.daysToHarvest < 1 || item.daysToHarvest > 365);
+    })) {
+      showFormError("Enter maturity estimates between 1 and 365 days, or leave them blank.");
+      return;
+    }
+    const treeType = feature.id === "fruit-tree"
+      ? feature.options[optionIndex]
+      : "";
+    if (treeType.indexOf("Multi-grafted") !== 0 && selected.contents.length > 1 &&
+        feature.id === "fruit-tree") {
+      showFormError("For a single-variety tree, select only one cultivar. Choose multi-grafted apple to select several scions.");
+      return;
+    }
+    if (treeType.indexOf("Multi-grafted") === 0 && selected.contents.length > 5) {
+      showFormError("Choose up to five scions for this sample multi-graft plan.");
+      return;
+    }
+    const rotationDays = elements.rotationField.hidden ? null : Number(elements.rotationDays.value);
+    if (!elements.rotationField.hidden &&
+        (!Number.isInteger(rotationDays) || rotationDays < 1 || rotationDays > 365)) {
+      showFormError("Enter a rotation review interval from 1 to 365 days.");
+      return;
+    }
+    const scheduleStartDate = elements.rotationField.hidden ? "" : elements.scheduleStartDate.value;
+    if (!elements.rotationField.hidden && !/^\d{4}-\d{2}-\d{2}$/.test(scheduleStartDate)) {
+      showFormError("Choose a valid planned planting or cycle start date.");
+      return;
+    }
+    showFormError("");
     beginDrawing({
       id: "plan-" + Date.now(),
       featureId: feature.id,
       feature: feature.name,
       variety: feature.options[optionIndex],
-      guildPlants: guildPlants,
+      contents: selected.contents,
+      guildLayers: selected.guildLayers,
+      nitrogenFixer: selected.nitrogenFixer,
+      bedProfile: definition && definition.type === "plants"
+        ? { exposure: elements.bedExposure.value, watering: elements.bedWatering.value }
+        : null,
+      rotationDays: rotationDays,
+      scheduleStartDate: scheduleStartDate,
+      guildPlants: [],
       note: elements.planNote.value.trim() || "A starting idea to research and adapt to the actual site."
     });
   });
@@ -795,6 +1330,7 @@
 
   readSavedPlan();
   populateFeatureOptions();
+  renderReferenceList();
   selectZone(selectedZoneId);
   renderPlan();
   renderPerspective();

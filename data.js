@@ -92,13 +92,7 @@ const PLAN_CATALOG = [
     name: "Fruit tree",
     category: "Growing",
     defaultAreaM2: 35,
-    options: [
-      "Apple — Liberty (example; verify local suitability)",
-      "Apple — Honeycrisp (example; verify local suitability)",
-      "Pear — choose a locally suitable cultivar and pollination partner",
-      "European plum — verify local suitability and disease resistance",
-      "Multi-grafted apple — confirm cultivar compatibility and rootstock"
-    ]
+    options: ["Apple tree", "Pear tree", "European plum tree", "Multi-grafted apple tree"]
   },
   {
     id: "berry-planting",
@@ -204,10 +198,306 @@ const PLAN_CATALOG = [
 ];
 
 const APPLE_GUILD_PLANTS = [
-  { id: "chives", name: "Chives", role: "Aromatic ground-layer plant; check spacing and site fit." },
-  { id: "clover", name: "Clover", role: "Living groundcover; check spread and local suitability." },
-  { id: "yarrow", name: "Yarrow", role: "Flowering insectary plant; choose a locally appropriate species." },
-  { id: "comfrey", name: "Comfrey", role: "Biomass plant; can spread, so research containment and placement." }
+  { id: "chives", name: "Chives", role: "Herbaceous layer example; verify site fit." },
+  { id: "clover", name: "Clover", role: "Legume groundcover example; nitrogen benefit to nearby plants is not guaranteed." },
+  { id: "yarrow", name: "Yarrow", role: "Herbaceous layer example; verify local species." },
+  { id: "comfrey", name: "Comfrey", role: "Herbaceous layer example; can spread, so research containment." }
+];
+
+const VEGETABLE_PLANTS = [
+  { id: "lettuce", name: "Lettuce", maturityEditable: true },
+  { id: "radish", name: "Radish", maturityEditable: true },
+  { id: "carrot", name: "Carrot", maturityEditable: true },
+  {
+    id: "pea",
+    name: "Pea",
+    scientificName: "Pisum sativum",
+    sun: ["full"],
+    watering: ["drip", "soaker", "hand"],
+    verifiedFacts: [
+      "Needs full sun.",
+      "Good growing temperatures are 55–65°F.",
+      "Soil pH range given by the source: 6.0–7.5; well-drained soil is advised.",
+      "Water the soil rather than the vines; during the growing season the source suggests at least 1 inch per week, with more frequent watering possible in sandy soil."
+    ],
+    sourceId: "umn-peas",
+    maturityEditable: true
+  },
+  { id: "bean", name: "Bean", maturityEditable: true },
+  {
+    id: "tomato",
+    name: "Tomato",
+    scientificName: "Solanum lycopersicum",
+    sun: ["full"],
+    watering: ["drip", "soaker", "hand"],
+    verifiedFacts: [
+      "Requires full sun and a long, frost-free growing season.",
+      "The source gives soil pH 5.5–7.0 as ideal.",
+      "Consistent soil moisture is recommended; avoid overhead sprinkling and soak the soil thoroughly.",
+      "The source gives about 1 inch of rainfall or irrigation per week as ideal; sandy soil may need more frequent watering."
+    ],
+    sourceId: "umn-tomatoes",
+    maturityEditable: true
+  },
+  { id: "pepper", name: "Pepper", maturityEditable: true },
+  { id: "cucumber", name: "Cucumber", maturityEditable: true },
+  { id: "squash", name: "Squash", maturityEditable: true },
+  { id: "kale", name: "Kale", maturityEditable: true },
+  { id: "beet", name: "Beet", maturityEditable: true },
+  { id: "potato", name: "Potato", maturityEditable: true }
+];
+
+const APPLE_CULTIVARS = [
+  {
+    id: "cortland",
+    name: "Cortland",
+    scientificName: "Malus domestica 'Cortland'",
+    verifiedFacts: [
+      "The University of Minnesota table lists good-to-fair hardiness for zones 4 to 3.",
+      "Average harvest listed: late September to early October.",
+      "Listed uses: fresh eating, cooking, and salad.",
+      "The source describes it as medium-sized and susceptible to apple scab and fire blight."
+    ],
+    sourceId: "umn-apples"
+  },
+  {
+    id: "haralson",
+    name: "Haralson",
+    scientificName: "Malus domestica 'Haralson'",
+    verifiedFacts: [
+      "The University of Minnesota table lists very-good-to-good hardiness for zones 4 to 3.",
+      "Average harvest listed: late September to early October.",
+      "Listed uses: fresh eating and cooking; the source notes it is good for pie.",
+      "The source reports some resistance to apple scab and fire blight."
+    ],
+    sourceId: "umn-apples"
+  },
+  {
+    id: "honeycrisp",
+    name: "Honeycrisp",
+    scientificName: "Malus domestica 'Honeycrisp'",
+    verifiedFacts: [
+      "The University of Minnesota table lists very-good-to-good hardiness for zones 4 to 3.",
+      "Average harvest listed: late September.",
+      "Listed use: best for fresh eating; also good for cooking.",
+      "The source describes it as medium-large, very juicy and crisp, with some resistance to apple scab and fire blight."
+    ],
+    sourceId: "umn-apples"
+  },
+  {
+    id: "liberty",
+    name: "Liberty",
+    scientificName: "Malus domestica 'Liberty'",
+    verifiedFacts: [
+      "The University of Minnesota table lists good-to-fair hardiness for zones 4 to 3.",
+      "Average harvest listed: early October.",
+      "Listed uses: fresh eating and cooking.",
+      "The source describes it as immune to apple scab and resistant to fire blight."
+    ],
+    sourceId: "umn-apples"
+  }
+];
+
+const GUILD_LAYERS = [
+  {
+    id: "canopy",
+    name: "1. Canopy / overstory tree",
+    options: [
+      { id: "apple", name: "Apple (Malus spp.)", sourceId: "forest-gardening", layerRole: "Canopy / overstory tree" },
+      { id: "pear", name: "Pear (Pyrus spp.)", sourceId: "forest-gardening", layerRole: "Canopy / overstory tree" },
+      { id: "plum", name: "Plum (Prunus spp.)", sourceId: "forest-gardening", layerRole: "Canopy / overstory tree" }
+    ]
+  },
+  {
+    id: "understory",
+    name: "2. Small tree / understory",
+    options: [
+      { id: "serviceberry", name: "Serviceberry (Amelanchier spp.)", sourceId: "forest-gardening", layerRole: "Small tree / large shrub" },
+      { id: "dwarf-fruit", name: "Dwarf fruit tree (rootstock-specific)", sourceId: "umn-apples", layerRole: "Small tree / large shrub" }
+    ]
+  },
+  {
+    id: "shrub",
+    name: "3. Shrub",
+    options: [
+      { id: "currant", name: "Currant (Ribes spp.)", sourceId: "forest-gardening", layerRole: "Shrub" },
+      { id: "gooseberry", name: "Gooseberry (Ribes spp.)", sourceId: "forest-gardening", layerRole: "Shrub; species-level verification still needed" },
+      { id: "aronia", name: "Chokeberry (Aronia spp.)", sourceId: "forest-gardening", layerRole: "Shrub" }
+    ]
+  },
+  {
+    id: "herbaceous",
+    name: "4. Herbaceous / perennial",
+    options: [
+      { id: "comfrey", name: "Comfrey (Symphytum spp.)", sourceId: "forest-gardening", layerRole: "Herbaceous perennial; spreading habit noted by source" },
+      { id: "mint", name: "Mint (Mentha spp.)", sourceId: "forest-gardening", layerRole: "Herbaceous perennial" },
+      { id: "lemon-balm", name: "Lemon balm (Melissa officinalis)", sourceId: "forest-gardening", layerRole: "Herbaceous perennial" },
+      { id: "tansy", name: "Tansy (Tanacetum vulgare)", sourceId: "forest-gardening", layerRole: "Example plant for attracting predators of common pests; verify local suitability" }
+    ]
+  },
+  {
+    id: "groundcover",
+    name: "5. Groundcover",
+    options: [
+      { id: "wild-ginger", name: "Wild ginger (Asarum spp.)", sourceId: "forest-gardening", layerRole: "Groundcover" },
+      { id: "bunchberry", name: "Bunchberry (Cornus canadensis)", sourceId: "forest-gardening", layerRole: "Groundcover" },
+      { id: "wintergreen", name: "Wintergreen (Gaultheria spp.)", sourceId: "forest-gardening", layerRole: "Groundcover" },
+      { id: "creeping-raspberry", name: "Carpeting bramble (Rubus spp.)", sourceId: "forest-gardening", layerRole: "Groundcover" }
+    ]
+  },
+  {
+    id: "rhizosphere",
+    name: "6. Root / rhizosphere",
+    options: [
+      { id: "liquorice", name: "Liquorice (Glycyrrhiza spp.)", sourceId: "forest-gardening", layerRole: "Useful-root / rhizosphere example" },
+      { id: "barberry-root", name: "Barberry (Berberis spp.)", sourceId: "forest-gardening", layerRole: "Useful-root / rhizosphere example" }
+    ]
+  },
+  {
+    id: "vine",
+    name: "7. Climber / vine",
+    options: [
+      { id: "grape", name: "Grape (Vitis spp.)", sourceId: "forest-gardening", layerRole: "Climber / vine" },
+      { id: "hardy-kiwi", name: "Hardy kiwi (Actinidia spp.)", sourceId: "forest-gardening", layerRole: "Climber / vine; source notes sturdy tree support" }
+    ]
+  }
+];
+
+const NITROGEN_FIXERS = [
+  { id: "alder", name: "Alder (Alnus spp.)", sourceId: "forest-gardening", role: "Nitrogen-fixer example listed by source" },
+  { id: "broom", name: "Broom (Cytisus scoparius)", sourceId: "forest-gardening", role: "Nitrogen-fixer example listed by source" },
+  { id: "elaeagnus", name: "Elaeagnus (Elaeagnus spp.)", sourceId: "forest-gardening", role: "Nitrogen-fixer example listed by source" },
+  { id: "shrub-lupin", name: "Shrub lupin (Lupinus arboreus)", sourceId: "forest-gardening", role: "Nitrogen-fixer example listed by source" },
+  { id: "none", name: "No nitrogen-fixer selected", role: "" }
+];
+
+const FACILITY_CONTENTS = {
+  "garden-beds": { type: "plants", title: "Choose crops for this bed", options: VEGETABLE_PLANTS },
+  greenhouse: { type: "plants", title: "Choose crops for this greenhouse", options: VEGETABLE_PLANTS },
+  "berry-planting": {
+    type: "components",
+    title: "Choose berry-planting ideas",
+    options: [
+      { id: "blueberry", name: "Blueberry (Vaccinium spp.; soil pH and cultivar need checking)" },
+      { id: "currant", name: "Currant (Ribes spp.; verify local disease and site fit)" },
+      { id: "raspberry", name: "Raspberry (Rubus idaeus; plan for spread and support)" }
+    ]
+  },
+  "fruit-tree": { type: "cultivars", title: "Choose scions / cultivars", options: APPLE_CULTIVARS },
+  "angled-espalier": { type: "cultivars", title: "Choose scions / cultivars", options: APPLE_CULTIVARS },
+  "apple-guild": { type: "guild", title: "Choose what goes in each guild layer" },
+  "food-forest": { type: "guild", title: "Choose what goes in each forest-garden layer" },
+  "compost-area": {
+    type: "components",
+    title: "Choose compost infrastructure",
+    options: [
+      { id: "three-bin", name: "Three-bin compost bays" },
+      { id: "leaf-mould", name: "Leaf-mould bay" },
+      { id: "worm-bin", name: "Worm-composting bin" },
+      { id: "covered-bin", name: "Covered compost bin" }
+    ]
+  },
+  "rain-garden": {
+    type: "components",
+    title: "Choose planting ideas to research",
+    options: [
+      { id: "sedge", name: "Locally native sedge (Carex spp.)" },
+      { id: "rush", name: "Locally native rush (Juncus spp.)" },
+      { id: "swamp-milkweed", name: "Swamp milkweed (Asclepias incarnata; verify site fit)" }
+    ]
+  },
+  "pollinator-patch": {
+    type: "components",
+    title: "Choose flowering-plant ideas to research",
+    options: [
+      { id: "native-aster", name: "Native aster (Symphyotrichum spp.)" },
+      { id: "native-goldenrod", name: "Native goldenrod (Solidago spp.)" },
+      { id: "wild-bergamot", name: "Wild bergamot (Monarda fistulosa)" }
+    ]
+  },
+  "beneficial-habitat": {
+    type: "components",
+    title: "Choose habitat components",
+    options: [
+      { id: "native-edge", name: "Locally native flowering shrub edge" },
+      { id: "water-source", name: "Shallow, safely maintained water source" },
+      { id: "nest-box", name: "Species-appropriate nest box" },
+      { id: "deadwood", name: "Retained deadwood / log habitat (where safe)" }
+    ]
+  },
+  "pest-exclusion": {
+    type: "components",
+    title: "Choose targeted prevention components",
+    options: [
+      { id: "row-cover", name: "Removable row cover / insect netting" },
+      { id: "trunk-guard", name: "Tree trunk guards" },
+      { id: "wildlife-fence", name: "Wildlife-resistant fence" },
+      { id: "monitoring", name: "Monitoring and sanitation plan" }
+    ]
+  },
+  "garden-path": {
+    type: "components",
+    title: "Choose path materials",
+    options: [
+      { id: "wood-chip", name: "Wood-chip path" },
+      { id: "gravel", name: "Permeable gravel" },
+      { id: "stepping-stone", name: "Stepping stones" }
+    ]
+  },
+  "native-border": {
+    type: "components",
+    title: "Choose planting ideas to research",
+    options: [
+      { id: "native-aster", name: "Native aster (Symphyotrichum spp.)" },
+      { id: "native-goldenrod", name: "Native goldenrod (Solidago spp.)" },
+      { id: "native-sedge", name: "Locally native sedge (Carex spp.)" }
+    ]
+  }
+};
+
+const REFERENCE_SOURCES = [
+  {
+    id: "forest-gardening",
+    label: "Agroforestry Research Trust: Forest gardening",
+    url: "https://www.agroforestry.co.uk/about-agroforestry/forest-gardening/",
+    note: "Describes the seven-layer framework and example species; not a local planting prescription."
+  },
+  {
+    id: "umaine-vegetable-varieties",
+    label: "University of Maine Cooperative Extension: Vegetable varieties",
+    url: "https://extension.umaine.edu/publications/2190e/",
+    note: "Example cultivar list; regional performance and publication date should be checked."
+  },
+  {
+    id: "umaine-apple-pruning",
+    label: "University of Maine Cooperative Extension: Renovating old apple trees",
+    url: "https://extension.umaine.edu/publications/2409e/",
+    note: "Discusses gradual pruning and cautions against severe renovation in one go."
+  },
+  {
+    id: "umn-vegetable-planting",
+    label: "University of Minnesota Extension: Planting the vegetable garden",
+    url: "https://extension.umn.edu/garden-and-home/yard-and-garden/gardening-in-minnesota/planting-vegetable-garden",
+    note: "General crop timing and soil-test context; Minnesota timing does not transfer directly to Atlantic Canada."
+  },
+  {
+    id: "umn-tomatoes",
+    label: "University of Minnesota Extension: Growing tomatoes",
+    url: "https://extension.umn.edu/garden-and-home/yard-and-garden/gardening-in-minnesota/growing-tomatoes",
+    note: "Source for the listed tomato sun, soil, and watering notes; Minnesota guidance is not an Atlantic Canada prescription."
+  },
+  {
+    id: "umn-peas",
+    label: "University of Minnesota Extension: Growing peas",
+    url: "https://extension.umn.edu/garden-and-home/yard-and-garden/gardening-in-minnesota/growing-peas",
+    note: "Source for the listed pea sun, soil, temperature, and watering notes; Minnesota guidance is not an Atlantic Canada prescription."
+  },
+  {
+    id: "umn-apples",
+    label: "University of Minnesota Extension: Growing apples",
+    url: "https://extension.umn.edu/garden-and-home/yard-and-garden/gardening-in-minnesota/growing-apples",
+    note: "Source for the listed apple cultivation and cultivar-table notes; Minnesota hardiness and harvest timing are not Atlantic Canada recommendations."
+  }
 ];
 
 const DESIGN_PERSPECTIVES = [

@@ -10,7 +10,28 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 ## Work sessions
 
-### Session — 2026-11-08 — driver: student
+### Session — 2026-11-07 — driver: student
+
+- **Goal for this session:** Add transparent plant-information cards, make bed settings easier to configure, and avoid presenting unsupported guild or crop-fit claims as facts.
+- **What worked:** Added hover-, keyboard-, and tap-accessible plant cards that display cited notes and clearly identify missing profiles. Added one sun-exposure and one watering-method setting per bed, with auto-selection limited to cited crop profiles matching both settings. Added an at-a-glance guild layer/role summary and explicitly stated that selected layers do not establish companion compatibility or benefits.
+- **Accuracy and migration notes:** Tomato, pea, and apple cultivar details cite University of Minnesota Extension and are labeled Minnesota-specific, not Atlantic Canada recommendations. Other candidate menu entries are not assigned invented care stats. Pear and plum cultivar names can be entered from a local source and are labeled user-provided rather than app-verified. Existing saved plans remain supported, including older companion selections, which are now labeled unverified.
+- **What we checked:** JavaScript syntax, diff whitespace, browser checks for verified-fit crop selection, no-selection behavior for unsupported conditions, cited tomato and apple cards, guild layer choices and summary, user-entered pear cultivar, saved bed settings, no browser errors, and a narrow mobile viewport.
+- **Committed?** no — not committed yet.
+
+### Session — 2026-11-07 — driver: student
+
+- **Goal for this session:** Make plant choices clearer and more configurable, and distinguish real layer/species examples from verified guild compatibility.
+- **Key prompts we gave Copilot** (paste the important ones):
+  1. “Are the options for each guild and combination for the drop down menus all based on factual info and real guild companions?”
+  2. “You should be able to choose a piece of infrastructure and be able to select what goes into it ... rotation schedule using the amount of days ... select strains to the grafted trees or what kind of plants can fit in the vegetable beds.”
+  3. “Auto select which plants go in each bed or guild based on common traits such as watering levels and fertilizer amounts ... guilds should offer various options for each level ... six or seven levels.”
+- **What worked:** Replaced confusing gray, non-selectable category headers with high-contrast feature choices. Added configurable crop beds and greenhouses, cultivar/scion selection for single and multi-grafted fruit-tree plans, seven forest-garden layers, compost/habitat infrastructure choices, editable crop maturity-day estimates, and a date-based succession/rotation review reminder. Added a rough tag-matching auto-select and source links with clear limits.
+- **What broke, and how we fixed it:** Initial browser assertions counted optional maturity inputs as extra crop checkboxes and expected an empty guild after auto-selection. Refined the checks to distinguish input types and reset auto-selected values before testing the empty state; no application defect was found.
+- **Research and accuracy note:** Earlier companion options were illustrative, not validated combinations. The updated layer framework and some species examples reference the Agroforestry Research Trust; Maine vegetable cultivar examples and gradual apple-pruning context link to University of Maine Cooperative Extension. Compatibility, the sample water/fertility tags, and regional suitability remain unverified; auto-select is not a planting recommendation.
+- **What we checked:** JavaScript syntax and diff formatting; browser checks for selectable menus, source links, rough-tag auto-selection, user-entered maturity schedules, rotation reminders, multi-grafted scions, all seven guild layers, configurable infrastructure, perspective-idea customization, and mobile layout.
+- **Committed?** no — not committed yet.
+
+### Session — 2026-11-07 — driver: student
 
 - **Goal for this session:** Let visitors draw proposed feature areas on the sample map, keep the total within the sample parcel, and explore plant guilds, varieties, habitat, and pest-prevention concepts.
 - **Key prompts we gave Copilot** (paste the important ones):

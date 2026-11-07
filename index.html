@@ -16,6 +16,7 @@
     </a>
     <nav aria-label="Main navigation">
       <a href="#overview">Overview</a>
+      <a href="#site-brief">Brief</a>
       <a href="#property">Property</a>
       <a href="#plan">My plan</a>
     </nav>
@@ -57,6 +58,159 @@
         </article>
       </div>
       <p class="snapshot-note" id="area-note">Sample dashboard · Area is illustrative, not a measured parcel.</p>
+    </section>
+
+    <section class="workspace site-brief-section" id="site-brief" aria-labelledby="site-brief-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Start with context</p>
+          <h2 id="site-brief-title">Property brief &amp; pre-planning checks</h2>
+        </div>
+        <p class="section-hint">Record what you know and what still needs checking.</p>
+      </div>
+      <div class="site-brief-grid">
+        <form class="panel site-brief-form" id="site-brief-form">
+          <div class="panel-heading">
+            <div>
+              <h3>Goals and working assumptions</h3>
+              <p class="muted">Optional context for your own planning; no AI or recommendations are generated.</p>
+            </div>
+          </div>
+          <label for="brief-region">Province or territory</label>
+          <select id="brief-region" name="region">
+            <option value="">Not recorded</option>
+            <option value="new-brunswick">New Brunswick</option>
+            <option value="nova-scotia">Nova Scotia</option>
+            <option value="prince-edward-island">Prince Edward Island</option>
+            <option value="newfoundland-and-labrador">Newfoundland and Labrador</option>
+            <option value="other">Other / outside Atlantic Canada</option>
+          </select>
+
+          <fieldset class="brief-goals">
+            <legend>What are you planning for?</legend>
+            <div class="brief-goal-options">
+              <label><input type="checkbox" name="goals" value="vegetables"> Vegetables and staple foods</label>
+              <label><input type="checkbox" name="goals" value="fruit"> Fruit and perennial foods</label>
+              <label><input type="checkbox" name="goals" value="habitat"> Habitat and biodiversity</label>
+              <label><input type="checkbox" name="goals" value="water-soil"> Soil and water stewardship</label>
+              <label><input type="checkbox" name="goals" value="lower-maintenance"> Lower-maintenance landscape</label>
+              <label><input type="checkbox" name="goals" value="household-resilience"> Household resilience and skills</label>
+            </div>
+          </fieldset>
+
+          <div class="brief-pair">
+            <div>
+              <label for="brief-time">Time available in a typical week</label>
+              <select id="brief-time" name="time">
+                <option value="">Not recorded</option>
+                <option value="under-2">Under 2 hours</option>
+                <option value="2-5">2–5 hours</option>
+                <option value="6-10">6–10 hours</option>
+                <option value="over-10">Over 10 hours</option>
+                <option value="seasonal">Varies by season</option>
+              </select>
+            </div>
+            <div>
+              <label for="brief-budget">Rough project budget comfort (CAD)</label>
+              <select id="brief-budget" name="budget">
+                <option value="">Not recorded</option>
+                <option value="under-500">Under $500</option>
+                <option value="500-2000">$500–$2,000</option>
+                <option value="2000-10000">$2,000–$10,000</option>
+                <option value="over-10000">Over $10,000</option>
+                <option value="not-sure">Not sure yet</option>
+              </select>
+            </div>
+          </div>
+
+          <label for="brief-water">Water access for planned growing areas</label>
+          <select id="brief-water" name="water">
+            <option value="">Not recorded</option>
+            <option value="reliable">Reliable source identified</option>
+            <option value="seasonal">Seasonal or capacity uncertain</option>
+            <option value="none">No source identified</option>
+            <option value="needs-review">Needs local / technical review</option>
+          </select>
+          <label for="brief-soil">Soil information</label>
+          <select id="brief-soil" name="soil">
+            <option value="">Not recorded</option>
+            <option value="current-test">Current soil test available</option>
+            <option value="old-test">Test exists but may be outdated</option>
+            <option value="untested">Not tested</option>
+            <option value="concern">Possible contamination or other concern</option>
+          </select>
+          <label for="brief-notes">Other goals, limits, or assumptions <span class="optional-label">(optional)</span></label>
+          <textarea id="brief-notes" name="notes" rows="3" maxlength="500" placeholder="Keep notes general; avoid private details or exact addresses."></textarea>
+          <p class="site-brief-save" id="site-brief-save" role="status" aria-live="polite">Brief is stored only in this browser.</p>
+        </form>
+
+        <article class="panel preflight-panel">
+          <div class="panel-heading">
+            <div>
+              <h3>Before treating an idea as build-ready</h3>
+              <p class="muted">Track questions to investigate. A “reviewed” status is not a safety clearance or permit.</p>
+            </div>
+          </div>
+          <div class="preflight-progress">
+            <strong id="preflight-count">0 of 7 statuses recorded</strong>
+            <progress id="preflight-progress" max="7" value="0" aria-label="Pre-planning check statuses recorded">0 of 7</progress>
+          </div>
+          <div class="preflight-checks" id="preflight-checks">
+            <div class="preflight-check">
+              <label for="check-boundary">Property boundary, ownership, easements, and setbacks</label>
+              <select id="check-boundary" data-check="boundary" aria-label="Review status for property boundary and setbacks">
+                <option value="open">Not reviewed</option><option value="reviewed">Reviewed; not independently verified</option><option value="na">Not applicable (explain below)</option>
+              </select>
+              <input data-check-note="boundary" maxlength="180" aria-label="Boundary and setback source or next step" placeholder="Source, note, or next step (optional)">
+            </div>
+            <div class="preflight-check">
+              <label for="check-utilities">Underground utilities before any digging</label>
+              <select id="check-utilities" data-check="utilities" aria-label="Review status for underground utilities">
+                <option value="open">Not reviewed</option><option value="reviewed">Reviewed; not independently verified</option><option value="na">Not applicable (explain below)</option>
+              </select>
+              <input data-check-note="utilities" maxlength="180" aria-label="Utility-locating source or next step" placeholder="Utility locator, source, or next step (optional)">
+            </div>
+            <div class="preflight-check">
+              <label for="check-well-septic">Well, septic system, and required clearances</label>
+              <select id="check-well-septic" data-check="well-septic" aria-label="Review status for well and septic clearances">
+                <option value="open">Not reviewed</option><option value="reviewed">Reviewed; not independently verified</option><option value="na">Not applicable (explain below)</option>
+              </select>
+              <input data-check-note="well-septic" maxlength="180" aria-label="Well and septic source or next step" placeholder="Records, authority, or next step (optional)">
+            </div>
+            <div class="preflight-check">
+              <label for="check-water">Water flow, flooding, erosion, and downstream effects</label>
+              <select id="check-water" data-check="water" aria-label="Review status for water and drainage">
+                <option value="open">Not reviewed</option><option value="reviewed">Reviewed; not independently verified</option><option value="na">Not applicable (explain below)</option>
+              </select>
+              <input data-check-note="water" maxlength="180" aria-label="Water and drainage source or next step" placeholder="Observations, source, or next step (optional)">
+            </div>
+            <div class="preflight-check">
+              <label for="check-soil">Soil test, growing conditions, or contamination concern</label>
+              <select id="check-soil" data-check="soil" aria-label="Review status for soil conditions">
+                <option value="open">Not reviewed</option><option value="reviewed">Reviewed; not independently verified</option><option value="na">Not applicable (explain below)</option>
+              </select>
+              <input data-check-note="soil" maxlength="180" aria-label="Soil information source or next step" placeholder="Test date, source, or next step (optional)">
+            </div>
+            <div class="preflight-check">
+              <label for="check-rules">Local permits, protected areas, and applicable rules</label>
+              <select id="check-rules" data-check="rules" aria-label="Review status for permits and local rules">
+                <option value="open">Not reviewed</option><option value="reviewed">Reviewed; not independently verified</option><option value="na">Not applicable (explain below)</option>
+              </select>
+              <input data-check-note="rules" maxlength="180" aria-label="Local rules source or next step" placeholder="Authority, source, or next step (optional)">
+            </div>
+            <div class="preflight-check">
+              <label for="check-access">Slope, access, equipment, and safe maintenance</label>
+              <select id="check-access" data-check="access" aria-label="Review status for access and maintenance">
+                <option value="open">Not reviewed</option><option value="reviewed">Reviewed; not independently verified</option><option value="na">Not applicable (explain below)</option>
+              </select>
+              <input data-check-note="access" maxlength="180" aria-label="Access or maintenance source or next step" placeholder="Observation, source, or next step (optional)">
+            </div>
+          </div>
+          <p class="preflight-disclaimer">These prompts do not cover every property or legal requirement. For digging, find the relevant provincial locate service through <a href="https://www.clickbeforeyoudig.com/" target="_blank" rel="noopener noreferrer">Click Before You Dig</a>. The planning approach is informed by the <a href="https://www.nrcs.usda.gov/getting-assistance/conservation-technical-assistance" target="_blank" rel="noopener noreferrer">USDA NRCS conservation-planning overview</a> (U.S. context, not a Canadian checklist). Confirm critical matters with the appropriate local authority or qualified professional. TerraForma does not assess or approve a site.</p>
+          <p class="site-brief-save" id="preflight-save" role="status" aria-live="polite">Check statuses are stored only in this browser.</p>
+          <button class="reset-brief-button" id="reset-brief" type="button" hidden>Forget unreadable saved brief</button>
+        </article>
+      </div>
     </section>
 
     <section class="workspace" id="property">
@@ -279,7 +433,7 @@
           <label for="plan-note">Planning note <span class="optional-label">(optional)</span></label>
           <textarea id="plan-note" name="note" rows="3" maxlength="240" placeholder="What should you observe or research?"></textarea>
           <button class="button button-dark" type="submit">Draw on map <span aria-hidden="true">↗</span></button>
-          <p class="form-footnote">Click at least three points inside the sample boundary. Avoid overlapping areas. No account or payment required.</p>
+          <p class="form-footnote">Click at least three points inside the sample boundary. Avoid overlapping areas. An outline is a concept only—not a safety review, permit, or construction approval. No account or payment required.</p>
           <p class="form-error" id="form-error" role="alert" hidden></p>
         </form>
       </div>

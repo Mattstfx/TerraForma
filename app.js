@@ -2,6 +2,8 @@
   "use strict";
 
   const storageKey = "terraforma-sample-plan";
+  const siteBriefStorageKey = "terraforma-site-brief";
+  const preflightCheckIds = ["boundary", "utilities", "well-septic", "water", "soil", "rules", "access"];
   const svgNamespace = "http://www.w3.org/2000/svg";
   const elements = {
     mapMarkers: document.getElementById("map-markers"),
@@ -59,7 +61,14 @@
     perspectiveProcessTitle: document.getElementById("perspective-process-title"),
     perspectiveProcess: document.getElementById("perspective-process"),
     perspectiveReferences: document.getElementById("perspective-references"),
-    perspectiveIdeas: document.getElementById("perspective-ideas")
+    perspectiveIdeas: document.getElementById("perspective-ideas"),
+    siteBriefForm: document.getElementById("site-brief-form"),
+    siteBriefSave: document.getElementById("site-brief-save"),
+    preflightChecks: document.getElementById("preflight-checks"),
+    preflightCount: document.getElementById("preflight-count"),
+    preflightProgress: document.getElementById("preflight-progress"),
+    preflightSave: document.getElementById("preflight-save"),
+    resetBrief: document.getElementById("reset-brief")
   };
 
   let selectedZoneId = PROPERTY.zones[0].id;
@@ -72,6 +81,7 @@
     });
   });
   let storageAvailable = true;
+  let siteBriefStorageAvailable = true;
   let pendingPlanItem = null;
   let drawingPoints = [];
   let keyboardCursor = { x: 320, y: 215 };
@@ -102,6 +112,143 @@
     option.value = value;
     option.textContent = label;
     return option;
+  }
+
+  function readSiteBrief() {
+    try {
+      const saved = window.localStorage.getItem(siteBriefStorageKey);
+      if (saved === null) return;
+      const parsed = JSON.parse(saved);
+      const validSelections = {
+        region: ["", "new-brunswick", "nova-scotia", "prince-edward-island", "newfoundland-and-labrador", "other"],
+        time: ["", "under-2", "2-5", "6-10", "over-10", "seasonal"],
+        budget: ["", "under-500", "500-2000", "2000-10000", "over-10000", "not-sure"],
+        water: ["", "reliable", "seasonal", "none", "needs-review"],
+        soil: ["", "current-test", "old-test", "untested", "concern"]
+      };
+      if (!parsed || parsed.version !== 1 || typeof parsed !== "object" ||
+          !Object.keys(validSelections).every(function (key) {
+            return validSelections[key].includes(parsed[key]);
+          }) ||
+          !Array.isArray(parsed.goals) ||
+          !parsed.goals.every(function (goal) {
+            return ["vegetables", "fruit", "habitat", "water-soil", "lower-maintenance", "household-resilience"].includes(goal);
+          }) ||
+          typeof parsed.notes !== "string" || parsed.notes.length > 500 ||
+          !parsed.checks || typeof parsed.checks !== "object" ||
+          !preflightCheckIds.every(function (id) {
+            const check = parsed.checks[id];
+            return check && ["open", "reviewed", "na"].includes(check.status) &&
+              typeof check.note === "string" && check.note.length <= 180;
+          })) {
+        throw new Error("The saved property brief has an unexpected format.");
+      }
+
+      Object.keys(validSelections).forEach(function (key) {
+        const field = elements.siteBriefForm.elements.namedItem(key);
+        if (field) field.value = parsed[key];
+      });
+      elements.siteBriefForm.elements.namedItem("notes").value = parsed.notes;
+      elements.siteBriefForm.querySelectorAll('input[name="goals"]').forEach(function (input) {
+        input.checked = parsed.goals.includes(input.value);
+      });
+      preflightCheckIds.forEach(function (id) {
+        elements.preflightChecks.querySelector('[data-check="' + id + '"]').value = parsed.checks[id].status;
+        elements.preflightChecks.querySelector('[data-check-note="' + id + '"]').value = parsed.checks[id].note;
+      });
+      elements.siteBriefSave.textContent = "Saved property brief loaded from this browser.";
+      elements.preflightSave.textContent = "Saved check statuses loaded from this browser.";
+    } catch (error) {
+      siteBriefStorageAvailable = false;
+      elements.siteBriefSave.textContent = "Could not load the saved property brief. The form is not saved; check browser storage before continuing.";
+      elements.siteBriefSave.classList.add("storage-error");
+      elements.preflightSave.textContent = "Could not load saved check statuses.";
+      elements.preflightSave.classList.add("storage-error");
+      elements.resetBrief.hidden = false;
+      console.error("TerraForma could not read the property brief:", error);
+    }
+    updatePreflightProgress();
+  }
+
+  function collectSiteBrief() {
+    const formData = new FormData(elements.siteBriefForm);
+    const checks = {};
+    preflightCheckIds.forEach(function (id) {
+      checks[id] = {
+        status: elements.preflightChecks.querySelector('[data-check="' + id + '"]').value,
+        note: elements.preflightChecks.querySelector('[data-check-note="' + id + '"]').value.trim()
+      };
+    });
+    return {
+      version: 1,
+      region: formData.get("region"),
+      goals: formData.getAll("goals"),
+      time: formData.get("time"),
+      budget: formData.get("budget"),
+      water: formData.get("water"),
+      soil: formData.get("soil"),
+      notes: String(formData.get("notes") || "").trim(),
+      checks: checks
+    };
+  }
+
+  function saveSiteBrief() {
+    updatePreflightProgress();
+    if (!siteBriefStorageAvailable) {
+      elements.siteBriefSave.textContent = "Could not save this brief in browser storage. Changes may be lost when you leave.";
+      elements.preflightSave.textContent = "Could not save check statuses in browser storage.";
+      return;
+    }
+    try {
+      window.localStorage.setItem(siteBriefStorageKey, JSON.stringify(collectSiteBrief()));
+      elements.siteBriefSave.textContent = "Property brief saved only in this browser.";
+      elements.preflightSave.textContent = "Check statuses saved only in this browser.";
+      elements.siteBriefSave.classList.remove("storage-error");
+      elements.preflightSave.classList.remove("storage-error");
+    } catch (error) {
+      siteBriefStorageAvailable = false;
+      elements.siteBriefSave.textContent = "Could not save this brief in browser storage. Changes may be lost when you leave.";
+      elements.preflightSave.textContent = "Could not save check statuses in browser storage.";
+      elements.siteBriefSave.classList.add("storage-error");
+      elements.preflightSave.classList.add("storage-error");
+      console.error("TerraForma could not save the property brief:", error);
+    }
+  }
+
+  function updatePreflightProgress() {
+    const statuses = preflightCheckIds.map(function (id) {
+      return elements.preflightChecks.querySelector('[data-check="' + id + '"]').value;
+    });
+    const reviewed = statuses.filter(function (status) { return status === "reviewed"; }).length;
+    const notApplicable = statuses.filter(function (status) { return status === "na"; }).length;
+    const addressed = reviewed + notApplicable;
+    elements.preflightCount.textContent = addressed + " of " + preflightCheckIds.length +
+      " statuses recorded (" + reviewed + " reviewed · " + notApplicable + " marked not applicable)";
+    elements.preflightProgress.value = addressed;
+    elements.preflightProgress.textContent = addressed + " of " + preflightCheckIds.length + " statuses recorded";
+  }
+
+  function resetUnreadableSiteBrief() {
+    if (!window.confirm("The saved property brief could not be read. Forget that saved brief and start with a blank one?")) return;
+    try {
+      window.localStorage.removeItem(siteBriefStorageKey);
+      siteBriefStorageAvailable = true;
+      elements.siteBriefForm.reset();
+      preflightCheckIds.forEach(function (id) {
+        elements.preflightChecks.querySelector('[data-check="' + id + '"]').value = "open";
+        elements.preflightChecks.querySelector('[data-check-note="' + id + '"]').value = "";
+      });
+      elements.siteBriefSave.textContent = "Started a blank brief. It is stored only in this browser when you make changes.";
+      elements.preflightSave.textContent = "Check statuses are stored only in this browser.";
+      elements.siteBriefSave.classList.remove("storage-error");
+      elements.preflightSave.classList.remove("storage-error");
+      elements.resetBrief.hidden = true;
+      updatePreflightProgress();
+    } catch (error) {
+      elements.siteBriefSave.textContent = "Could not remove the unreadable saved brief from browser storage.";
+      elements.siteBriefSave.classList.add("storage-error");
+      console.error("TerraForma could not reset the property brief:", error);
+    }
   }
 
   function getCatalogItem(id) {
@@ -345,7 +492,8 @@
     }).filter(Boolean);
     summary.textContent = "Selected " + selected.length + " of " + GUILD_LAYERS.length +
       " vertical layers" + (roles.length ? ": " + roles.join("; ") : ".") +
-      (fixer ? " Nitrogen-fixer candidate: " + fixer.name + "." : "") +
+      (fixer ? " Potential nitrogen-fixer function: " + fixer.name + "." : "") +
+      " The function may overlap a physical layer; it is not an eighth layer." +
       " This describes planned structure and roles only; it does not verify compatibility, nitrogen transfer, yield, wildlife effects, or regional fit.";
   }
 
@@ -367,7 +515,7 @@
     elements.contentsHelp.textContent = isPlants
       ? "Choose crops and optionally enter days to maturity from your seed packet. Hover, focus, or tap a crop name for its sourced profile."
       : isGuild
-        ? "Choose candidates independently for each layer. The selected layers describe structure, not proven companions or local recommendations."
+        ? "This menu uses one seven-layer forest-garden framework; other frameworks may group layers differently, and not every layer must be planted. A plant can occupy one physical layer and also have a separate function. Examples cite a framework, not local suitability or proven companion benefits."
         : isCultivars
           ? "These cultivar notes come from a Minnesota source and are not an Atlantic Canada recommendation. Confirm local fit and graft compatibility."
           : isManualCultivar
@@ -378,7 +526,8 @@
       GUILD_LAYERS.forEach(function (layer) {
         const label = document.createElement("label");
         label.className = "guild-layer-label";
-        label.textContent = layer.name;
+        const heading = document.createElement("span");
+        heading.textContent = layer.name;
         const select = document.createElement("select");
         select.className = "guild-layer-select";
         select.dataset.layerId = layer.id;
@@ -398,20 +547,27 @@
           }
           updateGuildSummary();
         });
-        label.appendChild(select);
+        const description = document.createElement("span");
+        description.className = "guild-layer-description";
+        description.textContent = layer.description;
+        label.append(heading, select, description);
         elements.guildOptions.appendChild(label);
         elements.guildOptions.appendChild(info);
       });
       const nitrogenLabel = document.createElement("label");
       nitrogenLabel.className = "guild-layer-label";
-      nitrogenLabel.textContent = "Optional functional role: nitrogen fixer";
+      const nitrogenHeading = document.createElement("span");
+      nitrogenHeading.textContent = "Optional cross-cutting function: potential nitrogen fixer";
       const nitrogenSelect = document.createElement("select");
       nitrogenSelect.id = "nitrogen-fixer-select";
       nitrogenSelect.appendChild(makeOption("Not selected", ""));
       NITROGEN_FIXERS.forEach(function (plant) {
         nitrogenSelect.appendChild(makeOption(plant.name, plant.id));
       });
-      nitrogenLabel.appendChild(nitrogenSelect);
+      const nitrogenHelp = document.createElement("span");
+      nitrogenHelp.className = "guild-layer-description";
+      nitrogenHelp.textContent = "Not an eighth layer. A listed species can also be chosen in its physical layer above; selecting this role does not prove nitrogen reaches neighboring plants. Candidates need species-specific and local review.";
+      nitrogenLabel.append(nitrogenHeading, nitrogenSelect, nitrogenHelp);
       elements.guildOptions.appendChild(nitrogenLabel);
       nitrogenSelect.addEventListener("change", updateGuildSummary);
       const summary = document.createElement("div");
@@ -925,8 +1081,8 @@
         if (fixer) {
           const role = document.createElement("p");
           role.className = "guild-summary";
-          role.textContent = "Nitrogen-fixer candidate: " + fixer.name +
-            " (not a guarantee of nitrogen transfer to nearby plants).";
+          role.textContent = "Potential nitrogen-fixer function: " + fixer.name +
+            ". This is a functional label, not an eighth layer or a guarantee of nitrogen transfer to neighboring plants.";
           content.appendChild(role);
         }
       }
@@ -1427,7 +1583,19 @@
   });
   elements.finishDrawing.addEventListener("click", finishDrawing);
 
+  elements.siteBriefForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+    saveSiteBrief();
+  });
+  elements.siteBriefForm.addEventListener("input", saveSiteBrief);
+  elements.siteBriefForm.addEventListener("change", saveSiteBrief);
+  elements.preflightChecks.addEventListener("input", saveSiteBrief);
+  elements.preflightChecks.addEventListener("change", saveSiteBrief);
+  elements.resetBrief.addEventListener("click", resetUnreadableSiteBrief);
+
   readSavedPlan();
+  readSiteBrief();
+  updatePreflightProgress();
   populateFeatureOptions();
   renderReferenceList();
   selectZone(selectedZoneId);

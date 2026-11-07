@@ -293,15 +293,18 @@ const GUILD_LAYERS = [
   {
     id: "canopy",
     name: "1. Canopy / overstory tree",
+    description: "Tallest woody layer in this framework. Mature size, shade, roots, and local suitability still need to be checked.",
     options: [
       { id: "apple", name: "Apple (Malus spp.)", scientificName: "Malus spp.", sourceId: "forest-gardening", profileId: "apple-layer", layerRole: "Canopy / overstory tree" },
       { id: "pear", name: "Pear (Pyrus communis)", scientificName: "Pyrus communis", sourceId: "forest-gardening", profileId: "pear-layer", layerRole: "Canopy / overstory tree" },
-      { id: "plum", name: "Plum (Prunus domestica)", scientificName: "Prunus domestica", sourceId: "forest-gardening", profileId: "plum-layer", layerRole: "Canopy / overstory tree" }
+      { id: "plum", name: "Plum (Prunus domestica)", scientificName: "Prunus domestica", sourceId: "forest-gardening", profileId: "plum-layer", layerRole: "Canopy / overstory tree" },
+      { id: "alder", name: "Alder (Alnus spp.)", scientificName: "Alnus spp.", sourceId: "forest-gardening", profileId: "alder-fixer", layerRole: "Canopy / overstory tree; also listed as a potential nitrogen-fixer role" }
     ]
   },
   {
     id: "understory",
     name: "2. Small tree / understory",
+    description: "Smaller woody trees below or between canopy trees; the label is relative to the design and mature plant sizes.",
     options: [
       { id: "serviceberry", name: "Serviceberry (Amelanchier spp.)", scientificName: "Amelanchier spp.", sourceId: "forest-gardening", profileId: "serviceberry-layer", layerRole: "Small tree / large shrub" },
       { id: "dwarf-apple", name: "Dwarf apple (cultivar and rootstock not selected)", scientificName: "Malus spp.", sourceId: "forest-gardening", profileId: "apple-layer", layerRole: "Small tree / large shrub" }
@@ -310,14 +313,18 @@ const GUILD_LAYERS = [
   {
     id: "shrub",
     name: "3. Shrub",
+    description: "Woody shrubs below the tree strata; check mature spread and maintenance before placing.",
     options: [
       { id: "currant", name: "Currant (type unspecified)", scientificName: "Ribes spp.", sourceId: "forest-gardening", profileId: "currantGroup", layerRole: "Shrub" },
-      { id: "aronia", name: "Chokeberry (Aronia spp.)", scientificName: "Aronia spp.", sourceId: "forest-gardening", profileId: "aronia-layer", layerRole: "Shrub" }
+      { id: "aronia", name: "Chokeberry (Aronia spp.)", scientificName: "Aronia spp.", sourceId: "forest-gardening", profileId: "aronia-layer", layerRole: "Shrub" },
+      { id: "elaeagnus", name: "Elaeagnus (Elaeagnus spp.)", scientificName: "Elaeagnus spp.", sourceId: "forest-gardening", profileId: "elaeagnus-fixer", layerRole: "Shrub; also listed as a potential nitrogen-fixer role" },
+      { id: "shrub-lupin", name: "Shrub lupin (Lupinus arboreus)", scientificName: "Lupinus arboreus", sourceId: "forest-gardening", profileId: "shrub-lupin-fixer", layerRole: "Shrub; also listed as a potential nitrogen-fixer role" }
     ]
   },
   {
     id: "herbaceous",
     name: "4. Herbaceous / perennial",
+    description: "Non-woody plants, including herbaceous perennials; choose by verified site requirements, not layer alone.",
     options: [
       { id: "comfrey", name: "Common comfrey (Symphytum officinale)", scientificName: "Symphytum officinale", sourceId: "forest-gardening", profileId: "commonComfrey", layerRole: "Herbaceous perennial; safety and spread caveats apply" },
       { id: "mint", name: "Mint (Mentha spp.)", scientificName: "Mentha spp.", sourceId: "forest-gardening", profileId: "mint-layer", layerRole: "Herbaceous perennial" },
@@ -327,6 +334,7 @@ const GUILD_LAYERS = [
   {
     id: "groundcover",
     name: "5. Groundcover",
+    description: "Low-growing plants that occupy the ground plane; actual soil-cover performance is site- and species-specific.",
     options: [
       { id: "wild-ginger", name: "Canada wild ginger (Asarum canadense)", scientificName: "Asarum canadense", sourceId: "forest-gardening", profileId: "wildGinger", layerRole: "Groundcover" },
       { id: "bunchberry", name: "Bunchberry (Cornus canadensis)", scientificName: "Cornus canadensis", sourceId: "forest-gardening", profileId: "bunchberry-layer", layerRole: "Groundcover" },
@@ -336,7 +344,8 @@ const GUILD_LAYERS = [
   },
   {
     id: "rhizosphere",
-    name: "6. Root / rhizosphere",
+    name: "6. Root / rhizosphere layer",
+    description: "The framework's underground/root stratum. 'Rhizosphere' is the root-influenced soil zone; this is not simply a list of edible root crops.",
     options: [
       { id: "liquorice", name: "Liquorice (Glycyrrhiza spp.)", scientificName: "Glycyrrhiza spp.", sourceId: "forest-gardening", profileId: "liquorice-layer", layerRole: "Useful-root / rhizosphere example" },
       { id: "barberry-root", name: "Barberry (Berberis spp.)", scientificName: "Berberis spp.", sourceId: "forest-gardening", profileId: "barberry-layer", layerRole: "Useful-root / rhizosphere example" }
@@ -345,6 +354,7 @@ const GUILD_LAYERS = [
   {
     id: "vine",
     name: "7. Climber / vine",
+    description: "Climbing plants use vertical supports; check support, spread, and competition with other plants.",
     options: [
       { id: "grape", name: "Grape (Vitis spp.)", scientificName: "Vitis spp.", sourceId: "forest-gardening", profileId: "grape-layer", layerRole: "Climber / vine" },
       { id: "hardy-kiwi", name: "Hardy kiwi (Actinidia spp.)", scientificName: "Actinidia spp.", sourceId: "forest-gardening", profileId: "kiwi-layer", layerRole: "Climber / vine; source notes sturdy tree support" }
@@ -353,10 +363,9 @@ const GUILD_LAYERS = [
 ];
 
 const NITROGEN_FIXERS = [
-  { id: "alder", name: "Alder (Alnus spp.)", scientificName: "Alnus spp.", sourceId: "forest-gardening", profileId: "alder-fixer", role: "Nitrogen-fixer example listed by source" },
-  { id: "elaeagnus", name: "Elaeagnus (Elaeagnus spp.)", scientificName: "Elaeagnus spp.", sourceId: "forest-gardening", profileId: "elaeagnus-fixer", role: "Nitrogen-fixer example listed by source" },
-  { id: "shrub-lupin", name: "Shrub lupin (Lupinus arboreus)", scientificName: "Lupinus arboreus", sourceId: "forest-gardening", profileId: "shrub-lupin-fixer", role: "Nitrogen-fixer example listed by source" },
-  { id: "none", name: "No nitrogen-fixer selected", role: "" }
+  { id: "alder", name: "Alder (Alnus spp.)", scientificName: "Alnus spp.", sourceId: "forest-gardening", profileId: "alder-fixer", role: "Potential nitrogen-fixer function; also selectable in the canopy layer" },
+  { id: "elaeagnus", name: "Elaeagnus (Elaeagnus spp.)", scientificName: "Elaeagnus spp.", sourceId: "forest-gardening", profileId: "elaeagnus-fixer", role: "Potential nitrogen-fixer function; also selectable in the shrub layer" },
+  { id: "shrub-lupin", name: "Shrub lupin (Lupinus arboreus)", scientificName: "Lupinus arboreus", sourceId: "forest-gardening", profileId: "shrub-lupin-fixer", role: "Potential nitrogen-fixer function; also selectable in the shrub layer" }
 ];
 
 const FACILITY_CONTENTS = {

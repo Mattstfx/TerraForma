@@ -237,6 +237,7 @@ main {
 .snapshot-note { margin: 6px 0 0; color: #899187; font-size: 0.69rem; }
 
 .workspace { padding-top: 42px; scroll-margin-top: 20px; }
+.site-brief-section { padding-top: 35px; }
 .section-heading { align-items: flex-end; margin-bottom: 16px; }
 .section-heading .eyebrow { margin-bottom: 4px; }
 .section-heading h2 { font-size: 1.72rem; }
@@ -250,6 +251,40 @@ main {
 }
 
 .panel { padding: 20px; }
+.site-brief-grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); align-items: start; gap: 16px; }
+.site-brief-form, .preflight-panel { display: grid; gap: 9px; }
+.site-brief-form > label, .brief-pair label { display: block; margin-top: 2px; color: #526250; font-size: 0.72rem; font-weight: 700; }
+.site-brief-form select, .site-brief-form textarea, .preflight-check select, .preflight-check input {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid #dfe3d8;
+  border-radius: 8px;
+  background: #fffefa;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.72rem;
+}
+.site-brief-form textarea { resize: vertical; }
+.brief-goals { margin: 4px 0; padding: 10px; border: 1px solid var(--line); border-radius: 9px; }
+.brief-goals legend { padding: 0 4px; color: #526250; font-size: 0.72rem; font-weight: 700; }
+.brief-goal-options { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 10px; }
+.brief-goal-options label { display: flex; align-items: flex-start; gap: 6px; color: #667166; font-size: 0.68rem; }
+.brief-goal-options input { margin: 3px 0 0; accent-color: var(--forest); }
+.brief-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.brief-pair > div { min-width: 0; }
+.site-brief-save { margin: 2px 0 0; color: #6d786c; font-size: 0.66rem; }
+.preflight-progress { display: grid; gap: 5px; margin: 3px 0 5px; color: #657160; font-size: 0.67rem; }
+.preflight-progress progress { width: 100%; height: 8px; accent-color: var(--leaf); }
+.preflight-checks { display: grid; gap: 10px; }
+.preflight-check { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 0.9fr); gap: 5px 10px; padding: 9px 0; border-top: 1px solid var(--line); }
+.preflight-check label { align-self: center; color: #526250; font-size: 0.7rem; font-weight: 700; }
+.preflight-check input { grid-column: 1 / -1; }
+.preflight-check select { font-size: 0.66rem; }
+.preflight-disclaimer { margin: 4px 0 0; padding: 10px; border-radius: 8px; background: #f8f6ed; color: #766b53; font-size: 0.66rem; }
+.reset-brief-button { justify-self: start; padding: 7px 10px; border: 1px solid #d5c9b9; border-radius: 8px; background: #fffefa; color: #775a42; cursor: pointer; font-size: 0.66rem; font-weight: 700; }
+.reset-brief-button[hidden] { display: none; }
+.storage-error { color: #9a4e36 !important; }
 .panel-heading { align-items: flex-start; }
 .panel-heading h3, .plan-list-heading h3, .add-plan-panel h3 {
   margin: 0;
@@ -524,7 +559,7 @@ main {
   .site-header { min-height: 66px; padding: 0 17px; }
   .brand { gap: 8px; font-size: 1rem; }
   .brand-mark { width: 28px; height: 28px; }
-  .site-header nav { gap: 13px; }
+  .site-header nav { flex: 1 1 0; min-width: 0; gap: 13px; justify-content: flex-start; overflow-x: auto; white-space: nowrap; }
   .site-header nav a { font-size: 0.76rem; }
   main { width: min(100% - 30px, 520px); padding: 31px 0 40px; }
   .welcome { padding-bottom: 27px; }
@@ -540,7 +575,9 @@ main {
   .section-heading { align-items: flex-start; flex-direction: column; gap: 7px; }
   .section-hint { margin: 0; }
   .property-grid, .plan-grid { grid-template-columns: 1fr; }
-  .perspective-details, .perspective-method, .perspective-ideas { grid-template-columns: 1fr; }
+  .site-brief-grid, .perspective-details, .perspective-method, .perspective-ideas { grid-template-columns: 1fr; }
+  .preflight-check { grid-template-columns: 1fr; }
+  .preflight-check input { grid-column: auto; }
   .perspective-ideas-heading { align-items: flex-start; flex-direction: column; gap: 4px; }
   .perspective-tabs { margin-right: -3px; margin-left: -3px; }
   .perspective-tab { font-size: 0.7rem; }
@@ -691,6 +728,7 @@ main {
 .fit-note { grid-column: 1 / -1; margin: 0; color: #6b715e; font-size: 0.62rem; }
 .guild-layer-label { display: block; margin: 6px 0 0 !important; color: #36493b !important; font-size: 0.67rem !important; font-weight: 750 !important; }
 .guild-layer-label select { display: block; margin-top: 4px; font-weight: 450; }
+.guild-layer-description { display: block; margin-top: 4px; color: #778174; font-size: 0.62rem; font-weight: 400; line-height: 1.45; }
 .guild-config-summary { margin: 8px 0; padding: 9px; border-radius: 8px; background: #f0f3eb; color: #58675d; font-size: 0.65rem; line-height: 1.5; }
 .manual-cultivar-label { display: block; margin: 0 !important; }
 .manual-cultivar-label input { display: block; margin-top: 5px; }

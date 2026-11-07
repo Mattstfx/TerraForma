@@ -12,6 +12,14 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 ### Session — 2026-11-07 — driver: student
 
+- **Goal for this session:** Advance the non-AI MVP with a useful property brief, pre-planning checks, and an accurate seven-layer / cross-cutting-role model.
+- **What worked:** Added a locally saved property brief for region, household goals, available time, rough budget comfort, water access, and soil information. Added seven review prompts covering property rights/setbacks, utilities, well/septic, water and drainage, soil, rules, and access/maintenance, with notes, progress, clear limits, and an explicit recovery action for unreadable saved data. Kept the checklist advisory; it does not block concept drawings or certify a site. Clarified layer descriptions including layer 6 (root/rhizosphere), made the optional nitrogen-fixer role explicitly cross-cutting, and made example candidates selectable in both their physical layer and functional-role selector. AI remains outside the MVP.
+- **Accuracy, privacy, and migration notes:** Brief/check data uses a separate localStorage key from plans, asks for no exact address, and does not alter saved plan records. Checklist status means user-reviewed only, not verified or approved. Utility-locate and conservation-planning links include jurisdiction caveats.
+- **What we checked:** JavaScript syntax, diff formatting, layer/profile/source references, and editor diagnostics. Browser stress checks covered blank and saved briefs, reload persistence, preservation of existing plan storage, malformed-data error/recovery, progress accounting, root-layer guidance, overlapping Alder layer/function labels, saved/reloaded guild plans, and narrow-screen overflow.
+- **Committed?** no — not committed yet.
+
+### Session — 2026-11-07 — driver: student
+
 - **Goal for this session:** Give the permaculture, landscape, and homestead perspectives a more substantive design foundation rather than presenting loosely related tips as expert recommendations.
 - **What worked:** Reframed the perspectives around distinct goals and practical sequences: permaculture ethics, observation, system relationships, small trials and feedback; landscape user needs, site inventory, circulation, views, scale, accessibility and maintenance; homestead household goals, capacity, infrastructure, seasonal work, storage and record-keeping. Expanded idea-specific cautions and added relevant links to David Holmgren, USDA NRCS, the Royal Horticultural Society, and University of Maine Cooperative Extension.
 - **Accuracy and scope notes:** The lenses are educational planning approaches, not advice from real professionals. NRCS is U.S.-specific, RHS guidance is UK context, and Maine gardening information does not supply an Atlantic Canada calendar. Recommendations do not assume the fictional property's unknown measurements, soil, plant identity, drainage, yields, cost, or safety conditions.

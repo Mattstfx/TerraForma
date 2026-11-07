@@ -210,6 +210,19 @@ main {
 }
 
 .snapshot { padding: 24px 26px 18px; }
+.property-profile-disclosure { margin-top: 12px; border-top: 1px solid var(--line); }
+.property-profile-disclosure > summary { display: flex; min-height: 43px; align-items: center; justify-content: space-between; gap: 12px; color: var(--forest-deep); cursor: pointer; font-size: 0.72rem; font-weight: 750; list-style-position: inside; }
+.property-profile-disclosure > summary::marker { color: var(--leaf); }
+.property-profile-save-state { color: var(--muted); font-size: 0.64rem; font-weight: 500; }
+.property-profile-form { padding: 3px 0 2px; }
+.property-profile-caveat { margin: 0 0 12px; padding: 9px 11px; border-radius: 8px; background: #f7f4e9; color: #766b53; font-size: 0.65rem; }
+.property-profile-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; }
+.property-profile-fields > label, .property-area-fields > label { display: grid; min-width: 0; gap: 4px; color: #526250; font-size: 0.67rem; font-weight: 700; }
+.property-profile-fields input, .property-profile-fields select { width: 100%; min-width: 0; min-height: 36px; padding: 7px 9px; border: 1px solid #dfe3d8; border-radius: 8px; background: #fffefa; color: var(--ink); font: inherit; font-size: 0.72rem; }
+.property-area-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(100px, 0.6fr); gap: 10px; }
+.property-profile-status { margin: 8px 0; color: #6d786c; font-size: 0.66rem; }
+.property-profile-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.property-profile-actions .button { min-height: 38px; padding: 8px 12px; font-size: 0.72rem; }
 
 .property-heading, .section-heading, .panel-heading, .plan-list-heading {
   display: flex;
@@ -617,6 +630,8 @@ main {
   .snapshot { padding: 19px 16px 14px; }
   .property-heading { align-items: flex-start; flex-direction: column; gap: 10px; }
   .property-heading h2 { font-size: 1.35rem; }
+  .property-profile-disclosure > summary { align-items: flex-start; flex-direction: column; gap: 3px; padding: 8px 0; }
+  .property-profile-fields { grid-template-columns: 1fr; }
   .stats { grid-template-columns: 1fr; margin-top: 15px; }
   .stat, .stat + .stat { padding: 10px 0; border-left: 0; }
   .stat + .stat { border-top: 1px solid var(--line); }

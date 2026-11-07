@@ -12,6 +12,14 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 ### Session — 2026-11-07 — driver: student
 
+- **Goal for this session:** Let the student personalize the single-property planning workspace before taking on real parcel maps.
+- **What worked:** Added a separate, local-only property profile editor for name, broad general location, and approximate area in acres or hectares. Save and Cancel are explicit; the map title, area summary, feature-size estimates, and capacity meter update consistently. The area and map settings remain separate from plan and property-brief storage.
+- **Accuracy, privacy, and scope notes:** General location is user-entered and asks for no street address. The map drawing, boundary, terrain, and observation locations remain fictional. Changing acreage only rescales approximate planning calculations; it does not locate a parcel, verify a boundary, or supply real terrain data.
+- **What we checked:** JavaScript syntax, diff whitespace, default sample state, unsaved/cancel behavior, save and reload, acre/hectare entry, map/capacity update, preservation of plan/brief/theme storage, and no horizontal overflow at a narrow viewport.
+- **Committed?** no — not committed yet.
+
+### Session — 2026-11-07 — driver: student
+
 - **Goal for this session:** Make planned map footprints more configurable, including exact scaled bed dimensions and snapping.
 - **What worked:** Added freeform, axis-aligned rectangle, and square drawing modes. Rectangle/square footprints can be drawn from two corners or given dimensions in metres; selected dimensions are shown with the saved feature. Added optional 1 m, 5 m, and 10 m point snapping, with matching keyboard movement. Existing freeform drawing remains the default.
 - **Accuracy, privacy, and scope notes:** Dimensions are scaled estimates against the fictional demo map, not surveyed or georeferenced measurements. Specified shapes still must fit inside the sample boundary, avoid other plans, and satisfy area-capacity checks. Saved shape metadata is optional and older saved plan records remain readable.

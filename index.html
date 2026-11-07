@@ -43,14 +43,14 @@
       </div>
     </section>
 
-    <section class="snapshot" aria-label="Sample property snapshot">
+    <section class="snapshot" aria-label="Property profile snapshot">
       <div class="property-heading">
         <div>
-          <p class="eyebrow">Your workspace · Sample property</p>
+          <p class="eyebrow">Your workspace · Property profile</p>
           <h2 id="property-name">Cedar Ridge Homestead</h2>
           <p class="muted" id="property-location">Illustrative property · Atlantic Canada</p>
         </div>
-        <span class="demo-label">Fictional demo data</span>
+        <span class="demo-label" id="property-profile-status">Fictional demo data</span>
       </div>
 
       <div class="stats" aria-label="Sample property data">
@@ -68,6 +68,39 @@
         </article>
       </div>
       <p class="snapshot-note" id="area-note">Sample dashboard · Area is illustrative, not a measured parcel.</p>
+      <details class="property-profile-disclosure" id="property-profile-disclosure">
+        <summary>
+          <span>Edit property name, general location &amp; area</span>
+          <span class="property-profile-save-state" id="property-profile-save-state">Using fictional sample details</span>
+        </summary>
+        <form class="property-profile-form" id="property-profile-form">
+          <p class="property-profile-caveat">These are user-entered planning details only. The map boundary, terrain, and observation locations remain fictional and are not tied to your real parcel. Do not enter a street address.</p>
+          <div class="property-profile-fields">
+            <label for="profile-name">Property name
+              <input id="profile-name" name="name" type="text" maxlength="60" required>
+            </label>
+            <label for="profile-location">General location <span class="optional-label">(optional; e.g., county and province)</span>
+              <input id="profile-location" name="location" type="text" maxlength="100" placeholder="Not recorded">
+            </label>
+            <div class="property-area-fields">
+              <label for="profile-area">Approximate property area
+                <input id="profile-area" name="area" type="number" min="0.01" max="100000" step="any" required>
+              </label>
+              <label for="profile-area-unit">Unit
+                <select id="profile-area-unit" name="areaUnit">
+                  <option value="acres">Acres</option>
+                  <option value="hectares">Hectares</option>
+                </select>
+              </label>
+            </div>
+          </div>
+          <p class="property-profile-status" id="property-profile-status-message" role="status" aria-live="polite">Details are stored only in this browser.</p>
+          <div class="property-profile-actions">
+            <button class="button button-dark" id="save-property-profile" type="button">Save property details</button>
+            <button class="button button-secondary" id="cancel-property-profile" type="button">Cancel changes</button>
+          </div>
+        </form>
+      </details>
     </section>
 
     <section class="workspace site-brief-section" id="site-brief" aria-labelledby="site-brief-title">
@@ -76,7 +109,7 @@
           <p class="eyebrow">Start with context</p>
           <h2 id="site-brief-title">Property brief &amp; pre-planning checks</h2>
         </div>
-        <p class="section-hint">Edit this sample property's context when you need it.</p>
+        <p class="section-hint">Edit this property's planning context when you need it.</p>
       </div>
       <details class="brief-disclosure" id="brief-disclosure">
         <summary>
@@ -88,7 +121,7 @@
           <div class="panel-heading">
             <div>
               <h3>Goals and working assumptions</h3>
-              <p class="muted">This updates the current sample property; it does not create another property. No AI or recommendations are generated.</p>
+              <p class="muted">This updates the current planning workspace's context; it does not create another property. No AI or recommendations are generated.</p>
             </div>
           </div>
           <label for="brief-region">Province or territory</label>
@@ -266,7 +299,7 @@
 
           <div class="map-frame" role="group" aria-label="Illustrative property map with three selectable observation locations">
             <svg class="site-map" id="site-map" viewBox="0 0 640 430" role="group" tabindex="0" aria-labelledby="map-title map-description" aria-label="Interactive illustrative property map. While drawing a feature, use arrow keys and Enter to add outline points.">
-              <title id="map-title">Illustrative Cedar Ridge property</title>
+              <title id="map-title">Illustrative map · Cedar Ridge Homestead</title>
               <desc id="map-description">A fictional, not-to-scale property drawing with wooded edges, a clearing, a path, and a low corner.</desc>
               <defs>
                 <pattern id="field-lines" width="18" height="18" patternUnits="userSpaceOnUse" patternTransform="rotate(32)">

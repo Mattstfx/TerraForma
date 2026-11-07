@@ -3,6 +3,9 @@
 
   const storageKey = "terraforma-sample-plan";
   const siteBriefStorageKey = "terraforma-site-brief";
+  const propertyProfileStorageKey = "terraforma-property-profile";
+  const squareMetersPerAcre = 4046.8564224;
+  const squareMetersPerHectare = 10000;
   const interfaceThemeStorageKey = "terraforma-interface-theme";
   const interfaceThemes = ["field", "coastal", "studio"];
   const landscapeStyles = ["", "naturalistic", "formal", "productive"];
@@ -13,6 +16,7 @@
     mapMarkers: document.getElementById("map-markers"),
     mapFrame: document.querySelector(".map-frame"),
     mapSvg: document.getElementById("site-map"),
+    mapTitle: document.getElementById("map-title"),
     planAreas: document.getElementById("plan-areas"),
     zonePicker: document.getElementById("zone-picker"),
     planList: document.getElementById("plan-list"),
@@ -86,7 +90,22 @@
     briefDisclosureStatus: document.getElementById("brief-disclosure-status"),
     briefStorageNote: document.getElementById("brief-storage-note"),
     interfaceTheme: document.getElementById("interface-theme"),
-    themeStatus: document.getElementById("theme-status")
+    themeStatus: document.getElementById("theme-status"),
+    propertyName: document.getElementById("property-name"),
+    propertyLocation: document.getElementById("property-location"),
+    propertyArea: document.getElementById("property-area"),
+    areaNote: document.getElementById("area-note"),
+    propertyProfileStatus: document.getElementById("property-profile-status"),
+    propertyProfileDisclosure: document.getElementById("property-profile-disclosure"),
+    propertyProfileForm: document.getElementById("property-profile-form"),
+    profileName: document.getElementById("profile-name"),
+    profileLocation: document.getElementById("profile-location"),
+    profileArea: document.getElementById("profile-area"),
+    profileAreaUnit: document.getElementById("profile-area-unit"),
+    propertyProfileSaveState: document.getElementById("property-profile-save-state"),
+    propertyProfileStatusMessage: document.getElementById("property-profile-status-message"),
+    savePropertyProfile: document.getElementById("save-property-profile"),
+    cancelPropertyProfile: document.getElementById("cancel-property-profile")
   };
 
   let selectedZoneId = PROPERTY.zones[0].id;
@@ -101,6 +120,15 @@
   let storageAvailable = true;
   let siteBriefStorageAvailable = true;
   let savedSiteBrief = null;
+  let savedPropertyProfile = {
+    name: PROPERTY.name,
+    location: "",
+    area: 2.4,
+    areaUnit: "acres"
+  };
+  let propertyProfileIsSaved = false;
+  let propertyAreaM2 = PROPERTY.areaM2;
+  let propertyMapAreaM2PerUnit = PROPERTY.mapAreaM2PerUnit;
   let speciesCardTimer = null;
   let speciesCardAnchor = null;
   let pendingPlanItem = null;
@@ -122,10 +150,6 @@
   document.title = STARTUP.name + " — Land planning, made thoughtful";
   document.getElementById("tagline").textContent = STARTUP.tagline;
   document.getElementById("pitch").textContent = STARTUP.pitch;
-  document.getElementById("property-name").textContent = PROPERTY.name;
-  document.getElementById("property-location").textContent = PROPERTY.location;
-  document.getElementById("property-area").textContent = PROPERTY.area;
-  document.getElementById("area-note").textContent = "Sample dashboard · " + PROPERTY.areaNote + ".";
   document.getElementById("observation-count").textContent = PROPERTY.zones.length;
   elements.scheduleStartDate.value = localDateValue(new Date());
 
@@ -134,6 +158,144 @@
     option.value = value;
     option.textContent = label;
     return option;
+  }
+
+  function defaultPropertyProfile() {
+    return {
+      name: PROPERTY.name,
+      location: "",
+      area: 2.4,
+      areaUnit: "acres"
+    };
+  }
+
+  function areaInSquareMeters(profile) {
+    return profile.area * (profile.areaUnit === "hectares"
+      ? squareMetersPerHectare
+      : squareMetersPerAcre);
+  }
+
+  function collectPropertyProfile() {
+    return {
+      name: elements.profileName.value.trim(),
+      location: elements.profileLocation.value.trim(),
+      area: Number(elements.profileArea.value),
+      areaUnit: elements.profileAreaUnit.value
+    };
+  }
+
+  function applyPropertyProfile(profile, isSaved) {
+    propertyAreaM2 = areaInSquareMeters(profile);
+    propertyMapAreaM2PerUnit = propertyAreaM2 / polygonArea(PROPERTY.mapBoundary);
+    elements.propertyProfileStatusMessage.classList.remove("storage-error");
+    elements.propertyName.textContent = profile.name;
+    elements.mapTitle.textContent = "Illustrative map · " + profile.name;
+    elements.propertyLocation.textContent = profile.location
+      ? "User-entered general location · " + profile.location
+      : isSaved ? "General location not recorded · map is illustrative" : PROPERTY.location;
+    elements.propertyArea.textContent =
+      new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(profile.area) +
+      " " + profile.areaUnit + (isSaved ? " · estimate" : "");
+    elements.areaNote.textContent = isSaved
+      ? "User-entered area estimate. Map shape, terrain, and observation locations remain fictional; drawn feature sizes are approximate."
+      : "Sample dashboard · " + PROPERTY.areaNote + ".";
+    elements.propertyProfileStatus.textContent = isSaved
+      ? "User-provided details · illustrative map"
+      : "Fictional demo data";
+    elements.profileName.value = profile.name;
+    elements.profileLocation.value = profile.location;
+    elements.profileArea.value = profile.area;
+    elements.profileAreaUnit.value = profile.areaUnit;
+    if (isSaved) {
+      elements.propertyProfileSaveState.textContent = "Saved on this device";
+      elements.propertyProfileStatusMessage.textContent = "Property details are saved only in this browser.";
+    } else {
+      elements.propertyProfileSaveState.textContent = "Using fictional sample details";
+      elements.propertyProfileStatusMessage.textContent = "Details are stored only in this browser.";
+    }
+  }
+
+  function readPropertyProfile() {
+    savedPropertyProfile = defaultPropertyProfile();
+    propertyProfileIsSaved = false;
+    try {
+      const saved = window.localStorage.getItem(propertyProfileStorageKey);
+      if (saved === null) {
+        applyPropertyProfile(savedPropertyProfile, false);
+        return;
+      }
+      const parsed = JSON.parse(saved);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed) ||
+          parsed.version !== 1 || typeof parsed.name !== "string" ||
+          !parsed.name.trim() || parsed.name.length > 60 ||
+          typeof parsed.location !== "string" || parsed.location.length > 100 ||
+          !Number.isFinite(parsed.area) || parsed.area < 0.01 || parsed.area > 100000 ||
+          !["acres", "hectares"].includes(parsed.areaUnit)) {
+        throw new Error("The saved property details have an unexpected format.");
+      }
+      savedPropertyProfile = {
+        name: parsed.name.trim(),
+        location: parsed.location.trim(),
+        area: parsed.area,
+        areaUnit: parsed.areaUnit
+      };
+      propertyProfileIsSaved = true;
+      applyPropertyProfile(savedPropertyProfile, true);
+    } catch (error) {
+      applyPropertyProfile(savedPropertyProfile, false);
+      elements.propertyProfileDisclosure.open = true;
+      elements.propertyProfileSaveState.textContent = "Saved details could not be read";
+      elements.propertyProfileStatusMessage.textContent =
+        "Could not load saved property details. The fictional sample is shown; saving will replace the unreadable entry.";
+      elements.propertyProfileStatusMessage.classList.add("storage-error");
+      console.error("TerraForma could not read the property profile:", error);
+    }
+  }
+
+  function updatePropertyProfileDirtyState() {
+    const changed = JSON.stringify(collectPropertyProfile()) !==
+      JSON.stringify(savedPropertyProfile);
+    elements.propertyProfileStatusMessage.textContent = changed
+      ? "Unsaved changes. Save or cancel before leaving this section."
+      : "No unsaved changes. Details are stored only in this browser.";
+  }
+
+  function savePropertyProfile() {
+    if (!elements.propertyProfileForm.reportValidity()) return;
+    const nextProfile = collectPropertyProfile();
+    if (!nextProfile.name || !Number.isFinite(nextProfile.area) ||
+        nextProfile.area < 0.01 || nextProfile.area > 100000 ||
+        !["acres", "hectares"].includes(nextProfile.areaUnit)) {
+      elements.propertyProfileStatusMessage.textContent =
+        "Enter a property name and an area between 0.01 and 100,000 acres or hectares.";
+      elements.propertyProfileStatusMessage.classList.add("storage-error");
+      return;
+    }
+    try {
+      window.localStorage.setItem(propertyProfileStorageKey, JSON.stringify({
+        version: 1,
+        name: nextProfile.name,
+        location: nextProfile.location,
+        area: nextProfile.area,
+        areaUnit: nextProfile.areaUnit
+      }));
+      savedPropertyProfile = nextProfile;
+      propertyProfileIsSaved = true;
+      applyPropertyProfile(savedPropertyProfile, true);
+      elements.propertyProfileDisclosure.open = false;
+      renderPlan();
+    } catch (error) {
+      elements.propertyProfileStatusMessage.textContent =
+        "Could not save property details in browser storage. Changes may be lost when you leave.";
+      elements.propertyProfileStatusMessage.classList.add("storage-error");
+      console.error("TerraForma could not save the property profile:", error);
+    }
+  }
+
+  function cancelPropertyProfileChanges() {
+    applyPropertyProfile(savedPropertyProfile, propertyProfileIsSaved);
+    elements.propertyProfileStatusMessage.textContent = "Unsaved property changes canceled.";
+    elements.propertyProfileDisclosure.open = false;
   }
 
   function blankSiteBrief() {
@@ -1067,16 +1229,18 @@
 
   function usedAreaM2(items) {
     return items.reduce(function (total, item) {
-      return total + polygonArea(item.polygon) * PROPERTY.mapAreaM2PerUnit;
+      return total + polygonArea(item.polygon) * propertyMapAreaM2PerUnit;
     }, 0);
   }
 
   function updateCapacity() {
     const used = Math.round(usedAreaM2(planItems));
-    const remaining = Math.max(0, PROPERTY.areaM2 - used);
-    const percent = Math.min(100, (used / PROPERTY.areaM2) * 100);
-    elements.capacitySummary.textContent =
-      used.toLocaleString() + " m² planned · " + remaining.toLocaleString() + " m² remaining";
+    const remaining = Math.max(0, propertyAreaM2 - used);
+    const percent = Math.min(100, (used / propertyAreaM2) * 100);
+    elements.capacitySummary.textContent = used > propertyAreaM2
+      ? used.toLocaleString() + " m² planned · exceeds the entered area estimate by " +
+        (used - Math.round(propertyAreaM2)).toLocaleString() + " m²"
+      : used.toLocaleString() + " m² planned · " + remaining.toLocaleString() + " m² remaining";
     elements.capacityProgress.value = percent;
     elements.capacityProgress.textContent = Math.round(percent) + "%";
   }
@@ -1088,7 +1252,7 @@
   }
 
   function mapUnitsPerMeter() {
-    return 1 / Math.sqrt(PROPERTY.mapAreaM2PerUnit);
+    return 1 / Math.sqrt(propertyMapAreaM2PerUnit);
   }
 
   function snapMapPoint(point) {
@@ -1210,7 +1374,7 @@
         class: "planned-area" + (item.id === selectedPlanId ? " is-selected" : ""),
         tabindex: "0",
         role: "button",
-        "aria-label": item.feature + ", " + Math.round(polygonArea(item.polygon) * PROPERTY.mapAreaM2PerUnit) + " approximate square metres; select to locate in plan",
+        "aria-label": item.feature + ", " + Math.round(polygonArea(item.polygon) * propertyMapAreaM2PerUnit) + " approximate square metres; select to locate in plan",
         "aria-pressed": item.id === selectedPlanId ? "true" : "false",
         "data-plan-id": item.id
       });
@@ -1301,7 +1465,7 @@
           Math.round((bounds.maxY - bounds.minY) / mapUnitsPerMeter() * 10) / 10 + " m"
         : "";
       location.textContent = item.location + " · about " +
-        Math.round(polygonArea(item.polygon) * PROPERTY.mapAreaM2PerUnit) + " m²" + dimensions;
+        Math.round(polygonArea(item.polygon) * propertyMapAreaM2PerUnit) + " m²" + dimensions;
       const variety = document.createElement("p");
       variety.className = "plan-variety";
       variety.textContent = item.variety || "Planning option to research";
@@ -1705,8 +1869,8 @@
     if (planItems.some(function (item) { return polygonsOverlap(item.polygon, points); })) {
       return "This footprint overlaps or touches another planned area. Choose a separate part of the map.";
     }
-    const estimate = polygonArea(points) * PROPERTY.mapAreaM2PerUnit;
-    if (usedAreaM2(planItems) + estimate > PROPERTY.areaM2) {
+    const estimate = polygonArea(points) * propertyMapAreaM2PerUnit;
+    if (usedAreaM2(planItems) + estimate > propertyAreaM2) {
       return "This area would exceed the sample property's illustrative remaining capacity.";
     }
     return "";
@@ -1902,6 +2066,14 @@
   elements.siteBriefForm.addEventListener("submit", function (event) {
     event.preventDefault();
   });
+  elements.propertyProfileForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+    savePropertyProfile();
+  });
+  elements.propertyProfileForm.addEventListener("input", updatePropertyProfileDirtyState);
+  elements.propertyProfileForm.addEventListener("change", updatePropertyProfileDirtyState);
+  elements.savePropertyProfile.addEventListener("click", savePropertyProfile);
+  elements.cancelPropertyProfile.addEventListener("click", cancelPropertyProfileChanges);
   elements.siteBriefForm.addEventListener("input", updateSiteBriefDirtyState);
   elements.siteBriefForm.addEventListener("change", updateSiteBriefDirtyState);
   elements.preflightChecks.addEventListener("input", updateSiteBriefDirtyState);
@@ -1912,6 +2084,7 @@
   elements.interfaceTheme.addEventListener("change", saveInterfaceTheme);
 
   readSavedPlan();
+  readPropertyProfile();
   readInterfaceTheme();
   readSiteBrief();
   updatePreflightProgress();

@@ -56,6 +56,9 @@
     perspectiveSummary: document.getElementById("perspective-summary"),
     perspectivePriorities: document.getElementById("perspective-priorities"),
     perspectiveQuestion: document.getElementById("perspective-question"),
+    perspectiveProcessTitle: document.getElementById("perspective-process-title"),
+    perspectiveProcess: document.getElementById("perspective-process"),
+    perspectiveReferences: document.getElementById("perspective-references"),
     perspectiveIdeas: document.getElementById("perspective-ideas")
   };
 
@@ -1138,6 +1141,35 @@
     elements.perspectiveDescriptor.textContent = perspective.descriptor;
     elements.perspectiveSummary.textContent = perspective.summary;
     elements.perspectiveQuestion.textContent = perspective.question;
+    elements.perspectiveProcessTitle.textContent = perspective.processTitle;
+    elements.perspectiveProcess.replaceChildren();
+    perspective.process.forEach(function (step) {
+      const item = document.createElement("li");
+      item.textContent = step;
+      elements.perspectiveProcess.appendChild(item);
+    });
+    elements.perspectiveReferences.replaceChildren();
+    perspective.references.forEach(function (referenceId) {
+      const reference = PERSPECTIVE_REFERENCES.find(function (entry) {
+        return entry.id === referenceId;
+      });
+      if (!reference) {
+        const missing = document.createElement("p");
+        missing.textContent = "Reference unavailable: " + referenceId;
+        elements.perspectiveReferences.appendChild(missing);
+        return;
+      }
+      const paragraph = document.createElement("p");
+      const link = document.createElement("a");
+      link.href = reference.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = reference.label;
+      const note = document.createElement("span");
+      note.textContent = " — " + reference.note;
+      paragraph.append(link, note);
+      elements.perspectiveReferences.appendChild(paragraph);
+    });
     elements.perspectivePriorities.replaceChildren();
     perspective.priorities.forEach(function (priority) {
       const item = document.createElement("li");

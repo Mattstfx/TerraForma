@@ -1077,74 +1077,135 @@ PLANT_PROFILES.currantGroup.sourceIds.push("gnb-small-fruits");
 PLANT_PROFILES.raspberry.sourceIds.push("gnb-small-fruits");
 PLANT_PROFILES.potato.sourceIds.push("gnb-potatoes");
 
+const PERSPECTIVE_REFERENCES = [
+  {
+    id: "holmgren-permaculture",
+    label: "David Holmgren: About Permaculture",
+    url: "https://holmgren.com.au/about-permaculture/",
+    note: "Frames permaculture as an ethics- and ecology-based design system for land use and resilient living; principles are thinking tools, not guaranteed outcomes."
+  },
+  {
+    id: "nrcs-conservation-planning",
+    label: "USDA NRCS: Conservation Technical Assistance and Planning",
+    url: "https://www.nrcs.usda.gov/getting-assistance/conservation-technical-assistance",
+    note: "Describes conservation planning as identifying landowner objectives and assessing natural-resource issues. U.S. program context, not Canadian regulations or a property-specific plan."
+  },
+  {
+    id: "rhs-garden-design",
+    label: "Royal Horticultural Society: Garden Design",
+    url: "https://www.rhs.org.uk/garden-design",
+    note: "General garden-design orientation and inspiration. UK context; plant, climate, accessibility, construction, and regulatory choices must be localized."
+  },
+  {
+    id: "umaine-garden-planning",
+    label: "University of Maine Cooperative Extension: Planning Your Garden",
+    url: "https://extension.umaine.edu/gardening/2020/05/07/planning-your-garden/",
+    note: "Home-garden planning resource covering household food preferences, preservation, planting timing, and succession planting. Maine guidance is not an Atlantic Canada calendar."
+  }
+];
+
 const DESIGN_PERSPECTIVES = [
   {
     id: "permaculture",
     name: "Permaculture designer",
-    descriptor: "Systems, relationships & resilience",
-    summary: "Look for relationships between sunlight, water, plants, people and buildings. Start by observing how the site works before adding new elements.",
-    priorities: ["Observe before intervening", "Connect useful functions", "Work with water"],
-    question: "What changes through the seasons, and where does water naturally move?",
+    descriptor: "Ethics, observation & whole-system design",
+    summary: "Treat this as a systems-design lens, not a list of companion plants. Begin with the people and ecology involved, observe the site over time, identify flows and constraints, and test modest designs that can be reviewed and adapted.",
+    priorities: ["Care for land and people; consider fair limits and distribution", "Observe patterns and resource flows before choosing interventions", "Connect functions only where the relationship is practical and evidenced", "Use small trials and feedback rather than assuming a design will work"],
+    processTitle: "A permaculture-informed design sequence",
+    process: [
+      "Clarify the people’s needs, responsibilities, and ecological limits; distinguish goals from assumptions.",
+      "Record observations across relevant seasons: sun, wind, slope, water movement, soil evidence, existing plants, access, and use.",
+      "Map resources, constraints, and recurring work; identify opportunities to meet more than one need without claiming unmeasured benefits.",
+      "Compare options, start with a reversible small-scale trial, and record results before expanding."
+    ],
+    references: ["holmgren-permaculture", "nrcs-conservation-planning"],
+    question: "What do we know from repeated observation, what is still uncertain, and which small test would reduce the most uncertainty?",
     ideas: [
       {
         feature: "Rain garden",
         location: "South low corner",
-        reason: "The sample owner reports standing water here. Observe where water enters and drains, and check site conditions before deciding whether a rain garden is appropriate."
+        reason: "The sample owner reports standing water here, but the cause and flow path are unknown. Record when and where water appears, where it comes from and goes, and how long it remains; investigate soil, utilities, slopes, and downstream effects before comparing any infiltration or drainage design."
       },
       {
         feature: "Food forest",
         location: "East tree line",
-        reason: "Explore whether a layered edible planting could complement the existing edge. Identify existing trees, light levels, and root competition first."
+        reason: "First inventory existing trees and understory, seasonal shade, access, and likely root competition. Then decide whether a small layered planting fits the site and household; layer labels do not establish companion benefits or local suitability."
       },
       {
         feature: "Apple tree guild",
         location: "North clearing",
-        reason: "Consider a small apple-centered guild as a design exercise. Choose companion plants for the actual site and confirm mature size and maintenance needs."
+        reason: "Use this as a relationship-mapping exercise, not a validated guild recipe. Confirm the apple’s cultivar, rootstock, pollination needs, and site fit; select any understory plants independently for verified local requirements and manageable maintenance."
+      },
+      {
+        feature: "Compost area",
+        location: "East tree line",
+        reason: "Trace the household's actual organic-material flows and handling routine before locating a compost area. Check year-round access, drainage, distance from work areas, wildlife conflicts, and local rules; do not assume compost will meet a crop's nutrient needs."
       }
     ]
   },
   {
     id: "landscape",
     name: "Landscape designer",
-    descriptor: "Aesthetics, flow & outdoor living",
-    summary: "Consider the views from the house, comfortable routes through the property, and how planting and gathering spaces can feel cohesive.",
-    priorities: ["Frame useful views", "Make routes welcoming", "Balance structure and planting"],
-    question: "Which outdoor spaces should feel connected, and what views do you want to create?",
+    descriptor: "Purpose, circulation & spatial composition",
+    summary: "Plan the outdoor spaces as a connected composition: what people need to do, how they move, what they see, and how planting and built elements define spaces over time. A pleasing sketch still needs a site inventory, accessibility checks, maintenance planning, and locally suitable plants.",
+    priorities: ["Start with uses, users, views, and existing site conditions", "Organize destinations and circulation before choosing materials", "Use scale, repetition, contrast, and focal points deliberately", "Account for mature plant size, seasonal change, maintenance, and accessibility"],
+    processTitle: "A landscape-design sequence",
+    process: [
+      "List intended activities, users, privacy needs, desired views, and constraints such as utilities, access, grades, and drainage.",
+      "Make a base map and site inventory; verify dimensions and observe conditions instead of treating this illustrative demo map as a survey.",
+      "Lay out activity areas, routes, sightlines, and transitions before specifying plants, paving, or structures.",
+      "Check scale, mature dimensions, seasonal interest, accessibility, construction needs, and ongoing maintenance; revise before building."
+    ],
+    references: ["rhs-garden-design", "nrcs-conservation-planning"],
+    question: "Who will use each outdoor space, how should they get there, and what should they experience along the way?",
     ideas: [
       {
         feature: "Garden path",
         location: "North clearing",
-        reason: "A simple path could connect the home and growing area. Choose its route after checking how the ground feels underfoot in wet weather."
+        reason: "Map the actual destinations and observe the route in wet and dry conditions before drawing a path. Check slope, drainage, width, surface, turning/access needs, winter use, and maintenance; the sample map does not establish a safe or accessible alignment."
       },
       {
         feature: "Native planting border",
         location: "East tree line",
-        reason: "A varied planting edge can create a softer transition between open and wooded areas. Select plants only after checking light, soil, and local suitability."
+        reason: "Explore a planted transition only after recording the existing edge, views, light, soil moisture, desired screening, and maintenance capacity. Verify every plant for the property’s ecoregion and conditions; ‘native’ cannot be inferred from this generic sample list."
       },
       {
         feature: "Angled dwarf-apple fence trial",
         location: "East tree line",
-        reason: "An experimental espalier-style idea: dwarf apple trees planted close and trained at about 45° along a support. Research cultivar, rootstock, exact spacing, support strength, and pruning; overly aggressive pruning can stress or damage trees."
+        reason: "Treat the close-planted, angled dwarf-apple concept as a specialty fruit-training experiment, not a standard landscape prescription. Confirm cultivar, rootstock, mature spread, support engineering, spacing, pruning method, access, and local advice; the angle and planting density have not been validated for this sample site."
       }
     ]
   },
   {
     id: "homestead",
-    name: "Homestead grower",
-    descriptor: "Food, effort & practical first steps",
-    summary: "Prioritize a small, manageable growing area and build knowledge gradually, rather than taking on more than you can maintain.",
-    priorities: ["Start with a small area", "Plan around your time", "Learn by doing"],
-    question: "How much time can you realistically spend maintaining new projects each week?",
+    name: "Homestead planner",
+    descriptor: "Household needs, seasonal work & practical capacity",
+    summary: "Plan around what the household wants to produce and use, the work and skills available, and the time, budget, storage, and infrastructure constraints. Treat yields and costs as unknown until supported by local records or estimates.",
+    priorities: ["Define household goals and intended uses before choosing crops or livestock", "Match project size to time, skills, budget, and reliable access to water", "Plan for harvest, storage, preservation, tools, and seasonal workload—not only planting", "Keep records and expand only after a manageable trial is understood"],
+    processTitle: "A practical homestead-planning sequence",
+    process: [
+      "Set household goals, preferred foods, intended preservation or storage, available time, budget, skills, and safety constraints.",
+      "Inventory the site and essential infrastructure: water, soil-test status, sun, access, tools, storage, utilities, and applicable rules.",
+      "Choose one manageable pilot; sequence prerequisites and seasonal tasks, and record assumptions, estimated costs, and sources.",
+      "Track time, inputs, harvest/use, problems, and maintenance; review the results before repeating or expanding."
+    ],
+    references: ["umaine-garden-planning", "nrcs-conservation-planning"],
+    question: "What does the household actually want to produce, preserve, or learn—and what time, budget, and infrastructure can it reliably commit?",
     ideas: [
       {
         feature: "Vegetable beds",
         location: "North clearing",
-        reason: "Try a compact growing area first. Track sun through the season and confirm access to water before expanding."
+        reason: "Start with a small bed based on household food preferences and realistic weekly work. Before selecting crops, verify seasonal light, soil-test needs, water access, seed availability, and local planting guidance; track what is eaten or preserved, not just what is harvested."
       },
       {
         feature: "Compost area",
         location: "East tree line",
-        reason: "A convenient compost spot can support garden work. Check access, drainage, and distance from the home before choosing a location."
+        reason: "Choose a compost system only after estimating the materials and labor the household can actually manage. Check convenient access, drainage, wildlife and local requirements, and whether finished compost can be used appropriately; avoid treating it as a guaranteed fertilizer substitute."
+      },
+      {
+        feature: "Greenhouse",
+        location: "North clearing",
+        reason: "Consider a greenhouse only after identifying the specific season-extension goal, expected labor, water access, ventilation and snow/wind requirements, costs, and maintenance. The demo provides no local structure design or return-on-investment estimate."
       }
     ]
   }

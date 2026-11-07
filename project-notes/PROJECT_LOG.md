@@ -12,6 +12,14 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 ### Session — 2026-11-07 — driver: student
 
+- **Goal for this session:** Give the permaculture, landscape, and homestead perspectives a more substantive design foundation rather than presenting loosely related tips as expert recommendations.
+- **What worked:** Reframed the perspectives around distinct goals and practical sequences: permaculture ethics, observation, system relationships, small trials and feedback; landscape user needs, site inventory, circulation, views, scale, accessibility and maintenance; homestead household goals, capacity, infrastructure, seasonal work, storage and record-keeping. Expanded idea-specific cautions and added relevant links to David Holmgren, USDA NRCS, the Royal Horticultural Society, and University of Maine Cooperative Extension.
+- **Accuracy and scope notes:** The lenses are educational planning approaches, not advice from real professionals. NRCS is U.S.-specific, RHS guidance is UK context, and Maine gardening information does not supply an Atlantic Canada calendar. Recommendations do not assume the fictional property's unknown measurements, soil, plant identity, drainage, yields, cost, or safety conditions.
+- **What we checked:** JavaScript syntax, diff formatting, that every lens has four process steps and valid references, and that every suggested idea maps to an existing feature. Browser checks confirmed each perspective renders its process, links, and ideas.
+- **Committed?** no — not committed yet.
+
+### Session — 2026-11-07 — driver: student
+
 - **Goal for this session:** Deepen the plant catalog without filling evidence gaps with guesses, and make the scope of each source visible.
 - **What worked:** Added 48 profile records with source links, grouped facts, explicit unknowns, and regional caveats. Connected every selectable species entry—including fruit-tree types—to a profile, narrowed several choices to identified taxa, and kept forest-garden examples clearly distinct from care recommendations. Removed tansy and broom from the selectable guild list; added species-specific comfrey safety/spread cautions. Updated the source-coverage note and removed the unused legacy auto-selection routine and duplicate pea/tomato facts.
 - **Accuracy and migration notes:** New England and Minnesota facts remain labeled by jurisdiction; a forest-garden layer citation is not evidence of local suitability, companion benefits, or nitrogen transfer. Existing saved plan data was not altered.

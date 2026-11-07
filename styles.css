@@ -422,6 +422,13 @@ main {
 .perspective-question { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid #e8e4d5; border-radius: 11px; background: #f8f6ed; }
 .question-mark { display: grid; flex: 0 0 auto; width: 23px; height: 23px; place-items: center; border-radius: 50%; background: #eee8d4; color: #796943; font-size: 0.74rem; font-weight: 800; }
 .perspective-question p { margin: 4px 0 0; color: #737466; font-size: 0.72rem; }
+.perspective-method { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(240px, 0.8fr); gap: 18px 26px; margin-top: 20px; padding: 15px; border: 1px solid var(--line); border-radius: 11px; background: #fbfbf6; }
+.perspective-method > h4 { grid-column: 1 / -1; margin: 0 0 -12px; color: var(--forest-deep); font-size: 0.79rem; }
+.perspective-method ol { margin: 0; padding-left: 20px; color: #677166; font-size: 0.69rem; }
+.perspective-method li + li { margin-top: 7px; }
+.perspective-references h4 { margin: 0 0 7px; color: var(--forest-deep); font-size: 0.73rem; }
+.perspective-references p { margin: 7px 0; color: #737a70; font-size: 0.64rem; }
+.perspective-references a { color: #315a40; font-weight: 700; }
 .perspective-ideas-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: 23px; }
 .perspective-ideas-heading > div > p { margin: 3px 0 0; color: var(--muted); font-size: 0.68rem; }
 .sample-lens { color: #8a7959; font-size: 0.64rem; font-weight: 700; }
@@ -533,7 +540,7 @@ main {
   .section-heading { align-items: flex-start; flex-direction: column; gap: 7px; }
   .section-hint { margin: 0; }
   .property-grid, .plan-grid { grid-template-columns: 1fr; }
-  .perspective-details, .perspective-ideas { grid-template-columns: 1fr; }
+  .perspective-details, .perspective-method, .perspective-ideas { grid-template-columns: 1fr; }
   .perspective-ideas-heading { align-items: flex-start; flex-direction: column; gap: 4px; }
   .perspective-tabs { margin-right: -3px; margin-left: -3px; }
   .perspective-tab { font-size: 0.7rem; }

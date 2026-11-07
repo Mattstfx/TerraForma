@@ -75,11 +75,11 @@
               <h3>Site overview</h3>
               <p class="muted">Illustrative layout · Not to scale</p>
             </div>
-            <span class="map-key"><span class="key-dot observation-dot"></span> Observation <span class="key-dot feature-dot"></span> Planned feature</span>
+            <span class="map-key"><span class="key-dot observation-dot"></span> Observation <span class="key-dot feature-dot"></span> Planned area</span>
           </div>
 
           <div class="map-frame" role="group" aria-label="Illustrative property map with three selectable observation locations">
-            <svg class="site-map" viewBox="0 0 640 430" role="img" aria-labelledby="map-title map-description">
+            <svg class="site-map" id="site-map" viewBox="0 0 640 430" role="group" tabindex="0" aria-labelledby="map-title map-description" aria-label="Interactive illustrative property map. While drawing a feature, use arrow keys and Enter to add outline points.">
               <title id="map-title">Illustrative Cedar Ridge property</title>
               <desc id="map-description">A fictional, not-to-scale property drawing with wooded edges, a clearing, a path, and a low corner.</desc>
               <defs>
@@ -92,13 +92,14 @@
                 </pattern>
               </defs>
               <rect width="640" height="430" rx="18" class="map-ground"></rect>
-              <path class="parcel" d="M90 55 C165 30 242 55 319 45 C406 34 496 56 554 91 L527 344 C445 379 367 364 293 380 C205 397 138 362 76 331 Z"></path>
+              <path class="parcel" d="M90 55 L319 45 L554 91 L527 344 L293 380 L76 331 Z"></path>
               <path class="tree-zone" d="M101 76 C163 57 224 76 284 66 L272 116 C216 126 163 105 102 125 Z"></path>
               <path class="tree-zone" d="M494 88 C522 105 534 129 527 167 L511 300 C492 287 486 270 490 245 Z"></path>
               <path class="field-zone" d="M145 145 C226 119 341 132 421 144 L407 256 C327 269 234 260 155 280 Z"></path>
               <path class="field-lines" d="M145 145 C226 119 341 132 421 144 L407 256 C327 269 234 260 155 280 Z"></path>
               <path class="pathway" d="M312 71 C301 129 323 170 300 218 C279 260 316 297 301 356"></path>
               <path class="water-zone" d="M300 294 C349 276 414 291 476 315 L470 348 C413 337 361 358 309 361 C293 342 291 318 300 294 Z"></path>
+              <g id="plan-areas" aria-label="Planned feature areas"></g>
               <path class="stream" d="M322 329 C355 315 395 326 427 318 C447 313 460 323 477 326"></path>
               <g class="tree-symbol" aria-hidden="true">
                 <circle cx="124" cy="156" r="19"></circle><circle cx="468" cy="183" r="23"></circle>
@@ -117,8 +118,16 @@
             <span class="north-arrow" aria-hidden="true">N <span>↑</span></span>
           </div>
           <div class="map-footer">
-            <p><span class="legend-swatch woods-swatch"></span> Tree line <span class="legend-swatch field-swatch"></span> Open area</p>
-            <span>Sample site plan</span>
+            <p><span class="legend-swatch woods-swatch"></span> Tree line <span class="legend-swatch field-swatch"></span> Open area <span class="legend-swatch planned-swatch"></span> Planned footprint</p>
+            <span>Illustrative, not measured</span>
+          </div>
+          <div class="drawing-toolbar" id="drawing-toolbar" hidden>
+            <p id="drawing-status" role="status" aria-live="polite">Click the map to outline this feature using at least three points.</p>
+            <div class="drawing-actions">
+              <button class="map-action-button" id="undo-point" type="button">Undo point</button>
+              <button class="map-action-button map-action-primary" id="finish-drawing" type="button" disabled>Finish area</button>
+              <button class="map-action-button" id="cancel-drawing" type="button">Cancel</button>
+            </div>
           </div>
         </article>
 
@@ -146,6 +155,46 @@
       </div>
     </section>
 
+    <section class="workspace perspectives-section" id="perspectives">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Different ways to see the same place</p>
+          <h2>Explore design perspectives</h2>
+        </div>
+        <p class="section-hint">Switch perspectives to compare priorities and ideas.</p>
+      </div>
+
+      <article class="panel perspectives-panel">
+        <div class="perspective-tabs" id="perspective-tabs" role="group" aria-label="Choose a design perspective"></div>
+        <div class="perspective-content" id="perspective-content" aria-live="polite">
+          <div class="perspective-intro">
+            <div>
+              <p class="eyebrow" id="perspective-descriptor">Systems, relationships & resilience</p>
+              <h3 id="perspective-name">Permaculture designer</h3>
+              <p class="perspective-summary" id="perspective-summary"></p>
+            </div>
+            <span class="perspective-mark" aria-hidden="true">✳</span>
+          </div>
+          <div class="perspective-details">
+            <div>
+              <h4>What this lens prioritizes</h4>
+              <ul class="priority-list" id="perspective-priorities"></ul>
+            </div>
+            <div class="perspective-question">
+              <span class="question-mark" aria-hidden="true">?</span>
+              <div><h4>A useful question to explore</h4><p id="perspective-question"></p></div>
+            </div>
+          </div>
+          <div class="perspective-ideas-heading">
+            <div><h4>Ideas for this sample property</h4><p>Starting points to investigate, not verified recommendations.</p></div>
+            <span class="sample-lens">Sample perspective</span>
+          </div>
+          <div class="perspective-ideas" id="perspective-ideas"></div>
+        </div>
+        <p class="perspective-disclaimer">These are fictional, pre-written perspective examples—not advice from a real designer or an AI analysis. Confirm site conditions and local requirements before acting.</p>
+      </article>
+    </section>
+
     <section class="workspace plan-section" id="plan">
       <div class="section-heading">
         <div>
@@ -164,6 +213,14 @@
             </div>
             <span class="plan-total" id="plan-total">2 ideas</span>
           </div>
+          <div class="capacity-meter">
+            <div class="capacity-label">
+              <strong>Illustrative planned land use</strong>
+              <span id="capacity-summary">Calculating…</span>
+            </div>
+            <progress id="capacity-progress" max="100" value="0" aria-label="Illustrative share of property area assigned to planned features">0%</progress>
+            <p>Approximate area only. This drawing is not a survey; dimensions and capacity are fictional estimates.</p>
+          </div>
           <div class="plan-list" id="plan-list" aria-live="polite"></div>
           <p class="storage-message" id="storage-message" role="status">Your planning ideas are stored only in this browser.</p>
         </article>
@@ -171,20 +228,31 @@
         <form class="panel add-plan-panel" id="plan-form">
           <p class="eyebrow">Keep exploring</p>
           <h3>Add a planning idea</h3>
-          <p class="muted">Try placing a feature in the sample property.</p>
+          <p class="muted">Choose a feature, then draw its footprint on the map.</p>
           <label for="feature-select">Feature type</label>
           <select id="feature-select" name="feature" required></select>
-          <label for="location-select">Suggested area</label>
-          <select id="location-select" name="location" required></select>
-          <button class="button button-dark" type="submit">Add to my plan <span aria-hidden="true">+</span></button>
-          <p class="form-footnote">Fictional sample data. No account or payment required.</p>
+          <div class="detail-field" id="detail-field">
+            <label for="detail-select">Plant, variety, or approach</label>
+            <select id="detail-select" name="detail" required></select>
+            <p class="detail-caution" id="detail-caution"></p>
+          </div>
+          <fieldset class="guild-fieldset" id="guild-fieldset" hidden>
+            <legend>Choose guild companions</legend>
+            <p>Example roles only; verify plant identity, suitability, and spread locally.</p>
+            <div id="guild-options"></div>
+          </fieldset>
+          <label for="plan-note">Planning note <span class="optional-label">(optional)</span></label>
+          <textarea id="plan-note" name="note" rows="3" maxlength="240" placeholder="What should you observe or research?"></textarea>
+          <button class="button button-dark" type="submit">Draw on map <span aria-hidden="true">↗</span></button>
+          <p class="form-footnote">Click at least three points inside the sample boundary. Avoid overlapping areas. No account or payment required.</p>
+          <p class="form-error" id="form-error" role="alert" hidden></p>
         </form>
       </div>
     </section>
 
     <section class="honesty-note" aria-label="Prototype limitations">
       <span class="honesty-icon" aria-hidden="true">i</span>
-      <p><strong>A note about this demo</strong> Everything shown is fictional sample content. The map is illustrative and not to scale; observations are not verified measurements. Plans save only in this browser. This prototype does not provide AI analysis, professional land assessments, accounts, or payments.</p>
+      <p><strong>A note about this demo</strong> Everything shown is fictional sample content. The map is illustrative and not to scale; the parcel-area conversion is only a demo estimate, not a survey. Plant and wildlife examples are ideas to research, not verified regional recommendations. Plans save only in this browser. This prototype does not provide AI analysis, professional land assessments, accounts, or payments.</p>
     </section>
   </main>
 

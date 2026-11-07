@@ -10,6 +10,28 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 ## Work sessions
 
+### Session — 2026-11-08 — driver: student
+
+- **Goal for this session:** Let visitors draw proposed feature areas on the sample map, keep the total within the sample parcel, and explore plant guilds, varieties, habitat, and pest-prevention concepts.
+- **Key prompts we gave Copilot** (paste the important ones):
+  1. “Add into the map where the new things are going to be added in the plan. The map should be interactive and anything in the plans should only be able to use the amount of property.”
+  2. “Guilds should be implemented and the option to choose varieties and specific plants and trees … add ways to attract beneficial bugs and animals while repelling the non-beneficial ones.”
+  3. “I also have a multigrafted apple tree and want obscure ideas like dwarf fruit trees planted close at 45-degree angles along a fence, and keep them aggressively pruned.”
+- **What worked:** Added interactive, drawn map footprints; parcel-boundary and overlap checks; approximate land-use totals; keyboard and pointer placement; local saving and migration of earlier saved ideas; selectable fruit examples and apple-guild companions; habitat and physical pest-exclusion concepts. Added the angled dwarf-apple fence concept as an experiment to research, with rootstock, spacing, support, and pruning cautions.
+- **What broke, and how we fixed it:** The observation-marker overlay initially intercepted map clicks. Routed drawing through the map frame and excluded marker/feature clicks. Made the form jump to the map without a smooth-scroll race.
+- **What we checked:** JavaScript syntax and diff whitespace; browser checks for saved-plan migration, guild and variety choices, drawn and keyboard footprints, persistence after reload, outside-boundary and overlap rejection, perspective placement, and a 390px mobile layout.
+- **Committed?** no — not committed yet.
+
+### Session — 2026-11-07 — driver: student
+
+- **Goal for this session:** Add switchable design viewpoints so visitors can compare how different priorities shape ideas for the same sample property.
+- **Key prompts we gave Copilot** (paste the important ones):
+  1. “Add a few options or viewpoints from an expert to the user ... allow it to flip between types and give multiple views on it from different perspectives.”
+  2. “Permaculture could be focused on that view and the landscaping viewpoint could focus on the aesthetics.”
+- **What worked:** Added interactive Permaculture Designer, Landscape Designer, and Homestead Grower perspectives, each with distinct priorities, a planning question, and sample ideas visitors can add to their local plan. Verified all three switches, adding a perspective idea to the plan, saving it across reloads, removing it, and mobile layout without horizontal page overflow.
+- **What broke, and how we fixed it:** An initial browser check matched both the perspective idea and the same feature already in the plan; refined the check to target plan entries specifically. The feature itself worked as expected.
+- **Committed?** no — not committed yet.
+
 ### Session — 2026-11-06 — driver: student
 
 - **Goal for this session:** Narrow TerraForma to a course-sized MVP and replace the generic starter experience with a working sample-property planning demo.
@@ -18,7 +40,7 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
   2. The product direction discussed: a useful basic experience without sign-in; treat persistent/higher-value services as a possible paid tier, not as real checkout in the course prototype.
 - **What worked:** Built a responsive, no-library prototype around one fictional Atlantic Canada property. Visitors can select sample observations on an illustrative map, add/remove proposed features, and keep the sample plan in this browser. The dashboard makes sample data visible and labels unverified content.
 - **What broke, and how we fixed it:** No breakages found in the initial checks. JavaScript syntax and whitespace checks passed; browser checks confirmed location selection, adding/removing a plan item, and persistence across reloads.
-- **Committed?** no — not committed yet.
+- **Committed?** yes — initial MVP committed and pushed as `f8e36cd`.
 
 ### MVP scope agreed for the class prototype
 

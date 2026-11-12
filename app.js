@@ -70,6 +70,7 @@
     mapZoomReset: document.getElementById("map-zoom-reset"),
     mapZoomLevel: document.getElementById("map-zoom-level"),
     mapPanToggle: document.getElementById("map-pan-toggle"),
+    undoPlan: document.getElementById("undo-plan"),
     mapNavigationHint: document.getElementById("map-navigation-hint"),
     footprintEditor: document.getElementById("footprint-editor"),
     footprintEditorName: document.getElementById("footprint-editor-name"),
@@ -233,6 +234,8 @@
   let selectedPerspectiveId = DESIGN_PERSPECTIVES[0].id;
   let selectedPlanId = null;
   let planItems = clonePlanItems(ACTIVE_PROPERTY.initialPlan);
+  let undoStack = [];
+  let redoStack = [];
   let storageAvailable = true;
   let siteBriefStorageAvailable = true;
   let savedSiteBrief = null;
@@ -2219,6 +2222,7 @@
       removeButton.textContent = "Remove";
       removeButton.setAttribute("aria-label", "Remove " + item.feature + " from the plan");
       removeButton.addEventListener("click", function () {
+        captureUndoState();
         planItems = planItems.filter(function (planItem) { return planItem.id !== item.id; });
         if (selectedPlanId === item.id) selectedPlanId = null;
         savePlan();
@@ -2318,6 +2322,7 @@
       shape: item.shape,
       rotationDegrees: item.rotationDegrees
     };
+    captureUndoState();
     item.polygon = polygon;
     item.shape = shape;
     item.rotationDegrees = rotationDegrees;
@@ -2453,6 +2458,26 @@
       }
     }
     return null;
+  }
+
+  function captureUndoState() {
+    undoStack.push(planItems.map(function (item) { return Object.assign({}, item); }));
+    redoStack = [];
+    updateUndoButton();
+  }
+
+  function updateUndoButton() {
+    elements.undoPlan.disabled = undoStack.length === 0;
+  }
+
+  function undo() {
+    if (undoStack.length === 0) return;
+    redoStack.push(planItems.map(function (item) { return Object.assign({}, item); }));
+    planItems = undoStack.pop();
+    selectedPlanId = null;
+    updateUndoButton();
+    renderPlan();
+    savePlan();
   }
 
   function savePlan() {
@@ -2671,6 +2696,7 @@
       rotationDegrees: 0,
       createdAt: new Date().toISOString()
     });
+    captureUndoState();
     planItems.push(savedItem);
     selectedPlanId = savedItem.id;
     pendingPlanItem = null;
@@ -2717,6 +2743,10 @@
   document.addEventListener("keydown", function (event) {
     if (event.key === "Escape" && !elements.speciesCard.hidden) {
       closeSpeciesCard();
+    }
+    if ((event.ctrlKey || event.metaKey) && event.key === "z" && !event.shiftKey) {
+      event.preventDefault();
+      undo();
     }
   });
   elements.planForm.addEventListener("submit", function (event) {
@@ -2905,6 +2935,7 @@
     if (pendingPlanItem || boundaryEditing) return;
     setMapPanMode(!mapPanActive);
   });
+  elements.undoPlan.addEventListener("click", undo);
   elements.footprintShape.addEventListener("change", function () {
     const fixedAspect = ["circle", "square"].includes(elements.footprintShape.value);
     elements.footprintDepth.disabled = fixedAspect;

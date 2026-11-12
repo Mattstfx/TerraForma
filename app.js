@@ -2076,6 +2076,7 @@
   }
 
   function renderPlan() {
+    updateUndoButton();
     elements.planList.replaceChildren();
     elements.planCount.textContent = planItems.length;
     elements.planTotal.textContent = planItems.length + (planItems.length === 1 ? " feature" : " features");

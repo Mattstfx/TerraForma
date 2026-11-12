@@ -1965,16 +1965,17 @@
   function updateDrawingStatus() {
     const needed = minimumDrawingPoints();
     elements.finishDrawing.disabled = drawingPoints.length < needed;
+    const gridInfo = snapGridMeters ? " (grid: " + snapGridMeters + "m)" : "";
     if (drawingPoints.length) {
       elements.drawingStatus.textContent = drawingPoints.length + " of " + needed +
         " required point" + (needed === 1 ? "" : "s") + " placed. " +
         (drawingShape === "freeform"
-          ? "Add outline points, undo, or finish."
-          : "Place the opposite corner; adjust dimensions or snap settings if needed.");
+          ? "Add outline points, undo, or finish." + gridInfo
+          : "Place the opposite corner; adjust dimensions or snap settings if needed." + gridInfo);
     } else {
       elements.drawingStatus.textContent = drawingShape === "freeform"
-        ? "Click or tap at least three points inside the boundary to outline this feature."
-        : "Place two opposite corners inside the boundary. Optional dimensions set the scaled size.";
+        ? "Click or tap at least three points inside the boundary to outline this feature." + gridInfo
+        : "Place two opposite corners inside the boundary. Optional dimensions set the scaled size." + gridInfo;
     }
   }
 

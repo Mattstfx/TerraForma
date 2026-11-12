@@ -878,6 +878,14 @@ main {
   font-size: 0.77rem;
 }
 .add-plan-panel textarea:focus-visible { outline: 3px solid #d0903e; outline-offset: 2px; }
+.feature-note-panel { padding: 22px; }
+.feature-note-panel h3 { font-family: Georgia, "Times New Roman", serif; font-size: 1.25rem; font-weight: 500; margin: 0 0 15px; }
+.feature-note-panel label { display: block; margin: 0 0 5px; color: #58675d; font-size: 0.7rem; font-weight: 700; }
+.feature-note-panel textarea { width: 100%; min-height: 90px; padding: 10px; border: 1px solid #dfe3d8; border-radius: 8px; background: #fffefa; color: #26342d; font-size: 0.77rem; font-family: inherit; resize: vertical; }
+.feature-note-panel textarea:focus-visible { outline: 3px solid #d0903e; outline-offset: 2px; }
+.feature-note-panel .button { width: 100%; margin-top: 12px; }
+.feature-note-panel .button-secondary { background: #e8ebe5; color: #26342d; }
+.feature-note-panel .button-secondary:hover { background: #dfe3d8; }
 .detail-caution { margin: 6px 0 0; color: #81765b; font-size: 0.65rem; line-height: 1.45; }
 .guild-fieldset { margin: 13px 0 0; padding: 10px; border: 1px solid var(--line); border-radius: 9px; }
 .guild-fieldset legend { padding: 0 4px; color: #58675d; font-size: 0.7rem; font-weight: 750; }

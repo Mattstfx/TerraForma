@@ -126,6 +126,11 @@
     rotationDays: document.getElementById("rotation-days"),
     scheduleStartDate: document.getElementById("schedule-start-date"),
     planNote: document.getElementById("plan-note"),
+    featureNotePanel: document.getElementById("feature-note-panel"),
+    featureNoteTitle: document.getElementById("feature-note-title"),
+    featureNoteEdit: document.getElementById("feature-note-edit"),
+    featureNoteSave: document.getElementById("feature-note-save"),
+    featureNoteCancel: document.getElementById("feature-note-cancel"),
     planForm: document.getElementById("plan-form"),
     formError: document.getElementById("form-error"),
     drawingToolbar: document.getElementById("drawing-toolbar"),
@@ -2444,11 +2449,41 @@
   function selectPlan(id, scrollToMap) {
     selectedPlanId = id;
     renderPlan();
+    updateFeatureNoteEditor();
     if (scrollToMap) {
       const selectedItem = planItems.find(function (item) { return item.id === id; });
       if (selectedItem) centerMapOnFootprint(selectedItem);
       document.getElementById("property").scrollIntoView({ behavior: "smooth", block: "start" });
     }
+  }
+
+  function updateFeatureNoteEditor() {
+    const item = planItems.find(function (entry) { return entry.id === selectedPlanId; });
+    if (!item) {
+      elements.featureNotePanel.hidden = true;
+      return;
+    }
+    elements.featureNotePanel.hidden = false;
+    elements.featureNoteTitle.textContent = item.feature + " · " + (item.variety || "Selected feature");
+    elements.featureNoteEdit.value = item.note || "";
+  }
+
+  function saveFeatureNote() {
+    const item = planItems.find(function (entry) { return entry.id === selectedPlanId; });
+    if (!item) return;
+    const newNote = elements.featureNoteEdit.value.trim() || "A starting idea to research and adapt to the actual site.";
+    if (item.note === newNote) return;
+    captureUndoState();
+    item.note = newNote;
+    savePlan();
+    renderPlan();
+    updateFeatureNoteEditor();
+  }
+
+  function deselectPlan() {
+    selectedPlanId = null;
+    renderPlan();
+    elements.featureNotePanel.hidden = true;
   }
 
   function readSavedPlan() {
@@ -3122,6 +3157,8 @@
   elements.cancelSiteBrief.addEventListener("click", cancelSiteBriefChanges);
   elements.resetBrief.addEventListener("click", resetUnreadableSiteBrief);
   elements.interfaceTheme.addEventListener("change", saveInterfaceTheme);
+  elements.featureNoteSave.addEventListener("click", saveFeatureNote);
+  elements.featureNoteCancel.addEventListener("click", deselectPlan);
 
   readPropertyBoundary();
   readPropertyProfile();

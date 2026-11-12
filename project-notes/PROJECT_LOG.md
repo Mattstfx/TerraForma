@@ -12,6 +12,22 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 ### Session — 2026-11-07 — driver: student
 
+- **Goal for this session:** Add pinch-to-zoom to the property map.
+- **What changed:** Two-finger touch gestures now zoom toward the midpoint between fingers, within the map's existing zoom limits. A multi-touch gesture cancels an accidental drawing click, and the map hint explains pinch zoom and one-finger pan mode.
+- **What we checked:** JavaScript syntax, diff formatting, and an isolated browser simulation of pinch zooming with no page errors.
+- **Limitations:** The browser gesture was simulated; a physical phone/tablet check is still desirable. Property size, contour lines, mapped water layers, plant-level bed placement, and 3D objects remain separate follow-up work.
+- **Committed?** no — not committed yet.
+
+### Session — 2026-11-07 — driver: student
+
+- **Goal for this session:** Finish and usability-test plant-by-plant placement in the 1 × 30 m vegetable-bed workflow.
+- **What changed:** Added a separate, horizontally scrollable 2D planting grid with individually clickable, numbered positions. Map dots remain a scale-limited visual reference; the grid provides the precise placement control. The planting form switches to two columns on narrow screens.
+- **What we checked:** In an isolated browser, drew a synthetic test boundary and 1 × 30 m bed, previewed 360 spots at test-only user-entered spacing, placed two species with different planting methods/dates, verified save/reload and removal, and placed a spot at a narrow viewport with no page overflow. JavaScript syntax and diff formatting passed. The test boundary and plan were removed from browser storage afterward.
+- **Accuracy and scope notes:** Spacing and source labels were explicitly test-only, not planting advice. Each saved plant stores its own species, spacing, source label, planting method, date, and normalized bed position. Plant symbols and map dots are not to scale; true 3D models and regional crop-spacing references are not implemented.
+- **Committed?** no — not committed yet.
+
+### Session — 2026-11-07 — driver: student
+
 - **Goal for this session:** Make the property map easier to navigate and footprints easier to place and revise.
 - **What changed:** Added zoom controls, reset, and an explicit pan mode; map pointer coordinates now use the SVG transform so drawing stays aligned while zoomed. Selecting a footprint opens editable shape, dimensions, and rotation controls; users can drag it to move, and choose a circle for round guilds/trees. “Show on map” centers and zooms to a feature. Out-of-boundary, overlapping, and over-capacity edits are rejected, with failed moves reverted. Boundary and drawing tools scroll the map into view before editing.
 - **Validation:** In an isolated browser profile, verified boundary creation, zoomed drawing, rectangle sizing and rotation, circle creation/editing, plan persistence, selecting map footprints, panning, focus-to-feature, and rejection/reversion of out-of-boundary edits. `node --check` and `git diff --check` passed.

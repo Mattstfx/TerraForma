@@ -375,7 +375,7 @@
             <button class="map-action-button" id="map-zoom-reset" type="button">Reset view</button>
             <button class="map-action-button" id="map-pan-toggle" type="button" aria-pressed="false">Pan map</button>
           </div>
-          <p class="map-navigation-hint" id="map-navigation-hint">Select a footprint to edit it; drag it to move. Turn on Pan map to move the view.</p>
+          <p class="map-navigation-hint" id="map-navigation-hint">Pinch to zoom. Select a footprint to edit or drag it to move; turn on Pan map for one-finger panning.</p>
           <section class="footprint-editor" id="footprint-editor" aria-labelledby="footprint-editor-title" hidden>
             <div class="footprint-editor-heading">
               <h4 id="footprint-editor-title">Edit selected footprint</h4>
@@ -403,6 +403,48 @@
             </div>
             <button class="map-action-button map-action-primary" id="apply-footprint-edits" type="button">Apply footprint changes</button>
             <p class="footprint-editor-status" id="footprint-editor-status" role="status" aria-live="polite"></p>
+            <section class="bed-planting-editor" id="bed-planting-editor" aria-labelledby="bed-planting-title" hidden>
+              <h5 id="bed-planting-title">Place individual plants</h5>
+              <p>For a rectangular bed, enter row and within-row spacing from a seed packet, nursery label, or cited growing guide. TerraForma does not guess spacing or verify user-entered sources.</p>
+              <div class="bed-planting-fields">
+                <label for="bed-plant-species">Plant
+                  <select id="bed-plant-species"></select>
+                </label>
+                <label for="bed-plant-cultivar">Cultivar / type
+                  <input id="bed-plant-cultivar" type="text" maxlength="80" placeholder="Use the label, if known">
+                </label>
+                <label for="bed-plant-row-spacing">Between-row spacing (cm)
+                  <input id="bed-plant-row-spacing" type="number" min="1" max="300" step="1" required>
+                </label>
+                <label for="bed-plant-in-row-spacing">Within-row spacing (cm)
+                  <input id="bed-plant-in-row-spacing" type="number" min="1" max="300" step="1" required>
+                </label>
+                <label for="bed-plant-method">Planting material
+                  <select id="bed-plant-method">
+                    <option value="seed">Seed</option>
+                    <option value="seedling">Seedling / transplant</option>
+                    <option value="larger-plant">Larger plant</option>
+                    <option value="established-plant">Established plant</option>
+                  </select>
+                </label>
+                <label for="bed-plant-date">Planting date
+                  <input id="bed-plant-date" type="date" required>
+                </label>
+                <label class="bed-plant-source-field" for="bed-plant-source">Spacing source / label
+                  <input id="bed-plant-source" type="text" maxlength="180" required placeholder="e.g. cultivar seed packet, page or table">
+                </label>
+              </div>
+              <div class="bed-planting-actions">
+                <button class="map-action-button map-action-primary" id="preview-bed-planting-spots" type="button">Show available spots</button>
+                <button class="map-action-button" id="stop-bed-planting" type="button" hidden>Stop placing</button>
+              </div>
+              <p class="bed-planting-status" id="bed-planting-status" role="status" aria-live="polite"></p>
+              <section class="bed-planting-grid-panel" id="bed-planting-grid-panel" aria-label="Bed planting grid" hidden>
+                <p>Choose an exact position in the bed grid. Each row represents a row across the bed; scroll horizontally to move along its length.</p>
+                <div class="bed-planting-grid" id="bed-planting-grid"></div>
+              </section>
+              <ol class="bed-plantings-list" id="bed-plantings-list"></ol>
+            </section>
           </section>
           <div class="map-footer" id="map-footer">
             <p id="map-footer-legend"><span class="legend-swatch woods-swatch"></span> Tree line <span class="legend-swatch field-swatch"></span> Open area <span class="legend-swatch planned-swatch"></span> Planned footprint</p>

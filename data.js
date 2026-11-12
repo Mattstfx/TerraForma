@@ -84,9 +84,9 @@ const TERRAIN_DEMO_PROPERTY = {
   id: "waverley-terrain-demo",
   name: "Waverley Terrain Test",
   location: "Waverley area · Halifax Regional Municipality, Nova Scotia",
-  area: 2.4,
+  area: 1,
   areaUnit: "acres",
-  areaNote: "Synthetic demo parcel; outline not drawn yet",
+  areaNote: "One-acre synthetic demo parcel; outline not drawn yet",
   mapBoundary: [],
   zones: [],
   initialPlan: []

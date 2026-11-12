@@ -23,6 +23,7 @@
   const landscapeStyles = ["", "naturalistic", "formal", "productive"];
   const speciesCardDismissDelay = 8000;
   const preflightCheckIds = ["boundary", "utilities", "well-septic", "water", "soil", "rules", "access"];
+  const maxBedPlantingCandidates = 2000;
   const svgNamespace = "http://www.w3.org/2000/svg";
   const terrainServiceUrl = "https://datacube.services.geo.ca/ows/elevation";
   const terrainDemoBounds = "44.797825,-63.63956,44.802175,-63.63044";
@@ -80,6 +81,20 @@
     applyFootprintEdits: document.getElementById("apply-footprint-edits"),
     clearFootprintSelection: document.getElementById("clear-footprint-selection"),
     footprintEditorStatus: document.getElementById("footprint-editor-status"),
+    bedPlantingEditor: document.getElementById("bed-planting-editor"),
+    bedPlantSpecies: document.getElementById("bed-plant-species"),
+    bedPlantCultivar: document.getElementById("bed-plant-cultivar"),
+    bedPlantRowSpacing: document.getElementById("bed-plant-row-spacing"),
+    bedPlantInRowSpacing: document.getElementById("bed-plant-in-row-spacing"),
+    bedPlantMethod: document.getElementById("bed-plant-method"),
+    bedPlantDate: document.getElementById("bed-plant-date"),
+    bedPlantSource: document.getElementById("bed-plant-source"),
+    previewBedPlantingSpots: document.getElementById("preview-bed-planting-spots"),
+    stopBedPlanting: document.getElementById("stop-bed-planting"),
+    bedPlantingStatus: document.getElementById("bed-planting-status"),
+    bedPlantingGridPanel: document.getElementById("bed-planting-grid-panel"),
+    bedPlantingGrid: document.getElementById("bed-planting-grid"),
+    bedPlantingsList: document.getElementById("bed-plantings-list"),
     mapLegend: document.getElementById("map-legend"),
     mapFooterLegend: document.getElementById("map-footer-legend"),
     mapScaleNote: document.getElementById("map-scale-note"),
@@ -224,6 +239,11 @@
       return Object.assign({}, item, {
         polygon: item.polygon.map(function (point) { return point.slice(); }),
         guildPlants: (item.guildPlants || []).slice(),
+        plantings: Array.isArray(item.plantings) ? item.plantings.map(function (plant) {
+          return Object.assign({}, plant, {
+            position: Array.isArray(plant.position) ? plant.position.slice() : []
+          });
+        }) : [],
         rotationDegrees: Number.isFinite(item.rotationDegrees) ? item.rotationDegrees : 0
       });
     });
@@ -260,7 +280,13 @@
   let mapViewBox = { x: 0, y: 0, width: 640, height: 430 };
   let mapPanActive = false;
   let mapPanDrag = null;
+  const mapTouchPointers = new Map();
+  let mapPinch = null;
+  let suppressMapClickUntil = 0;
   let footprintDrag = null;
+  let bedPlantingConfig = null;
+  let bedPlantingCandidates = [];
+  let bedPlantingGridDimensions = { rowCount: 0, plantCount: 0 };
 
   function localDateValue(date) {
     return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0") +
@@ -1042,6 +1068,12 @@
     updateFeatureDetails();
   }
 
+  function populateBedPlantOptions() {
+    VEGETABLE_PLANTS.forEach(function (plant) {
+      elements.bedPlantSpecies.appendChild(makeOption(plant.name, plant.id));
+    });
+  }
+
   function showFormError(message) {
     elements.formError.textContent = message;
     elements.formError.hidden = !message;
@@ -1787,14 +1819,39 @@
     });
   }
 
+  function updatePinchZoom() {
+    if (mapTouchPointers.size < 2 || !mapPinch) return;
+    const pointers = Array.from(mapTouchPointers.values()).slice(0, 2);
+    const distance = Math.hypot(
+      pointers[1].clientX - pointers[0].clientX,
+      pointers[1].clientY - pointers[0].clientY
+    );
+    if (distance < 1) return;
+    const midpoint = {
+      clientX: (pointers[0].clientX + pointers[1].clientX) / 2,
+      clientY: (pointers[0].clientY + pointers[1].clientY) / 2
+    };
+    const width = mapPinch.viewBox.width * mapPinch.distance / distance;
+    const height = width * 430 / 640;
+    const rectangle = elements.mapSvg.getBoundingClientRect();
+    const horizontalRatio = Math.max(0, Math.min(1, (midpoint.clientX - rectangle.left) / rectangle.width));
+    const verticalRatio = Math.max(0, Math.min(1, (midpoint.clientY - rectangle.top) / rectangle.height));
+    updateMapViewBox({
+      x: mapPinch.anchor[0] - horizontalRatio * width,
+      y: mapPinch.anchor[1] - verticalRatio * height,
+      width: width,
+      height: height
+    });
+  }
+
   function setMapPanMode(active) {
     mapPanActive = active;
     elements.mapFrame.classList.toggle("is-pan-active", active);
     elements.mapPanToggle.setAttribute("aria-pressed", active ? "true" : "false");
     elements.mapPanToggle.textContent = active ? "Pan mode on" : "Pan map";
     elements.mapNavigationHint.textContent = active
-      ? "Drag the map to move the view. Turn off Pan map to select or draw footprints."
-      : "Select a footprint to edit it; drag it to move. Turn on Pan map to move the view.";
+      ? "Pinch to zoom. Drag the map to move the view. Turn off Pan map to edit or draw footprints."
+      : "Pinch to zoom. Select a footprint to edit or drag it to move; turn on Pan map for one-finger panning.";
   }
 
   function snapMapPoint(point) {
@@ -2051,8 +2108,42 @@
       });
       label.textContent = item.feature.length > 14 ? item.feature.slice(0, 12) + "…" : item.feature;
       elements.planAreas.appendChild(label);
+
+      (item.plantings || []).forEach(function (plant) {
+        const point = bedPlantMapPoint(item, plant.position);
+        if (!point) return;
+        const marker = svgElement("g", {
+          class: "bed-planted-plant",
+          role: "img",
+          "aria-label": plant.plantName + ", planted " + plant.plantingDate
+        });
+        const title = svgElement("title", {});
+        title.textContent = plant.plantName +
+          (plant.cultivar ? " · " + plant.cultivar : "") +
+          " · planted " + plant.plantingDate +
+          " · spacing source: " + plant.spacingSource;
+        marker.appendChild(title);
+        [[-1.6, -0.5], [0.2, -1.7], [1.5, 0.5], [-0.3, 1.7]].forEach(function (offset) {
+          marker.appendChild(svgElement("ellipse", {
+            cx: point[0] + offset[0],
+            cy: point[1] + offset[1],
+            rx: 1.1,
+            ry: 2,
+            transform: "rotate(" + (offset[0] * 16) + " " + point[0] + " " + point[1] + ")",
+            class: "bed-plant-leaf"
+          }));
+        });
+        marker.appendChild(svgElement("circle", {
+          cx: point[0],
+          cy: point[1],
+          r: 0.85,
+          class: "bed-plant-center"
+        }));
+        elements.planAreas.appendChild(marker);
+      });
     });
     renderDraft();
+    renderBedPlantingCandidates();
   }
 
   function nearestZone(points) {
@@ -2157,6 +2248,14 @@
         content.appendChild(profile);
       }
 
+      if (item.plantings && item.plantings.length) {
+        const plantingSummary = document.createElement("p");
+        plantingSummary.className = "guild-summary";
+        plantingSummary.textContent = item.plantings.length + " individual plant" +
+          (item.plantings.length === 1 ? "" : "s") + " placed on the bed map. Spacing and source labels are user-entered.";
+        content.appendChild(plantingSummary);
+      }
+
       if (item.guildLayers && item.guildLayers.length) {
         const layers = document.createElement("p");
         layers.className = "guild-summary";
@@ -2236,7 +2335,13 @@
   function updateFootprintEditor() {
     const item = planItems.find(function (entry) { return entry.id === selectedPlanId; });
     elements.footprintEditor.hidden = !item;
-    if (!item) return;
+    elements.bedPlantingEditor.hidden = !item || item.featureId !== "garden-beds";
+    if (!item) {
+      bedPlantingConfig = null;
+      bedPlantingCandidates = [];
+      bedPlantingGridDimensions = { rowCount: 0, plantCount: 0 };
+      return;
+    }
     const dimensions = footprintDimensions(item);
     elements.footprintEditorName.textContent = item.feature + " · " + (item.variety || "Selected footprint");
     elements.footprintShape.value = ["rectangle", "square", "circle", "freeform"].includes(item.shape)
@@ -2247,6 +2352,315 @@
     elements.footprintDepth.disabled = item.shape === "circle" || item.shape === "square";
     elements.footprintRotation.value = Number.isFinite(item.rotationDegrees) ? item.rotationDegrees : 0;
     elements.footprintEditorStatus.textContent = "Drag the selected footprint on the map to move it. Dimensions are approximate map measurements.";
+    elements.previewBedPlantingSpots.disabled = item.shape !== "rectangle";
+    elements.bedPlantingsList.replaceChildren();
+    if (item.featureId === "garden-beds") {
+      if (item.shape !== "rectangle") {
+        elements.bedPlantingStatus.textContent = "Change this bed to a rectangle before laying out plant positions.";
+        bedPlantingConfig = null;
+        bedPlantingCandidates = [];
+        bedPlantingGridDimensions = { rowCount: 0, plantCount: 0 };
+      } else if (!bedPlantingConfig) {
+        elements.bedPlantingStatus.textContent = "Set the bed to 1 × 30 m if desired, then choose a plant and source-backed spacing to preview positions.";
+      }
+      renderBedPlantingsList(item);
+    }
+    elements.stopBedPlanting.hidden = !bedPlantingConfig;
+  }
+
+  function bedPlantMapPoint(item, position) {
+    if (!Array.isArray(position) || position.length !== 2 ||
+        !position.every(function (value) { return Number.isFinite(value); }) ||
+        item.polygon.length !== 4) return null;
+    const origin = item.polygon[0];
+    const widthEnd = item.polygon[1];
+    const depthEnd = item.polygon[3];
+    return [
+      origin[0] + (widthEnd[0] - origin[0]) * position[0] +
+        (depthEnd[0] - origin[0]) * position[1],
+      origin[1] + (widthEnd[1] - origin[1]) * position[0] +
+        (depthEnd[1] - origin[1]) * position[1]
+    ];
+  }
+
+  function getBedPlantPlacementCandidates(item, config) {
+    const origin = item.polygon[0];
+    const widthEnd = item.polygon[1];
+    const depthEnd = item.polygon[3];
+    const widthVector = [widthEnd[0] - origin[0], widthEnd[1] - origin[1]];
+    const depthVector = [depthEnd[0] - origin[0], depthEnd[1] - origin[1]];
+    const widthUnits = Math.hypot(widthVector[0], widthVector[1]);
+    const depthUnits = Math.hypot(depthVector[0], depthVector[1]);
+    const acrossWidth = widthUnits <= depthUnits;
+    const acrossVector = acrossWidth ? widthVector : depthVector;
+    const alongVector = acrossWidth ? depthVector : widthVector;
+    const acrossLength = Math.hypot(acrossVector[0], acrossVector[1]);
+    const alongLength = Math.hypot(alongVector[0], alongVector[1]);
+    const rowStep = config.rowSpacingCm / 100 * mapUnitsPerMeter();
+    const plantStep = config.inRowSpacingCm / 100 * mapUnitsPerMeter();
+    const rowCount = Math.floor(acrossLength / rowStep);
+    const plantCount = Math.floor(alongLength / plantStep);
+    const total = rowCount * plantCount;
+    if (total > maxBedPlantingCandidates) {
+      return { tooMany: true, total: total, rowCount: rowCount, plantCount: plantCount, candidates: [] };
+    }
+    if (rowCount === 0 || plantCount === 0) {
+      return { tooMany: false, total: 0, rowCount: rowCount, plantCount: plantCount, candidates: [] };
+    }
+
+    const acrossUnit = [acrossVector[0] / acrossLength, acrossVector[1] / acrossLength];
+    const alongUnit = [alongVector[0] / alongLength, alongVector[1] / alongLength];
+    const firstRowOffset = (acrossLength - (rowCount - 1) * rowStep) / 2;
+    const firstPlantOffset = (alongLength - (plantCount - 1) * plantStep) / 2;
+    const existing = (item.plantings || []).map(function (plant) {
+      return {
+        acrossOffset: acrossWidth
+          ? plant.position[0] * widthUnits
+          : plant.position[1] * depthUnits,
+        alongOffset: acrossWidth
+          ? plant.position[1] * depthUnits
+          : plant.position[0] * widthUnits,
+        rowSpacingCm: plant.rowSpacingCm,
+        inRowSpacingCm: plant.inRowSpacingCm
+      };
+    });
+    const candidates = [];
+
+    for (let row = 0; row < rowCount; row += 1) {
+      const acrossOffset = firstRowOffset + row * rowStep;
+      for (let column = 0; column < plantCount; column += 1) {
+        const alongOffset = firstPlantOffset + column * plantStep;
+        const point = [
+          origin[0] + acrossUnit[0] * acrossOffset + alongUnit[0] * alongOffset,
+          origin[1] + acrossUnit[1] * acrossOffset + alongUnit[1] * alongOffset
+        ];
+        const position = acrossWidth
+          ? [acrossOffset / widthUnits, alongOffset / depthUnits]
+          : [alongOffset / widthUnits, acrossOffset / depthUnits];
+        const available = existing.every(function (plant) {
+          const acrossGapCm = Math.abs(acrossOffset - plant.acrossOffset) /
+            mapUnitsPerMeter() * 100;
+          const alongGapCm = Math.abs(alongOffset - plant.alongOffset) /
+            mapUnitsPerMeter() * 100;
+          const requiredAcrossCm = Math.max(config.rowSpacingCm, plant.rowSpacingCm);
+          const requiredAlongCm = Math.max(config.inRowSpacingCm, plant.inRowSpacingCm);
+          return acrossGapCm + 0.01 >= requiredAcrossCm ||
+            alongGapCm + 0.01 >= requiredAlongCm;
+        });
+        if (available) candidates.push({
+          point: point,
+          position: position,
+          rowIndex: row,
+          columnIndex: column
+        });
+      }
+    }
+    return {
+      tooMany: false,
+      total: total,
+      rowCount: rowCount,
+      plantCount: plantCount,
+      candidates: candidates
+    };
+  }
+
+  function renderBedPlantingCandidates() {
+    elements.bedPlantingGrid.replaceChildren();
+    elements.bedPlantingGridPanel.hidden = true;
+    if (!bedPlantingConfig) return;
+    const item = planItems.find(function (entry) { return entry.id === selectedPlanId; });
+    if (!item || item.featureId !== "garden-beds" || item.shape !== "rectangle") return;
+    const group = svgElement("g", { "aria-hidden": "true" });
+    bedPlantingCandidates.forEach(function (candidate, index) {
+      const marker = svgElement("circle", {
+        cx: candidate.point[0],
+        cy: candidate.point[1],
+        r: 2.2,
+        class: "bed-plant-candidate"
+      });
+      group.appendChild(marker);
+    });
+    elements.planAreas.appendChild(group);
+
+    for (let rowIndex = 0; rowIndex < bedPlantingGridDimensions.rowCount; rowIndex += 1) {
+      const row = document.createElement("div");
+      row.className = "bed-planting-grid-row";
+      row.setAttribute("role", "group");
+      row.setAttribute("aria-label", "Row " + (rowIndex + 1));
+      const label = document.createElement("span");
+      label.className = "bed-planting-grid-row-label";
+      label.textContent = "Row " + (rowIndex + 1);
+      const spots = document.createElement("div");
+      spots.className = "bed-planting-grid-spots";
+      bedPlantingCandidates.forEach(function (candidate, index) {
+        if (candidate.rowIndex !== rowIndex) return;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "bed-planting-grid-spot";
+        button.textContent = String(candidate.columnIndex + 1);
+        button.setAttribute("aria-label",
+          "Place " + bedPlantingConfig.plantName + " at row " + (rowIndex + 1) +
+          ", position " + (candidate.columnIndex + 1));
+        button.title = "Row " + (rowIndex + 1) + ", position " + (candidate.columnIndex + 1);
+        button.setAttribute("data-bed-plant-grid-candidate", String(index));
+        button.addEventListener("click", function () { placeBedPlanting(index); });
+        spots.appendChild(button);
+      });
+      row.append(label, spots);
+      elements.bedPlantingGrid.appendChild(row);
+    }
+    elements.bedPlantingGridPanel.hidden = bedPlantingCandidates.length === 0;
+  }
+
+  function renderBedPlantingsList(item) {
+    (item.plantings || []).forEach(function (plant) {
+      const row = document.createElement("li");
+      row.textContent = plant.plantName +
+        (plant.cultivar ? " · " + plant.cultivar : "") +
+        " · " + plant.plantingDate +
+        " · " + plant.method.replace(/-/g, " ") +
+        " · spacing " + plant.rowSpacingCm + " × " + plant.inRowSpacingCm + " cm";
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.textContent = "Remove";
+      remove.setAttribute("aria-label", "Remove " + plant.plantName + " from this bed");
+      remove.addEventListener("click", function () { removeBedPlanting(item.id, plant.id); });
+      row.appendChild(remove);
+      elements.bedPlantingsList.appendChild(row);
+    });
+  }
+
+  function startBedPlantingPreview() {
+    const item = planItems.find(function (entry) { return entry.id === selectedPlanId; });
+    if (!item || item.featureId !== "garden-beds" || item.shape !== "rectangle") {
+      elements.bedPlantingStatus.textContent = "Select a rectangular vegetable bed to place plants.";
+      return;
+    }
+    if (!elements.bedPlantRowSpacing.checkValidity() ||
+        !elements.bedPlantInRowSpacing.checkValidity() ||
+        !elements.bedPlantDate.checkValidity()) {
+      elements.bedPlantingStatus.textContent = "Enter valid row spacing, within-row spacing, and planting date.";
+      return;
+    }
+    const spacingSource = elements.bedPlantSource.value.trim();
+    if (!spacingSource) {
+      elements.bedPlantingStatus.textContent = "Enter the seed-packet, nursery-label, or guide reference for these spacing values.";
+      elements.bedPlantSource.focus();
+      return;
+    }
+    const plant = VEGETABLE_PLANTS.find(function (entry) {
+      return entry.id === elements.bedPlantSpecies.value;
+    });
+    if (!plant) {
+      elements.bedPlantingStatus.textContent = "Choose a plant from the list.";
+      return;
+    }
+    bedPlantingConfig = {
+      speciesId: plant.id,
+      plantName: plant.name,
+      scientificName: plant.scientificName,
+      cultivar: elements.bedPlantCultivar.value.trim(),
+      rowSpacingCm: Number(elements.bedPlantRowSpacing.value),
+      inRowSpacingCm: Number(elements.bedPlantInRowSpacing.value),
+      spacingSource: spacingSource,
+      method: elements.bedPlantMethod.value,
+      plantingDate: elements.bedPlantDate.value
+    };
+    const result = getBedPlantPlacementCandidates(item, bedPlantingConfig);
+    if (result.tooMany) {
+      bedPlantingConfig = null;
+      bedPlantingCandidates = [];
+      bedPlantingGridDimensions = { rowCount: 0, plantCount: 0 };
+      renderMapAreas();
+      elements.bedPlantingStatus.textContent = "This spacing creates " + result.total.toLocaleString() +
+        " positions, above the " + maxBedPlantingCandidates.toLocaleString() +
+        "-spot preview limit. Enter larger source-backed row spacing to reduce the grid.";
+      elements.stopBedPlanting.hidden = true;
+      return;
+    }
+    if (result.candidates.length === 0) {
+      bedPlantingConfig = null;
+      bedPlantingCandidates = [];
+      bedPlantingGridDimensions = { rowCount: 0, plantCount: 0 };
+      renderMapAreas();
+      elements.bedPlantingStatus.textContent = result.total
+        ? "No candidate spots remain at these spacings. Try another part of the bed or review the source values."
+        : "These spacing values do not fit a plant position inside this bed.";
+      elements.stopBedPlanting.hidden = true;
+      return;
+    }
+    bedPlantingCandidates = result.candidates;
+    bedPlantingGridDimensions = {
+      rowCount: result.rowCount,
+      plantCount: result.plantCount
+    };
+    elements.stopBedPlanting.hidden = false;
+    elements.bedPlantingStatus.textContent = result.candidates.length.toLocaleString() +
+      " available positions. Choose a numbered position in the bed grid below. Map symbols are not to scale; spacing values are user-provided, not verified by TerraForma.";
+    renderMapAreas();
+  }
+
+  function invalidateBedPlantingPreview() {
+    if (!bedPlantingConfig) return;
+    bedPlantingConfig = null;
+    bedPlantingCandidates = [];
+    bedPlantingGridDimensions = { rowCount: 0, plantCount: 0 };
+    elements.stopBedPlanting.hidden = true;
+    elements.bedPlantingStatus.textContent = "Settings changed. Preview positions again before placing another plant.";
+    renderMapAreas();
+  }
+
+  function placeBedPlanting(index) {
+    const item = planItems.find(function (entry) { return entry.id === selectedPlanId; });
+    const candidate = bedPlantingCandidates[index];
+    if (!item || !candidate || !bedPlantingConfig) return;
+    if (!Array.isArray(item.plantings)) item.plantings = [];
+    const plant = Object.assign({
+      id: "bed-plant-" + Date.now() + "-" + item.plantings.length,
+      position: candidate.position.slice()
+    }, bedPlantingConfig);
+    item.plantings.push(plant);
+    const result = getBedPlantPlacementCandidates(item, bedPlantingConfig);
+    if (!savePlan()) {
+      item.plantings.pop();
+      elements.bedPlantingStatus.textContent = "Could not save this plant. No position was added.";
+      renderMapAreas();
+      return;
+    }
+    bedPlantingCandidates = result.tooMany ? [] : result.candidates;
+    bedPlantingGridDimensions = {
+      rowCount: result.rowCount,
+      plantCount: result.plantCount
+    };
+    if (bedPlantingCandidates.length === 0) bedPlantingConfig = null;
+    renderPlan();
+    elements.bedPlantingStatus.textContent = bedPlantingCandidates.length
+      ? "Plant position saved. " + bedPlantingCandidates.length.toLocaleString() + " available positions remain."
+      : "Plant position saved. No unoccupied spots remain at these spacings.";
+    elements.stopBedPlanting.hidden = !bedPlantingConfig;
+  }
+
+  function removeBedPlanting(itemId, plantId) {
+    const item = planItems.find(function (entry) { return entry.id === itemId; });
+    if (!item || !Array.isArray(item.plantings)) return;
+    const previous = item.plantings;
+    item.plantings = previous.filter(function (plant) { return plant.id !== plantId; });
+    if (!savePlan()) {
+      item.plantings = previous;
+      elements.bedPlantingStatus.textContent = "Could not save this removal. The plant remains in the bed.";
+      renderPlan();
+      elements.bedPlantingStatus.textContent = "Could not save this removal. The plant remains in the bed.";
+      return;
+    }
+    if (bedPlantingConfig && itemId === selectedPlanId) {
+      const result = getBedPlantPlacementCandidates(item, bedPlantingConfig);
+      bedPlantingCandidates = result.tooMany ? [] : result.candidates;
+      bedPlantingGridDimensions = {
+        rowCount: result.rowCount,
+        plantCount: result.plantCount
+      };
+    }
+    renderPlan();
   }
 
   function validateFootprintEdit(itemId, points) {
@@ -2352,6 +2766,11 @@
   }
 
   function selectPlan(id, scrollToMap) {
+    if (selectedPlanId !== id) {
+      bedPlantingConfig = null;
+      bedPlantingCandidates = [];
+      bedPlantingGridDimensions = { rowCount: 0, plantCount: 0 };
+    }
     selectedPlanId = id;
     renderPlan();
     if (scrollToMap) {
@@ -2402,11 +2821,31 @@
             return APPLE_GUILD_PLANTS.some(function (plant) { return plant.id === id; });
           })
           : [];
+        const plantings = Array.isArray(item.plantings)
+          ? item.plantings.filter(function (plant) {
+            return plant && typeof plant.id === "string" &&
+              typeof plant.speciesId === "string" &&
+              typeof plant.plantName === "string" &&
+              typeof plant.scientificName === "string" &&
+              Array.isArray(plant.position) && plant.position.length === 2 &&
+              plant.position.every(function (coordinate) {
+                return Number.isFinite(coordinate) && coordinate >= 0 && coordinate <= 1;
+              }) &&
+              Number.isFinite(plant.rowSpacingCm) && plant.rowSpacingCm >= 1 && plant.rowSpacingCm <= 300 &&
+              Number.isFinite(plant.inRowSpacingCm) && plant.inRowSpacingCm >= 1 && plant.inRowSpacingCm <= 300 &&
+              typeof plant.spacingSource === "string" && plant.spacingSource.length <= 180 &&
+              ["seed", "seedling", "larger-plant", "established-plant"].includes(plant.method) &&
+              /^\d{4}-\d{2}-\d{2}$/.test(plant.plantingDate);
+          }).map(function (plant) {
+            return Object.assign({}, plant, { position: plant.position.slice() });
+          })
+          : [];
         return Object.assign({}, item, {
           featureId: feature.id,
           polygon: polygon,
           variety: typeof item.variety === "string" ? item.variety : "Planning option to research",
           guildPlants: guildPlants,
+          plantings: plantings,
           contents: Array.isArray(item.contents) ? item.contents.filter(function (entry) {
             return entry && typeof entry.name === "string";
           }) : [],
@@ -2566,6 +3005,14 @@
     selectedPlanId = null;
     pendingPlanItem = item;
     drawingPoints = [];
+    elements.drawingShape.value = item.featureId === "garden-beds" ? "rectangle" : "freeform";
+    if (item.featureId === "garden-beds") {
+      elements.drawingWidth.value = "1";
+      elements.drawingDepth.value = "30";
+    } else {
+      elements.drawingWidth.value = "";
+      elements.drawingDepth.value = "";
+    }
     drawingShape = elements.drawingShape.value;
     keyboardCursor = { x: 320, y: 215 };
     elements.drawingToolbar.hidden = false;
@@ -2639,7 +3086,7 @@
     }
     if (points.some(function (point, index) {
       const next = points[(index + 1) % points.length];
-      return Math.hypot(point[0] - next[0], point[1] - next[1]) < 1;
+      return Math.hypot(point[0] - next[0], point[1] - next[1]) < 0.25 * mapUnitsPerMeter();
     })) return "Two outline points are too close together. Move or undo one of them.";
     if (polygonArea(points) < 4) return "This outline is too small to estimate. Draw a larger area.";
     if (hasSelfIntersection(points)) return "The outline crosses itself. Undo points and draw a simple shape.";
@@ -2669,6 +3116,7 @@
       polygon: finalPoints.map(function (point) { return point.slice(); }),
       shape: drawingShape,
       rotationDegrees: 0,
+      plantings: [],
       createdAt: new Date().toISOString()
     });
     planItems.push(savedItem);
@@ -2801,6 +3249,11 @@
   });
 
   elements.mapFrame.addEventListener("click", function (event) {
+    if (Date.now() < suppressMapClickUntil) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
     if (!canEditCurrentMap()) return;
     if (mapPanActive) return;
     if (boundaryEditing) {
@@ -2814,12 +3267,48 @@
       renderBoundaryDraft();
       return;
     }
+    if (bedPlantingConfig) {
+      elements.bedPlantingStatus.textContent = "Choose one of the highlighted available positions inside the bed.";
+      return;
+    }
     if (!pendingPlanItem || (event.target.closest &&
         event.target.closest(".map-marker, .planned-area, .planned-area-label, .north-arrow"))) return;
     addDrawingPoint(pointerToMapPoint(event));
   });
   elements.mapSvg.addEventListener("pointerdown", function (event) {
     if (event.button !== 0) return;
+    if (event.pointerType === "touch") {
+      mapTouchPointers.set(event.pointerId, {
+        clientX: event.clientX,
+        clientY: event.clientY
+      });
+      elements.mapSvg.setPointerCapture(event.pointerId);
+      if (mapTouchPointers.size >= 2) {
+        const pointers = Array.from(mapTouchPointers.values()).slice(0, 2);
+        const midpoint = {
+          clientX: (pointers[0].clientX + pointers[1].clientX) / 2,
+          clientY: (pointers[0].clientY + pointers[1].clientY) / 2
+        };
+        const rectangle = elements.mapSvg.getBoundingClientRect();
+        mapPinch = {
+          distance: Math.hypot(
+            pointers[1].clientX - pointers[0].clientX,
+            pointers[1].clientY - pointers[0].clientY
+          ),
+          viewBox: Object.assign({}, mapViewBox),
+          anchor: [
+            mapViewBox.x + (midpoint.clientX - rectangle.left) / rectangle.width * mapViewBox.width,
+            mapViewBox.y + (midpoint.clientY - rectangle.top) / rectangle.height * mapViewBox.height
+          ]
+        };
+        mapPanDrag = null;
+        finishFootprintDrag(false);
+        suppressMapClickUntil = Date.now() + 700;
+        event.preventDefault();
+        return;
+      }
+    }
+    if (mapPinch) return;
     if (mapPanActive && !boundaryEditing && !pendingPlanItem) {
       const rectangle = elements.mapSvg.getBoundingClientRect();
       const scale = Math.min(rectangle.width / mapViewBox.width, rectangle.height / mapViewBox.height);
@@ -2852,6 +3341,18 @@
     event.preventDefault();
   });
   elements.mapSvg.addEventListener("pointermove", function (event) {
+    if (event.pointerType === "touch" && mapTouchPointers.has(event.pointerId)) {
+      mapTouchPointers.set(event.pointerId, {
+        clientX: event.clientX,
+        clientY: event.clientY
+      });
+      if (mapPinch) {
+        updatePinchZoom();
+        event.preventDefault();
+        return;
+      }
+    }
+    if (mapPinch) return;
     if (mapPanDrag) {
       const deltaX = (event.clientX - mapPanDrag.clientX) * mapPanDrag.unitsPerPixel;
       const deltaY = (event.clientY - mapPanDrag.clientY) * mapPanDrag.unitsPerPixel;
@@ -2885,14 +3386,24 @@
     keyboardCursor = { x: pointer[0], y: pointer[1] };
     if (drawingShape !== "freeform" && drawingPoints.length < 2) renderDraft();
   });
-  elements.mapSvg.addEventListener("pointerup", function () {
+  elements.mapSvg.addEventListener("pointerup", function (event) {
+    if (event.pointerType === "touch") {
+      mapTouchPointers.delete(event.pointerId);
+      if (mapPinch) {
+        mapPinch = null;
+        suppressMapClickUntil = Date.now() + 700;
+        mapPanDrag = null;
+      }
+    }
     if (mapPanDrag) {
       mapPanDrag = null;
       return;
     }
     finishFootprintDrag(true);
   });
-  elements.mapSvg.addEventListener("pointercancel", function () {
+  elements.mapSvg.addEventListener("pointercancel", function (event) {
+    if (event.pointerType === "touch") mapTouchPointers.delete(event.pointerId);
+    mapPinch = null;
     mapPanDrag = null;
     finishFootprintDrag(false);
   });
@@ -2916,7 +3427,31 @@
     }
   });
   elements.applyFootprintEdits.addEventListener("click", applyFootprintEdits);
+  elements.previewBedPlantingSpots.addEventListener("click", startBedPlantingPreview);
+  elements.stopBedPlanting.addEventListener("click", function () {
+    bedPlantingConfig = null;
+    bedPlantingCandidates = [];
+    bedPlantingGridDimensions = { rowCount: 0, plantCount: 0 };
+    elements.stopBedPlanting.hidden = true;
+    elements.bedPlantingStatus.textContent = "Plant placement stopped.";
+    renderMapAreas();
+  });
+  [
+    elements.bedPlantSpecies,
+    elements.bedPlantCultivar,
+    elements.bedPlantRowSpacing,
+    elements.bedPlantInRowSpacing,
+    elements.bedPlantMethod,
+    elements.bedPlantDate,
+    elements.bedPlantSource
+  ].forEach(function (control) {
+    control.addEventListener("input", invalidateBedPlantingPreview);
+    control.addEventListener("change", invalidateBedPlantingPreview);
+  });
   elements.clearFootprintSelection.addEventListener("click", function () {
+    bedPlantingConfig = null;
+    bedPlantingCandidates = [];
+    bedPlantingGridDimensions = { rowCount: 0, plantCount: 0 };
     selectedPlanId = null;
     renderPlan();
   });
@@ -3015,6 +3550,7 @@
   updatePropertyWorkspaceControls();
   updatePreflightProgress();
   populateFeatureOptions();
+  populateBedPlantOptions();
   renderReferenceList();
   selectZone(selectedZoneId);
   updateMapViewBox(mapViewBox);

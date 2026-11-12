@@ -152,6 +152,15 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 - **What we checked:** JavaScript syntax and diff; button renders disabled initially; Ctrl+Z and button click both trigger undo; button state updates after each action; undo works for drawing new features, deleting features, and editing footprints; plan count and display update correctly after undo.
 - **Committed?** yes — `ca8e226` (Add undo/redo) and `9e6f969` (Update undo button state)
 
+### Session — 2026-11-13 — driver: student
+
+- **Goal for this session:** Enhance the drawing experience with visual feedback: show an optional snapping grid, display distance between cursor and last point while drawing freeform features, and show dimensions (width × depth or diameter) while drawing rectangles/squares/circles.
+- **What worked:** Created `distanceInMeters()` helper to convert map units back to real meters. Added `renderGridOverlay()` function to draw snapping grid lines when grid is enabled. Enhanced `renderDraft()` to display grid overlay, distance labels between cursor and last point (for freeform), and dimension labels showing scaled size (w×d for rectangles/squares, diameter for circles). Labels are SVG text with white outline stroke for readability and positioned at midpoints. Added CSS styling for grid lines (subtle, low opacity) and labels (bold, readable font size). Enhanced status message to display active grid snap setting.
+- **What broke, and how we fixed it:** Initial grid rendering was calculating lines inefficiently; optimized to only render lines visible in current view. Distance/dimension labels needed text-anchor and dy attributes for proper positioning; refined to use SVG paint-order and stroke for visibility.
+- **Accuracy and scope notes:** Distance calculations use map units normalized to real meters based on current zoom level. Grid spacing is displayed in meters. Labels appear on the fly while drawing but do not persist once the feature is finished. Grid overlay is visual only and does not enforce snapping; actual snapping to grid is handled by the separate grid-snap logic in point placement.
+- **What we checked:** JavaScript syntax; grid renders only when enabled and only visible lines; distance labels appear between cursor and last point; dimension labels show correct values for rectangle/square (w×d) and circle (diameter); labels have high contrast and don't obscure the drawing; CSS styles apply correctly; grid lines are non-scaling (remain visible at all zoom levels).
+- **Committed?** yes — `e2b6310` (Add visual grid preview and distance/dimension labels while drawing) and `65549e8` (Enhance drawing status to display active grid snap setting)
+
 ### MVP scope agreed for the class prototype
 
 - **Core demo:** Explore one fictional property, inspect three sample site observations, and add or remove a few proposed homestead features at sample locations.

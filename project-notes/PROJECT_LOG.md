@@ -161,6 +161,14 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 - **What we checked:** JavaScript syntax; grid renders only when enabled and only visible lines; distance labels appear between cursor and last point; dimension labels show correct values for rectangle/square (w×d) and circle (diameter); labels have high contrast and don't obscure the drawing; CSS styles apply correctly; grid lines are non-scaling (remain visible at all zoom levels).
 - **Committed?** yes — `e2b6310` (Add visual grid preview and distance/dimension labels while drawing) and `65549e8` (Enhance drawing status to display active grid snap setting)
 
+### Session — 2026-11-13 — driver: student
+
+- **Goal for this session:** Allow users to edit and save descriptive notes on individual plan items to document design decisions, research questions, and observations about each feature.
+- **What worked:** Added a feature note editor panel that appears when a plan item is selected in the list. Panel displays the feature name/variety as a title and shows a textarea with the current note. "Save note" button updates the note and integrates with undo/redo (note edits can be undone). "Deselect" button clears the selection and hides the panel. Panel is styled to match the add-plan-panel with consistent typography and button styling. Notes are persisted to browser storage alongside the feature data.
+- **Accuracy and scope notes:** Note editing is available only when a plan item is selected; new features get a default note ("A starting idea to research and adapt to the actual site.") which can be overwritten. Note edits are captured in the undo stack, so users can undo note changes just like feature additions or removals. Notes are displayed in the plan list (already existed); the new editor allows inline editing.
+- **What we checked:** JavaScript syntax and event binding; panel appears/hides correctly based on selection; feature title and current note load when selecting an item; save button captures note text and updates plan; deselect button clears selection and hides panel; note changes persist to browser storage and survive page reload; undo stack captures note edits.
+- **Committed?** yes — `ace884f` (Add feature note editor for plan items)
+
 ### MVP scope agreed for the class prototype
 
 - **Core demo:** Explore one fictional property, inspect three sample site observations, and add or remove a few proposed homestead features at sample locations.

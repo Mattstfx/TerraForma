@@ -1978,12 +1978,54 @@
     }
   }
 
+  function distanceInMeters(point1, point2) {
+    const unitsDistance = Math.hypot(point2[0] - point1[0], point2[1] - point1[1]);
+    return unitsDistance / mapUnitsPerMeter();
+  }
+
+  function renderGridOverlay(group, gridMeters) {
+    if (!gridMeters) return;
+    const gridUnits = gridMeters * mapUnitsPerMeter();
+    const viewBox = mapViewBox;
+    const startX = Math.floor(viewBox.x / gridUnits) * gridUnits;
+    const endX = viewBox.x + viewBox.width;
+    const startY = Math.floor(viewBox.y / gridUnits) * gridUnits;
+    const endY = viewBox.y + viewBox.height;
+    
+    for (let x = startX; x <= endX; x += gridUnits) {
+      if (x >= viewBox.x && x <= endX) {
+        group.appendChild(svgElement("line", {
+          x1: x,
+          y1: viewBox.y,
+          x2: x,
+          y2: endY,
+          class: "drawing-grid-line"
+        }));
+      }
+    }
+    for (let y = startY; y <= endY; y += gridUnits) {
+      if (y >= viewBox.y && y <= endY) {
+        group.appendChild(svgElement("line", {
+          x1: viewBox.x,
+          y1: y,
+          x2: endX,
+          y2: y,
+          class: "drawing-grid-line"
+        }));
+      }
+    }
+  }
+
   function renderDraft() {
     const oldDraft = document.getElementById("drawing-preview");
     if (oldDraft) oldDraft.remove();
     if (!pendingPlanItem) return;
 
     const group = svgElement("g", { id: "drawing-preview", "aria-hidden": "true" });
+    const gridMeters = Number(elements.drawingSnap.value);
+    
+    if (gridMeters) renderGridOverlay(group, gridMeters);
+    
     const draftPolygon = shapePolygon();
     if (drawingShape !== "freeform" && draftPolygon.length >= 3) {
       group.appendChild(svgElement("polygon", {
@@ -1997,6 +2039,7 @@
         class: "drawing-line"
       }));
     }
+    
     (drawingShape === "freeform" ? drawingPoints : drawingPoints.slice(0, 1)).forEach(function (point) {
       group.appendChild(svgElement("circle", {
         cx: point[0],
@@ -2011,6 +2054,46 @@
       r: 7,
       class: "drawing-cursor"
     }));
+    
+    if (drawingPoints.length > 0 && drawingShape === "freeform") {
+      const lastPoint = drawingPoints[drawingPoints.length - 1];
+      const distance = distanceInMeters(lastPoint, keyboardCursor);
+      const midX = (lastPoint[0] + keyboardCursor[0]) / 2;
+      const midY = (lastPoint[1] + keyboardCursor[1]) / 2;
+      
+      group.appendChild(svgElement("text", {
+        x: midX,
+        y: midY - 8,
+        class: "drawing-distance-label",
+        "text-anchor": "middle"
+      })).textContent = distance.toFixed(1) + " m";
+    } else if ((drawingShape === "rectangle" || drawingShape === "square" || drawingShape === "circle") && drawingPoints.length >= 1) {
+      const anchor = drawingPoints[0];
+      const endpoint = drawingPoints[1] || keyboardCursor;
+      const widthM = distanceInMeters(anchor, [endpoint[0], anchor[1]]);
+      const depthM = distanceInMeters(anchor, [anchor[0], endpoint[1]]);
+      const circleDiam = Math.hypot(widthM, depthM);
+      
+      const midX = (anchor[0] + endpoint[0]) / 2;
+      const midY = (anchor[1] + endpoint[1]) / 2;
+      
+      let label = "";
+      if (drawingShape === "circle") {
+        label = (circleDiam).toFixed(1) + " m diam";
+      } else if (drawingShape === "square") {
+        label = (widthM).toFixed(1) + " m × " + (widthM).toFixed(1) + " m";
+      } else {
+        label = (widthM).toFixed(1) + " m × " + (depthM).toFixed(1) + " m";
+      }
+      
+      group.appendChild(svgElement("text", {
+        x: midX,
+        y: midY,
+        class: "drawing-dimension-label",
+        "text-anchor": "middle"
+      })).textContent = label;
+    }
+    
     elements.planAreas.appendChild(group);
   }
 

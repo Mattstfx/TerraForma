@@ -755,6 +755,9 @@ main {
 }
 .drawing-point { fill: #315d43; stroke: white; stroke-width: 2; pointer-events: none; }
 .drawing-cursor { fill: white; stroke: #315d43; stroke-width: 3; vector-effect: non-scaling-stroke; pointer-events: none; }
+.drawing-grid-line { stroke: #315d43; stroke-width: 1; opacity: 0.15; vector-effect: non-scaling-stroke; pointer-events: none; }
+.drawing-distance-label { fill: #315d43; font-size: 10px; font-weight: 600; pointer-events: none; paint-order: stroke; stroke: white; stroke-width: 2; }
+.drawing-dimension-label { fill: #315d43; font-size: 11px; font-weight: 700; pointer-events: none; paint-order: stroke; stroke: white; stroke-width: 2.5; }
 .boundary-drawing-line {
   fill: rgb(68 95 125 / 20%);
   stroke: #3c5974;

@@ -144,6 +144,14 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 - **What broke, and how we fixed it:** No breakages found in the initial checks. JavaScript syntax and whitespace checks passed; browser checks confirmed location selection, adding/removing a plan item, and persistence across reloads.
 - **Committed?** yes — initial MVP committed and pushed as `f8e36cd`.
 
+### Session — 2026-11-12 — driver: student
+
+- **Goal for this session:** Add undo/redo capability for plan changes with keyboard shortcut support.
+- **What worked:** Implemented an undo stack that captures plan state before adding/removing/editing features. Added an "↶ Undo" button in the map toolbar, disabled when no undo history is available. Keyboard shortcut Ctrl+Z (Cmd+Z on Mac) triggers undo. Undo state is cleared when switching workspaces or reloading; within a session, users can undo the last action and revert to the previous plan.
+- **Accuracy and scope notes:** Undo applies to plan item changes (add/remove/edit footprints). It does not undo boundary edits, property profile changes, or site brief edits—those already have explicit Save/Cancel actions. Undo history is session-only and does not persist across page reload.
+- **What we checked:** JavaScript syntax and diff; button renders disabled initially; Ctrl+Z and button click both trigger undo; button state updates after each action; undo works for drawing new features, deleting features, and editing footprints; plan count and display update correctly after undo.
+- **Committed?** yes — `ca8e226` (Add undo/redo) and `9e6f969` (Update undo button state)
+
 ### MVP scope agreed for the class prototype
 
 - **Core demo:** Explore one fictional property, inspect three sample site observations, and add or remove a few proposed homestead features at sample locations.

@@ -73,6 +73,7 @@
     mapZoomReset: document.getElementById("map-zoom-reset"),
     mapZoomLevel: document.getElementById("map-zoom-level"),
     mapPanToggle: document.getElementById("map-pan-toggle"),
+    undoPlan: document.getElementById("undo-plan"),
     mapNavigationHint: document.getElementById("map-navigation-hint"),
     footprintEditor: document.getElementById("footprint-editor"),
     footprintEditorName: document.getElementById("footprint-editor-name"),
@@ -150,6 +151,11 @@
     rotationDays: document.getElementById("rotation-days"),
     scheduleStartDate: document.getElementById("schedule-start-date"),
     planNote: document.getElementById("plan-note"),
+    featureNotePanel: document.getElementById("feature-note-panel"),
+    featureNoteTitle: document.getElementById("feature-note-title"),
+    featureNoteEdit: document.getElementById("feature-note-edit"),
+    featureNoteSave: document.getElementById("feature-note-save"),
+    featureNoteCancel: document.getElementById("feature-note-cancel"),
     planForm: document.getElementById("plan-form"),
     formError: document.getElementById("form-error"),
     drawingToolbar: document.getElementById("drawing-toolbar"),
@@ -263,6 +269,8 @@
   let selectedPerspectiveId = DESIGN_PERSPECTIVES[0].id;
   let selectedPlanId = null;
   let planItems = clonePlanItems(ACTIVE_PROPERTY.initialPlan);
+  let undoStack = [];
+  let redoStack = [];
   let storageAvailable = true;
   let siteBriefStorageAvailable = true;
   let savedSiteBrief = null;
@@ -2155,16 +2163,55 @@
   function updateDrawingStatus() {
     const needed = minimumDrawingPoints();
     elements.finishDrawing.disabled = drawingPoints.length < needed;
+    const gridInfo = snapGridMeters ? " (grid: " + snapGridMeters + "m)" : "";
     if (drawingPoints.length) {
       elements.drawingStatus.textContent = drawingPoints.length + " of " + needed +
         " required point" + (needed === 1 ? "" : "s") + " placed. " +
         (drawingShape === "freeform"
-          ? "Add outline points, undo, or finish."
-          : "Place the opposite corner; adjust dimensions or snap settings if needed.");
+          ? "Add outline points, undo, or finish." + gridInfo
+          : "Place the opposite corner; adjust dimensions or snap settings if needed." + gridInfo);
     } else {
       elements.drawingStatus.textContent = drawingShape === "freeform"
-        ? "Click or tap at least three points inside the boundary to outline this feature."
-        : "Place two opposite corners inside the boundary. Optional dimensions set the scaled size.";
+        ? "Click or tap at least three points inside the boundary to outline this feature." + gridInfo
+        : "Place two opposite corners inside the boundary. Optional dimensions set the scaled size." + gridInfo;
+    }
+  }
+
+  function distanceInMeters(point1, point2) {
+    const unitsDistance = Math.hypot(point2[0] - point1[0], point2[1] - point1[1]);
+    return unitsDistance / mapUnitsPerMeter();
+  }
+
+  function renderGridOverlay(group, gridMeters) {
+    if (!gridMeters) return;
+    const gridUnits = gridMeters * mapUnitsPerMeter();
+    const viewBox = mapViewBox;
+    const startX = Math.floor(viewBox.x / gridUnits) * gridUnits;
+    const endX = viewBox.x + viewBox.width;
+    const startY = Math.floor(viewBox.y / gridUnits) * gridUnits;
+    const endY = viewBox.y + viewBox.height;
+    
+    for (let x = startX; x <= endX; x += gridUnits) {
+      if (x >= viewBox.x && x <= endX) {
+        group.appendChild(svgElement("line", {
+          x1: x,
+          y1: viewBox.y,
+          x2: x,
+          y2: endY,
+          class: "drawing-grid-line"
+        }));
+      }
+    }
+    for (let y = startY; y <= endY; y += gridUnits) {
+      if (y >= viewBox.y && y <= endY) {
+        group.appendChild(svgElement("line", {
+          x1: viewBox.x,
+          y1: y,
+          x2: endX,
+          y2: y,
+          class: "drawing-grid-line"
+        }));
+      }
     }
   }
 
@@ -2174,6 +2221,10 @@
     if (!pendingPlanItem) return;
 
     const group = svgElement("g", { id: "drawing-preview", "aria-hidden": "true" });
+    const gridMeters = Number(elements.drawingSnap.value);
+    
+    if (gridMeters) renderGridOverlay(group, gridMeters);
+    
     const draftPolygon = shapePolygon();
     if (drawingShape !== "freeform" && draftPolygon.length >= 3) {
       group.appendChild(svgElement("polygon", {
@@ -2187,6 +2238,7 @@
         class: "drawing-line"
       }));
     }
+    
     (drawingShape === "freeform" ? drawingPoints : drawingPoints.slice(0, 1)).forEach(function (point) {
       group.appendChild(svgElement("circle", {
         cx: point[0],
@@ -2201,6 +2253,46 @@
       r: 7,
       class: "drawing-cursor"
     }));
+    
+    if (drawingPoints.length > 0 && drawingShape === "freeform") {
+      const lastPoint = drawingPoints[drawingPoints.length - 1];
+      const distance = distanceInMeters(lastPoint, keyboardCursor);
+      const midX = (lastPoint[0] + keyboardCursor[0]) / 2;
+      const midY = (lastPoint[1] + keyboardCursor[1]) / 2;
+      
+      group.appendChild(svgElement("text", {
+        x: midX,
+        y: midY - 8,
+        class: "drawing-distance-label",
+        "text-anchor": "middle"
+      })).textContent = distance.toFixed(1) + " m";
+    } else if ((drawingShape === "rectangle" || drawingShape === "square" || drawingShape === "circle") && drawingPoints.length >= 1) {
+      const anchor = drawingPoints[0];
+      const endpoint = drawingPoints[1] || keyboardCursor;
+      const widthM = distanceInMeters(anchor, [endpoint[0], anchor[1]]);
+      const depthM = distanceInMeters(anchor, [anchor[0], endpoint[1]]);
+      const circleDiam = Math.hypot(widthM, depthM);
+      
+      const midX = (anchor[0] + endpoint[0]) / 2;
+      const midY = (anchor[1] + endpoint[1]) / 2;
+      
+      let label = "";
+      if (drawingShape === "circle") {
+        label = (circleDiam).toFixed(1) + " m diam";
+      } else if (drawingShape === "square") {
+        label = (widthM).toFixed(1) + " m × " + (widthM).toFixed(1) + " m";
+      } else {
+        label = (widthM).toFixed(1) + " m × " + (depthM).toFixed(1) + " m";
+      }
+      
+      group.appendChild(svgElement("text", {
+        x: midX,
+        y: midY,
+        class: "drawing-dimension-label",
+        "text-anchor": "middle"
+      })).textContent = label;
+    }
+    
     elements.planAreas.appendChild(group);
   }
 
@@ -2301,6 +2393,7 @@
   }
 
   function renderPlan() {
+    updateUndoButton();
     elements.planList.replaceChildren();
     elements.planCount.textContent = planItems.length;
     elements.planTotal.textContent = planItems.length + (planItems.length === 1 ? " feature" : " features");
@@ -2455,6 +2548,7 @@
       removeButton.textContent = "Remove";
       removeButton.setAttribute("aria-label", "Remove " + item.feature + " from the plan");
       removeButton.addEventListener("click", function () {
+        captureUndoState();
         planItems = planItems.filter(function (planItem) { return planItem.id !== item.id; });
         if (selectedPlanId === item.id) selectedPlanId = null;
         savePlan();
@@ -2869,6 +2963,7 @@
       shape: item.shape,
       rotationDegrees: item.rotationDegrees
     };
+    captureUndoState();
     item.polygon = polygon;
     item.shape = shape;
     item.rotationDegrees = rotationDegrees;
@@ -2915,10 +3010,40 @@
       elements.mapFrame.classList.remove("hide-proposed-water");
     }
     renderPlan();
+    updateFeatureNoteEditor();
     if (scrollToMap) {
       if (selectedItem) centerMapOnFootprint(selectedItem);
       document.getElementById("property").scrollIntoView({ behavior: "smooth", block: "start" });
     }
+  }
+
+  function updateFeatureNoteEditor() {
+    const item = planItems.find(function (entry) { return entry.id === selectedPlanId; });
+    if (!item) {
+      elements.featureNotePanel.hidden = true;
+      return;
+    }
+    elements.featureNotePanel.hidden = false;
+    elements.featureNoteTitle.textContent = item.feature + " · " + (item.variety || "Selected feature");
+    elements.featureNoteEdit.value = item.note || "";
+  }
+
+  function saveFeatureNote() {
+    const item = planItems.find(function (entry) { return entry.id === selectedPlanId; });
+    if (!item) return;
+    const newNote = elements.featureNoteEdit.value.trim() || "A starting idea to research and adapt to the actual site.";
+    if (item.note === newNote) return;
+    captureUndoState();
+    item.note = newNote;
+    savePlan();
+    renderPlan();
+    updateFeatureNoteEditor();
+  }
+
+  function deselectPlan() {
+    selectedPlanId = null;
+    renderPlan();
+    elements.featureNotePanel.hidden = true;
   }
 
   function readSavedPlan() {
@@ -3033,6 +3158,26 @@
       }
     }
     return null;
+  }
+
+  function captureUndoState() {
+    undoStack.push(planItems.map(function (item) { return Object.assign({}, item); }));
+    redoStack = [];
+    updateUndoButton();
+  }
+
+  function updateUndoButton() {
+    elements.undoPlan.disabled = undoStack.length === 0;
+  }
+
+  function undo() {
+    if (undoStack.length === 0) return;
+    redoStack.push(planItems.map(function (item) { return Object.assign({}, item); }));
+    planItems = undoStack.pop();
+    selectedPlanId = null;
+    updateUndoButton();
+    renderPlan();
+    savePlan();
   }
 
   function savePlan() {
@@ -3260,6 +3405,7 @@
       plantings: [],
       createdAt: new Date().toISOString()
     });
+    captureUndoState();
     planItems.push(savedItem);
     pendingPlanItem = null;
     drawingPoints = [];
@@ -3305,6 +3451,10 @@
   document.addEventListener("keydown", function (event) {
     if (event.key === "Escape" && !elements.speciesCard.hidden) {
       closeSpeciesCard();
+    }
+    if ((event.ctrlKey || event.metaKey) && event.key === "z" && !event.shiftKey) {
+      event.preventDefault();
+      undo();
     }
   });
   elements.planForm.addEventListener("submit", function (event) {
@@ -3556,6 +3706,7 @@
     if (pendingPlanItem || boundaryEditing) return;
     setMapPanMode(!mapPanActive);
   });
+  elements.undoPlan.addEventListener("click", undo);
   elements.footprintShape.addEventListener("change", function () {
     const fixedAspect = ["circle", "square"].includes(elements.footprintShape.value);
     elements.footprintDepth.disabled = fixedAspect;
@@ -3681,6 +3832,8 @@
   elements.cancelSiteBrief.addEventListener("click", cancelSiteBriefChanges);
   elements.resetBrief.addEventListener("click", resetUnreadableSiteBrief);
   elements.interfaceTheme.addEventListener("change", saveInterfaceTheme);
+  elements.featureNoteSave.addEventListener("click", saveFeatureNote);
+  elements.featureNoteCancel.addEventListener("click", deselectPlan);
 
   readPropertyBoundary();
   readPropertyProfile();

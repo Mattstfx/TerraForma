@@ -326,6 +326,22 @@
             <a href="https://open.canada.ca/en/open-government-licence-canada" target="_blank" rel="noreferrer">Open Government Licence — Canada</a>.
             The fixed Waverley-area request contains no user-entered property location. The overlay is regional terrain data, not a parcel boundary or permission to access land.
           </p>
+          <div class="terrain-overlays" id="terrain-overlays" hidden>
+            <fieldset>
+              <legend>Map overlays</legend>
+              <label><input id="show-contours" type="checkbox"> Nova Scotia mapped contours</label>
+              <label><input id="show-mapped-water" type="checkbox"> Nova Scotia mapped water</label>
+              <label><input id="show-proposed-water" type="checkbox" checked> Proposed rain gardens</label>
+            </fieldset>
+            <p id="contour-status" role="status" aria-live="polite"></p>
+            <p id="mapped-water-status" role="status" aria-live="polite"></p>
+            <p>Brown lines are mapped contours, labelled in metres using CGVD28; blue is mapped water; dashed amber areas are proposed rain gardens. Lines are simplified for display. Mapped features may be incomplete or out of date. Confirm conditions on site; these layers are not surveys or drainage designs.</p>
+            <p>Source: Government of Nova Scotia,
+              <a href="https://open.canada.ca/data/en/dataset/2caec448-1b4b-a107-d050-210e5c7b0e27" target="_blank" rel="noreferrer">landforms</a> and
+              <a href="https://open.canada.ca/data/en/dataset/cfa9682c-808e-1f3f-a906-5f78df3fe740" target="_blank" rel="noreferrer">water features</a>,
+              under the <a href="https://novascotia.ca/opendata/licence.asp" target="_blank" rel="noreferrer">Open Government Licence — Nova Scotia</a>. Requests use the fixed Waverley window.
+            </p>
+          </div>
 
           <div class="map-frame" role="group" aria-label="Illustrative planning map with optional Waverley-area terrain data">
             <svg class="site-map" id="site-map" viewBox="0 0 640 430" role="group" tabindex="0" aria-labelledby="map-title map-description" aria-label="Interactive illustrative property map. While drawing a feature or property outline, use arrow keys and Enter to add points.">
@@ -343,6 +359,8 @@
               <rect width="640" height="430" rx="18" class="map-ground"></rect>
               <image id="terrain-raster" class="terrain-raster" x="0" y="0" width="640" height="430" preserveAspectRatio="none" aria-hidden="true"></image>
               <image id="terrain-relief-overlay" class="terrain-relief-overlay" x="0" y="0" width="640" height="430" preserveAspectRatio="none" aria-hidden="true"></image>
+              <g id="mapped-water-overlay" class="provincial-overlay" aria-hidden="true"></g>
+              <g id="contour-overlay" class="provincial-overlay" aria-hidden="true"></g>
               <path class="parcel" id="property-boundary" d="M90 55 L319 45 L554 91 L527 344 L293 380 L76 331 Z"></path>
               <path class="tree-zone illustration-context" d="M101 76 C163 57 224 76 284 66 L272 116 C216 126 163 105 102 125 Z"></path>
               <path class="tree-zone illustration-context" d="M494 88 C522 105 534 129 527 167 L511 300 C492 287 486 270 490 245 Z"></path>

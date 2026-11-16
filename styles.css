@@ -397,6 +397,21 @@ main {
 .terrain-data-note { margin: 0; color: #68746b; font-size: 0.66rem; line-height: 1.5; }
 .terrain-data-source { margin: 9px 0 0; color: #68746b; font-size: 0.65rem; line-height: 1.55; }
 .terrain-data-source a { color: #365a42; font-weight: 700; }
+.terrain-overlays { margin-top: 10px; color: #53644f; font-size: 0.65rem; line-height: 1.5; }
+.terrain-overlays[hidden] { display: none; }
+.terrain-overlays fieldset { display: flex; flex-wrap: wrap; gap: 7px 15px; margin: 0; padding: 8px; border: 1px solid #d6e0d1; border-radius: 8px; }
+.terrain-overlays legend { padding: 0 4px; font-weight: 700; }
+.terrain-overlays label { display: inline-flex; align-items: center; gap: 5px; }
+.terrain-overlays p { margin: 5px 0; }
+.terrain-overlays a { color: #365a42; font-weight: 700; }
+.provincial-overlay { pointer-events: none; }
+.mapped-contour { fill: none; stroke: #754426; stroke-width: 1.3; vector-effect: non-scaling-stroke; }
+.mapped-contour.is-approximate { stroke-dasharray: 4 3; }
+.mapped-contour-label { fill: #4b2918; stroke: #fff; stroke-width: 2.5px; paint-order: stroke; font: bold 8px sans-serif; }
+.mapped-water-line { fill: none; stroke: #1471a4; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.mapped-water-polygon { fill: rgb(70 160 204 / 55%); fill-rule: evenodd; stroke: #1471a4; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.planned-area.is-proposed-water { stroke-dasharray: 4 3; }
+.map-frame.hide-proposed-water .is-proposed-water { display: none; }
 .terrain-legend { display: flex; justify-content: flex-end; margin-top: 8px; }
 .terrain-legend[hidden] { display: none; }
 .terrain-legend img { max-width: 100%; max-height: 140px; object-fit: contain; }

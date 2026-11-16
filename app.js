@@ -27,6 +27,8 @@
   const svgNamespace = "http://www.w3.org/2000/svg";
   const terrainServiceUrl = "https://datacube.services.geo.ca/ows/elevation";
   const terrainDemoBounds = "44.797825,-63.63956,44.802175,-63.63044";
+  const provincialServiceUrl = "https://nsgiwa.novascotia.ca/arcgis/rest/services/BASE/";
+  const provincialBounds = { west: -63.63956, south: 44.797825, east: -63.63044, north: 44.802175 };
   const terrainLayerDetails = {
     "dtm-hillshade": {
       label: "Bare-earth terrain hillshade",
@@ -99,6 +101,14 @@
     mapFooterLegend: document.getElementById("map-footer-legend"),
     mapScaleNote: document.getElementById("map-scale-note"),
     terrainLayer: document.getElementById("terrain-layer"),
+    terrainOverlays: document.getElementById("terrain-overlays"),
+    showContours: document.getElementById("show-contours"),
+    showMappedWater: document.getElementById("show-mapped-water"),
+    showProposedWater: document.getElementById("show-proposed-water"),
+    contourOverlay: document.getElementById("contour-overlay"),
+    mappedWaterOverlay: document.getElementById("mapped-water-overlay"),
+    contourStatus: document.getElementById("contour-status"),
+    mappedWaterStatus: document.getElementById("mapped-water-status"),
     terrainRaster: document.getElementById("terrain-raster"),
     terrainReliefOverlay: document.getElementById("terrain-relief-overlay"),
     terrainStatus: document.getElementById("terrain-status"),
@@ -277,6 +287,8 @@
   let keyboardCursor = { x: 320, y: 215 };
   let drawingShape = "freeform";
   let activeMapView = activeProjectId === "waverley-terrain-demo" ? "dtm-hillshade" : "illustrative";
+  let contourRequestVersion = 0;
+  let waterRequestVersion = 0;
   let mapViewBox = { x: 0, y: 0, width: 640, height: 430 };
   let mapPanActive = false;
   let mapPanDrag = null;
@@ -415,6 +427,120 @@
     return terrainServiceUrl + "?" + parameters.toString();
   }
 
+  async function fetchProvincialFeatures(service, layer, where) {
+    const parameters = new URLSearchParams({
+      where: where,
+      geometry: [provincialBounds.west, provincialBounds.south, provincialBounds.east, provincialBounds.north].join(","),
+      geometryType: "esriGeometryEnvelope",
+      inSR: "4326",
+      spatialRel: "esriSpatialRelIntersects",
+      outSR: "4326",
+      outFields: "FEAT_DESC,ZVALUE",
+      geometryPrecision: "6",
+      maxAllowableOffset: "0.00001",
+      f: "geojson"
+    });
+    const response = await fetch(provincialServiceUrl + service + "/MapServer/" + layer + "/query?" + parameters);
+    if (!response.ok) throw new Error("Provincial map service returned HTTP " + response.status);
+    const data = await response.json();
+    if (data.type !== "FeatureCollection" || !Array.isArray(data.features) || data.exceededTransferLimit) {
+      throw new Error(data.error ? data.error.message : "Incomplete or invalid provincial map data");
+    }
+    return data.features;
+  }
+
+  function provincialMapPoint(coordinate) {
+    if (!Array.isArray(coordinate) || coordinate.length < 2 ||
+        !Number.isFinite(coordinate[0]) || !Number.isFinite(coordinate[1])) {
+      throw new Error("Invalid coordinate in provincial map data");
+    }
+    return [
+      (coordinate[0] - provincialBounds.west) / (provincialBounds.east - provincialBounds.west) * 640,
+      (provincialBounds.north - coordinate[1]) / (provincialBounds.north - provincialBounds.south) * 430
+    ];
+  }
+
+  function provincialPath(lines, close) {
+    return lines.map(function (line) {
+      if (!Array.isArray(line) || line.length < 2) throw new Error("Invalid provincial feature geometry");
+      return line.map(function (coordinate, index) {
+        const point = provincialMapPoint(coordinate);
+        return (index ? "L" : "M") + point[0].toFixed(2) + " " + point[1].toFixed(2);
+      }).join(" ") + (close ? " Z" : "");
+    }).join(" ");
+  }
+
+  function renderProvincialFeatures(target, features, kind) {
+    const fragment = document.createDocumentFragment();
+    features.forEach(function (feature) {
+      if (!feature.geometry || !feature.properties) throw new Error("Missing provincial feature geometry or attributes");
+      const geometry = feature.geometry;
+      const description = String(feature.properties.FEAT_DESC || "");
+      let lines;
+      let polygon = false;
+      if (geometry.type === "LineString") lines = [geometry.coordinates];
+      else if (geometry.type === "MultiLineString") lines = geometry.coordinates;
+      else if (geometry.type === "Polygon" && kind === "water") {
+        lines = geometry.coordinates;
+        polygon = true;
+      } else if (geometry.type === "MultiPolygon" && kind === "water") {
+        lines = geometry.coordinates.flat();
+        polygon = true;
+      } else throw new Error("Unsupported provincial feature geometry: " + geometry.type);
+      const path = svgElement("path", {
+        d: provincialPath(lines, polygon),
+        class: kind === "contour"
+          ? "mapped-contour" + (description.toLowerCase().includes("approximate") ? " is-approximate" : "")
+          : polygon ? "mapped-water-polygon" : "mapped-water-line"
+      });
+      fragment.appendChild(path);
+      if (kind === "contour" && Number.isFinite(feature.properties.ZVALUE)) {
+        const point = lines.flat().map(provincialMapPoint).find(function (position) {
+          return position[0] >= 0 && position[0] <= 640 && position[1] >= 0 && position[1] <= 430;
+        });
+        if (point) {
+          const label = svgElement("text", { x: point[0], y: point[1], class: "mapped-contour-label" });
+          label.textContent = feature.properties.ZVALUE + " m";
+          fragment.appendChild(label);
+        }
+      }
+    });
+    target.replaceChildren(fragment);
+  }
+
+  async function updateProvincialOverlay(kind) {
+    const isContour = kind === "contour";
+    const version = isContour ? ++contourRequestVersion : ++waterRequestVersion;
+    const control = isContour ? elements.showContours : elements.showMappedWater;
+    const target = isContour ? elements.contourOverlay : elements.mappedWaterOverlay;
+    const status = isContour ? elements.contourStatus : elements.mappedWaterStatus;
+    target.replaceChildren();
+    if (!control.checked || activeMapView === "illustrative") {
+      status.textContent = "";
+      return;
+    }
+    status.textContent = "Loading Nova Scotia " + (isContour ? "mapped contours" : "mapped water") + "…";
+    try {
+      const data = isContour
+        ? await Promise.all([fetchProvincialFeatures("BASE_NSTDB_10k_Landforms_UT83", 4, "FEAT_DESC LIKE 'CONTOUR%'")])
+        : await Promise.all([
+          fetchProvincialFeatures("BASE_NSTDB_10k_Water_UT83", 4, "1=1"),
+          fetchProvincialFeatures("BASE_NSTDB_10k_Water_UT83", 8, "1=1")
+        ]);
+      if (version !== (isContour ? contourRequestVersion : waterRequestVersion)) return;
+      const features = data.flat();
+      renderProvincialFeatures(target, features, kind);
+      status.textContent = "Nova Scotia " + (isContour ? "contours" : "mapped water") +
+        " loaded for the regional window (" + features.length + " intersecting source features). Absence does not prove absence on the ground.";
+    } catch (error) {
+      if (version !== (isContour ? contourRequestVersion : waterRequestVersion)) return;
+      target.replaceChildren();
+      status.textContent = "Could not load Nova Scotia " + (isContour ? "contours" : "mapped water") +
+        ". Check your connection and toggle the layer to retry.";
+      console.error("TerraForma could not load provincial map data:", error);
+    }
+  }
+
   function setMapView(view) {
     if (activeProjectId === "waverley-terrain-demo" && view === "illustrative") {
       view = "dtm-hillshade";
@@ -423,6 +549,10 @@
     const isTerrain = view !== "illustrative";
     const isGeoreferencedTerrain = activeProjectId === "waverley-terrain-demo" && isTerrain;
     activeMapView = view;
+    elements.terrainOverlays.hidden = !isTerrain;
+    elements.mapFrame.classList.toggle("hide-proposed-water", isTerrain && !elements.showProposedWater.checked);
+    updateProvincialOverlay("contour");
+    updateProvincialOverlay("water");
     elements.mapFrame.classList.toggle("is-terrain-view", isTerrain);
     elements.mapFrame.classList.toggle("is-terrain-preview", isTerrain && !isGeoreferencedTerrain);
     elements.mapFrame.classList.toggle("is-georeferenced-terrain", isGeoreferencedTerrain);
@@ -538,6 +668,12 @@
   }
 
   elements.propertyWorkspace.addEventListener("change", switchPropertyWorkspace);
+  elements.showContours.addEventListener("change", function () { updateProvincialOverlay("contour"); });
+  elements.showMappedWater.addEventListener("change", function () { updateProvincialOverlay("water"); });
+  elements.showProposedWater.addEventListener("change", function () {
+    elements.mapFrame.classList.toggle("hide-proposed-water",
+      activeMapView !== "illustrative" && !elements.showProposedWater.checked);
+  });
 
   elements.terrainRaster.addEventListener("load", function () {
     if (activeMapView !== elements.terrainRaster.dataset.layer) return;
@@ -1877,7 +2013,7 @@
     if (!drawingPoints.length) return [];
 
     const anchor = drawingPoints[0];
-    const endpoint = drawingPoints[1] || keyboardCursor;
+    const endpoint = drawingPoints[1] || [keyboardCursor.x, keyboardCursor.y];
     const dimensions = specifiedDrawingDimensions();
     const directionX = endpoint[0] < anchor[0] ? -1 : 1;
     const directionY = endpoint[1] < anchor[1] ? -1 : 1;
@@ -2073,7 +2209,8 @@
     planItems.forEach(function (item) {
       const polygon = svgElement("polygon", {
         points: item.polygon.map(function (point) { return point.join(","); }).join(" "),
-        class: "planned-area" + (item.id === selectedPlanId ? " is-selected" : ""),
+        class: "planned-area" + (item.featureId === "rain-garden" ? " is-proposed-water" : "") +
+          (item.id === selectedPlanId ? " is-selected" : ""),
         tabindex: "0",
         role: "button",
         "aria-label": item.feature + ", " + Math.round(polygonArea(item.polygon) * propertyMapAreaM2PerUnit) + " approximate square metres; select to locate in plan",
@@ -2103,7 +2240,7 @@
       const label = svgElement("text", {
         x: center.x,
         y: center.y + 3,
-        class: "planned-area-label",
+        class: "planned-area-label" + (item.featureId === "rain-garden" ? " is-proposed-water" : ""),
         "aria-hidden": "true"
       });
       label.textContent = item.feature.length > 14 ? item.feature.slice(0, 12) + "…" : item.feature;
@@ -2772,9 +2909,13 @@
       bedPlantingGridDimensions = { rowCount: 0, plantCount: 0 };
     }
     selectedPlanId = id;
+    const selectedItem = planItems.find(function (item) { return item.id === id; });
+    if (selectedItem && selectedItem.featureId === "rain-garden" && activeMapView !== "illustrative") {
+      elements.showProposedWater.checked = true;
+      elements.mapFrame.classList.remove("hide-proposed-water");
+    }
     renderPlan();
     if (scrollToMap) {
-      const selectedItem = planItems.find(function (item) { return item.id === id; });
       if (selectedItem) centerMapOnFootprint(selectedItem);
       document.getElementById("property").scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -3120,11 +3261,10 @@
       createdAt: new Date().toISOString()
     });
     planItems.push(savedItem);
-    selectedPlanId = savedItem.id;
     pendingPlanItem = null;
     drawingPoints = [];
     elements.drawingToolbar.hidden = true;
-    renderPlan();
+    selectPlan(savedItem.id, false);
     savePlan();
     elements.planNote.value = "";
     showFormError("");

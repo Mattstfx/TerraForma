@@ -10,6 +10,14 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 ## Work sessions
 
+### Session — 2026-11-12 — driver: student
+
+- **Goal for this session:** Add source-backed contours and separate mapped water from proposed water on the terrain test map.
+- **What changed:** Added optional vector overlays from the Government of Nova Scotia's NSTDB landforms and water services, with contour elevation labels and independently switchable mapped water and proposed rain gardens. Selecting a hidden rain garden in the plan reveals it. Fixed a rectangle-preview coordinate mismatch discovered during map testing.
+- **Sources and limitations:** Provincial landforms and water are attributed in the app under the Open Government Licence — Nova Scotia. Contour heights use CGVD28; geometry is simplified for display. Published features are mapped, not field-verified current conditions, and are not surveys or drainage designs. Only the fixed Waverley window is requested; the parcel remains synthetic. Proposed water currently means rain-garden footprints; other proposed water types are not yet implemented.
+- **What we checked:** In an isolated browser, the live Waverley query returned nine contours, two water lines and one water polygon. Checked visible overlays, labels, zoom and slope-view switching, independent rain-garden visibility and saved-plan preservation, hidden-plan selection, error/retry and rapid-toggle handling, a narrow viewport, and rectangle preview. JavaScript syntax and diff formatting passed. Test boundary and plan were removed afterward.
+- **Committed?** no — not committed yet.
+
 ### Session — 2026-11-07 — driver: student
 
 - **Goal for this session:** Add pinch-to-zoom to the property map.

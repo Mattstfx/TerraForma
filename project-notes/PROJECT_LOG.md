@@ -12,6 +12,14 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 ### Session — 2026-11-16 — driver: student
 
+- **Goal:** Give each design perspective its own planning layout and feature priorities.
+- **What changed:** Added Observe & connect, Map studio, and Action desk views linked to the permaculture, landscape, and homestead perspectives. The views rearrange the existing workspace and highlight relevant planning ideas without removing options or changing saved property data. The chosen view is saved separately in the browser.
+- **What we checked:** In an isolated browser, checked all three views at desktop, intermediate, and narrow widths, both sets of perspective buttons, preserved form input and selections, reordered dropdown choices, drawing restrictions, storage errors, and reload persistence. Drew a garden, switched views, added a bed inside it, and verified both survived reload. JavaScript syntax and diff formatting passed.
+- **Limitations:** Highlighted ideas are starting points, not site-specific recommendations. Mobile layouts were checked in a browser viewport, not on a physical device.
+- **Committed?** no — not committed yet.
+
+### Session — 2026-11-16 — driver: student
+
 - **Goal:** Keep dropdown choices near their controls rather than using large browser-native menus.
 - **What changed:** Added compact, scrollable menus that open above or below the selected control, including dynamically generated guild choices. The original form controls remain in place as a fallback if the menu script cannot load. Keyboard selection, type-to-search, focus, disabled choices, and required-field feedback are supported.
 - **What we checked:** In an isolated browser, checked positioning and scrolling at a 312-pixel viewport, mouse and keyboard selection, Escape, type-to-search, dynamic plant choices, required and disabled options, the native fallback, map-view restrictions, and drawing a bed inside a garden. JavaScript syntax and diff formatting passed.

@@ -278,6 +278,20 @@ main {
 }
 
 .snapshot { padding: 24px 26px 18px; }
+.workspace-chooser { margin-top: 24px; padding: 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); }
+.workspace-chooser h2 { margin: 0; color: var(--forest-deep); font-family: Georgia, "Times New Roman", serif; font-size: 1.3rem; font-weight: 500; }
+.workspace-chooser > div > p:not(.eyebrow) { margin: 5px 0 0; color: #647168; font-size: 0.73rem; }
+.workspace-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-top: 14px; }
+.workspace-tab { display: grid; align-content: start; gap: 3px; min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
+.workspace-tab strong { color: var(--forest-deep); font-size: 0.8rem; }
+.workspace-tab span { color: #647168; font-size: 0.68rem; }
+.workspace-tab .workspace-tab-description { font-size: 0.65rem; font-weight: 400; }
+.workspace-tab:hover, .workspace-tab.is-selected { border-color: #9eaf96; background: #edf2e8; }
+.workspace-tab.is-selected strong::after { content: " - Selected"; font-size: 0.65rem; }
+.workspace-status { min-height: 1em; margin: 9px 0 0; color: var(--muted); font-size: 0.65rem; }
+.planning-workspace { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; column-gap: 18px; }
+.planning-workspace > .workspace { min-width: 0; }
+.feature-priority-note { margin: -2px 0 6px; color: #68746b; font-size: 0.64rem; }
 .property-profile-disclosure { margin-top: 12px; border-top: 1px solid var(--line); }
 .property-profile-disclosure > summary { display: flex; min-height: 43px; align-items: center; justify-content: space-between; gap: 12px; color: var(--forest-deep); cursor: pointer; font-size: 0.72rem; font-weight: 750; list-style-position: inside; }
 .property-profile-disclosure > summary::marker { color: var(--leaf); }
@@ -741,6 +755,27 @@ main {
 .footer-brand .brand-mark { width: 26px; height: 26px; font-size: 0.9rem; }
 .site-footer p { margin: 0; color: #818a80; font-size: 0.67rem; text-align: right; }
 
+@media (min-width: 901px) {
+  .planning-workspace { grid-template-columns: minmax(0, 1.65fr) minmax(0, 0.9fr); }
+  .planning-workspace > .workspace { grid-column: 1 / -1; }
+  .planning-workspace[data-layout="permaculture"] { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); }
+  .planning-workspace[data-layout="permaculture"] > #site-brief { grid-column: 1; }
+  .planning-workspace[data-layout="permaculture"] > #perspectives { grid-column: 2; }
+  .planning-workspace[data-layout="landscape"] > #property,
+  .planning-workspace[data-layout="homestead"] > #property { grid-column: 1; }
+  .planning-workspace[data-layout="landscape"] > #plan,
+  .planning-workspace[data-layout="homestead"] > #site-brief { grid-column: 2; }
+  .planning-workspace[data-layout="landscape"] > #property > .section-heading,
+  .planning-workspace[data-layout="landscape"] > #plan > .section-heading { align-items: flex-start; flex-direction: column; }
+  .planning-workspace[data-layout="landscape"] .property-grid,
+  .planning-workspace[data-layout="homestead"] .property-grid,
+  .planning-workspace[data-layout="landscape"] .plan-grid,
+  .planning-workspace[data-layout="permaculture"] .site-brief-grid,
+  .planning-workspace[data-layout="homestead"] .site-brief-grid,
+  .planning-workspace[data-layout="permaculture"] .perspective-method { grid-template-columns: minmax(0, 1fr); }
+  .planning-workspace[data-layout="homestead"] .plan-grid { grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.5fr); }
+}
+
 @media (max-width: 800px) {
   .site-header { gap: 18px; padding-right: 24px; padding-left: 24px; }
   .site-header nav { gap: 17px; }
@@ -764,6 +799,7 @@ main {
   .welcome-copy { font-size: 0.88rem; }
   .getting-started { padding: 16px; }
   .getting-started ol { grid-template-columns: 1fr; gap: 8px; }
+  .workspace-tabs { grid-template-columns: 1fr; }
   .brief-disclosure > summary { align-items: flex-start; flex-direction: column; gap: 3px; }
   .brief-actions { align-items: flex-start; flex-direction: column; }
   .brief-actions > div { width: 100%; }

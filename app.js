@@ -19,6 +19,24 @@
   const squareMetersPerAcre = 4046.8564224;
   const squareMetersPerHectare = 10000;
   const interfaceThemeStorageKey = "terraforma-interface-theme";
+  const perspectiveStorageKey = "terraforma-planning-perspective";
+  const workspaceLayouts = {
+    permaculture: {
+      label: "Observe & connect",
+      description: "Site brief and design relationships first, followed by the map and plan.",
+      sections: ["site-brief", "perspectives", "property", "plan"]
+    },
+    landscape: {
+      label: "Map studio",
+      description: "Map and planning tools side by side, with design ideas and the brief below.",
+      sections: ["property", "plan", "perspectives", "site-brief"]
+    },
+    homestead: {
+      label: "Action desk",
+      description: "Planning ideas and mapped features first, followed by the map and household brief.",
+      sections: ["plan", "property", "site-brief", "perspectives"]
+    }
+  };
   const interfaceThemes = ["field", "coastal", "studio"];
   const landscapeStyles = ["", "naturalistic", "formal", "productive"];
   const speciesCardDismissDelay = 8000;
@@ -187,6 +205,11 @@
     capacitySummary: document.getElementById("capacity-summary"),
     capacityProgress: document.getElementById("capacity-progress"),
     perspectiveTabs: document.getElementById("perspective-tabs"),
+    workspaceTabs: document.getElementById("workspace-tabs"),
+    workspaceStatus: document.getElementById("workspace-status"),
+    perspectiveSwitchStatus: document.getElementById("perspective-switch-status"),
+    planningWorkspace: document.getElementById("planning-workspace"),
+    featurePriorityNote: document.getElementById("feature-priority-note"),
     perspectiveName: document.getElementById("perspective-name"),
     perspectiveDescriptor: document.getElementById("perspective-descriptor"),
     perspectiveSummary: document.getElementById("perspective-summary"),
@@ -1216,9 +1239,26 @@
   }
 
   function populateFeatureOptions() {
-    PLAN_CATALOG.forEach(function (item) {
+    const perspective = getPerspectiveById(selectedPerspectiveId);
+    const prioritized = perspective.ideas.map(function (idea) { return idea.feature; });
+    const previousValue = elements.featureSelect.value;
+    const ordered = PLAN_CATALOG.slice().sort(function (a, b) {
+      const first = prioritized.indexOf(a.name);
+      const second = prioritized.indexOf(b.name);
+      return (first < 0 ? prioritized.length : first) - (second < 0 ? prioritized.length : second);
+    });
+    elements.featureSelect.replaceChildren();
+    ordered.forEach(function (item) {
       elements.featureSelect.appendChild(makeOption(item.category + " · " + item.name, item.id));
     });
+    elements.featureSelect.value = previousValue || PLAN_CATALOG[0].id;
+    elements.featurePriorityNote.textContent =
+      "Shown first for " + perspective.name + ": " + prioritized.join(", ") +
+      ". All features remain available; these are ideas to investigate, not site-specific recommendations.";
+  }
+
+  function initializeFeatureOptions() {
+    populateFeatureOptions();
     updateFeatureDetails();
   }
 
@@ -3403,20 +3443,88 @@
     return DESIGN_PERSPECTIVES.find(function (perspective) { return perspective.id === id; });
   }
 
-  function renderPerspectiveTabs() {
-    elements.perspectiveTabs.replaceChildren();
-    DESIGN_PERSPECTIVES.forEach(function (perspective) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "perspective-tab" + (perspective.id === selectedPerspectiveId ? " is-selected" : "");
-      button.textContent = perspective.name;
-      button.setAttribute("aria-pressed", perspective.id === selectedPerspectiveId ? "true" : "false");
-      button.addEventListener("click", function () {
-        selectedPerspectiveId = perspective.id;
-        renderPerspective();
-      });
-      elements.perspectiveTabs.appendChild(button);
+  function showPerspectiveStatus(message, isError) {
+    [elements.workspaceStatus, elements.perspectiveSwitchStatus].forEach(function (element) {
+      element.textContent = message;
+      element.classList.toggle("storage-error", isError);
     });
+  }
+
+  function readPerspective() {
+    try {
+      const saved = window.localStorage.getItem(perspectiveStorageKey);
+      if (saved && !getPerspectiveById(saved)) throw new Error("The saved planning view is not supported.");
+      if (saved) selectedPerspectiveId = saved;
+      showPerspectiveStatus("Your view preference is stored in this browser.", false);
+    } catch (error) {
+      showPerspectiveStatus("Could not load the saved view; using the permaculture view.", true);
+      console.error("TerraForma could not read the planning view:", error);
+    }
+  }
+
+  function selectPerspective(id, source) {
+    if (pendingPlanItem || boundaryEditing) {
+      showPerspectiveStatus("Finish or cancel the current map drawing before changing views.", true);
+      return;
+    }
+    if (!getPerspectiveById(id)) return;
+    selectedPerspectiveId = id;
+    renderPerspective();
+    try {
+      window.localStorage.setItem(perspectiveStorageKey, id);
+      showPerspectiveStatus("View saved on this device. Your property and plan are unchanged.", false);
+    } catch (error) {
+      showPerspectiveStatus("View changed for this visit but could not be saved in browser storage.", true);
+      console.error("TerraForma could not save the planning view:", error);
+    }
+    const activeButton = source.querySelector('[data-perspective-id="' + id + '"]');
+    if (activeButton) activeButton.focus();
+  }
+
+  function renderPerspectiveTabs() {
+    [elements.workspaceTabs, elements.perspectiveTabs].forEach(function (container) {
+      container.replaceChildren();
+      DESIGN_PERSPECTIVES.forEach(function (perspective) {
+        const layout = workspaceLayouts[perspective.id];
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = (container === elements.workspaceTabs ? "workspace-tab" : "perspective-tab") +
+          (perspective.id === selectedPerspectiveId ? " is-selected" : "");
+        button.dataset.perspectiveId = perspective.id;
+        if (container === elements.workspaceTabs) {
+          const title = document.createElement("strong");
+          title.textContent = layout.label;
+          const name = document.createElement("span");
+          name.textContent = perspective.name;
+          const description = document.createElement("span");
+          description.className = "workspace-tab-description";
+          description.textContent = layout.description;
+          button.append(title, name, description);
+        } else {
+          button.textContent = perspective.name;
+        }
+        button.setAttribute("aria-pressed", perspective.id === selectedPerspectiveId ? "true" : "false");
+        button.addEventListener("click", function () { selectPerspective(perspective.id, container); });
+        container.appendChild(button);
+      });
+    });
+  }
+
+  function applyWorkspaceLayout(perspective) {
+    const layout = workspaceLayouts[perspective.id];
+    elements.planningWorkspace.dataset.layout = perspective.id;
+    layout.sections.forEach(function (id) {
+      elements.planningWorkspace.appendChild(document.getElementById(id));
+    });
+    const planGrid = document.querySelector(".plan-grid");
+    const list = planGrid.querySelector(".plan-list-panel");
+    const notes = elements.featureNotePanel;
+    if (perspective.id === "permaculture") {
+      planGrid.append(list, notes, elements.planForm);
+    } else {
+      planGrid.append(elements.planForm, list, notes);
+    }
+    populateFeatureOptions();
   }
 
   function makePerspectiveIdea(idea) {
@@ -3443,6 +3551,7 @@
   function renderPerspective() {
     const perspective = getPerspectiveById(selectedPerspectiveId);
     if (!perspective) return;
+    applyWorkspaceLayout(perspective);
     elements.perspectiveName.textContent = perspective.name;
     elements.perspectiveDescriptor.textContent = perspective.descriptor;
     elements.perspectiveSummary.textContent = perspective.summary;
@@ -4069,9 +4178,10 @@
   readSavedPlan();
   readInterfaceTheme();
   readSiteBrief();
+  readPerspective();
   updatePropertyWorkspaceControls();
   updatePreflightProgress();
-  populateFeatureOptions();
+  initializeFeatureOptions();
   populateBedPlantOptions();
   renderReferenceList();
   selectZone(selectedZoneId);

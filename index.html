@@ -126,6 +126,17 @@
       </details>
     </section>
 
+    <section class="workspace-chooser" aria-labelledby="workspace-chooser-title">
+      <div>
+        <p class="eyebrow">Choose your working view</p>
+        <h2 id="workspace-chooser-title">Three ways to plan</h2>
+        <p>Each view changes the layout and highlights different ideas. Your property and plan stay the same.</p>
+      </div>
+      <div class="workspace-tabs" id="workspace-tabs" role="group" aria-label="Choose a planning view"></div>
+      <p class="workspace-status" id="workspace-status" role="status" aria-live="polite"></p>
+    </section>
+
+    <div class="planning-workspace" id="planning-workspace">
     <section class="workspace site-brief-section" id="site-brief" aria-labelledby="site-brief-title">
       <div class="section-heading">
         <div>
@@ -575,6 +586,7 @@
 
       <article class="panel perspectives-panel">
         <div class="perspective-tabs" id="perspective-tabs" role="group" aria-label="Choose a design perspective"></div>
+        <p class="workspace-status" id="perspective-switch-status" role="status" aria-live="polite"></p>
         <div class="perspective-content" id="perspective-content" aria-live="polite">
           <div class="perspective-intro">
             <div>
@@ -659,6 +671,7 @@
             <button type="button" class="map-action-button" id="clear-garden-target">Place independently instead</button>
           </div>
           <label for="feature-select">Feature type</label>
+          <p class="feature-priority-note" id="feature-priority-note"></p>
           <select id="feature-select" name="feature" required></select>
           <div class="detail-field" id="detail-field">
             <label for="detail-select" id="detail-label">Plant, variety, or setup</label>
@@ -705,6 +718,7 @@
         </form>
       </div>
     </section>
+    </div>
 
     <section class="sources-panel" aria-labelledby="sources-title">
       <h2 id="sources-title">Where these examples come from</h2>

@@ -4,7 +4,7 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 **Team name:** Individual project
 **Startup name:** TerraForma
-**Live site link:** Pending GitHub Pages setup
+**Live site link:** https://mattstfx.github.io/TerraForma/
 
 ---
 
@@ -12,11 +12,19 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 ### Session — 2026-11-16 — driver: student
 
+- **Goal:** Bring the project log up to date and publish the prototype.
+- **What changed:** Corrected the commit records for completed sessions, enabled GitHub Pages from the `main` branch root, and organized student-supplied business-case ideas as working notes.
+- **What we checked:** The Pages build and deployment completed successfully, and the published URL returned the TerraForma page. No browser-local data was changed.
+- **Limitations / next steps:** Develop the working notes into your own final business-case analysis, resolve the open network-effect and VRIN questions, and test with a physical mobile device and screen reader.
+- **Committed?** no — documentation changes are pending commit.
+
+### Session — 2026-11-16 — driver: student
+
 - **Goal:** Make placing a planning feature easier to follow.
 - **What changed:** Organized placement into choosing a feature, setting shape and size, and drawing and saving. Moved drawing controls above the map, added keyboard guidance and live validation with an invalid-outline highlight, and clarified approximate dimensions. Unfinished drawings are protected from starting another feature or changing shape without confirmation; saving opens the selected feature's editor.
 - **What we checked:** In an isolated browser, tested missing boundaries, shape and dimension controls, freeform, rectangle, square and circle, invalid boundary, overlap and crossing feedback, undo, keyboard drawing, cancel, storage failure, and drawing a bed inside a garden. Checked save/reload and a 312-pixel viewport, JavaScript syntax, and diff formatting.
 - **Limitations:** Measurements are approximate, not surveys. Zoom remains available while drawing, but pan mode requires finishing or cancelling first. Mobile testing used a browser viewport, not a physical device.
-- **Committed?** no — not committed yet.
+- **Committed?** yes — `338742e` (Improve map placement workflow).
 
 ### Session — 2026-11-16 — driver: student
 
@@ -24,7 +32,7 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 - **What changed:** Added a distinct SVG symbol for each planning feature on the map and in the plan list. Symbols are illustrative, not scaled models; the existing footprints remain the editable areas. Fixed an observation-marker overlay that blocked footprint clicks on the archived map.
 - **What we checked:** In an isolated browser, checked all 16 symbols, map and list rendering, clicking and keyboard selection, observation markers, boundary-edit and pan pointer behavior, proposed-water visibility, zoom, concave footprints, and a garden with a nested bed saved and reloaded. Checked a 312-pixel viewport, JavaScript syntax, and diff formatting.
 - **Limitations:** Symbols are 2D illustrations, not realistic or 3D models. Small features may require zooming in.
-- **Committed?** no — not committed yet.
+- **Committed?** yes — `afb2c14` (Add distinct planning feature symbols).
 
 ### Session — 2026-11-16 — driver: student
 
@@ -32,7 +40,7 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 - **What changed:** Added Observe & connect, Map studio, and Action desk views linked to the permaculture, landscape, and homestead perspectives. The views rearrange the existing workspace and highlight relevant planning ideas without removing options or changing saved property data. The chosen view is saved separately in the browser.
 - **What we checked:** In an isolated browser, checked all three views at desktop, intermediate, and narrow widths, both sets of perspective buttons, preserved form input and selections, reordered dropdown choices, drawing restrictions, storage errors, and reload persistence. Drew a garden, switched views, added a bed inside it, and verified both survived reload. JavaScript syntax and diff formatting passed.
 - **Limitations:** Highlighted ideas are starting points, not site-specific recommendations. Mobile layouts were checked in a browser viewport, not on a physical device.
-- **Committed?** no — not committed yet.
+- **Committed?** yes — `97d79e9` (Add perspective-based planning layouts).
 
 ### Session — 2026-11-16 — driver: student
 
@@ -40,7 +48,7 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 - **What changed:** Added compact, scrollable menus that open above or below the selected control, including dynamically generated guild choices. The original form controls remain in place as a fallback if the menu script cannot load. Keyboard selection, type-to-search, focus, disabled choices, and required-field feedback are supported.
 - **What we checked:** In an isolated browser, checked positioning and scrolling at a 312-pixel viewport, mouse and keyboard selection, Escape, type-to-search, dynamic plant choices, required and disabled options, the native fallback, map-view restrictions, and drawing a bed inside a garden. JavaScript syntax and diff formatting passed.
 - **Limitations:** Mobile sizing was checked in a browser viewport; physical-device and screen-reader testing are still recommended.
-- **Committed?** no — not committed yet.
+- **Committed?** yes — `0c02f2c` (Add compact anchored dropdown menus).
 
 ### Session — 2026-11-16 — driver: student
 
@@ -48,7 +56,7 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 - **What changed:** Added garden-area footprints, numbered fence sides, and a workflow for drawing beds inside a selected garden. Beds retain their existing plant-placement editor, save independently, and do not count twice against property capacity. Standalone saved beds remain supported. Garden deletion and footprint changes are blocked while beds remain; fence sections must be removed before resizing or reshaping the garden.
 - **What we checked:** In an isolated browser, drew a garden and two beds, placed a plant, toggled fencing, reloaded, and checked undo, deletion restrictions, overlapping and out-of-garden edits, legacy standalone-bed loading, malformed relationships, and storage-failure rollback. Checked a 312-pixel viewport, JavaScript syntax, and diff formatting.
 - **Limitations:** Fence sections cover whole polygon sides; gates and fence specifications are not modelled. Garden and bed geometry is approximate 2D planning, not a survey or construction design. A garden cannot yet move together with its beds.
-- **Committed?** no — not committed yet.
+- **Committed?** yes — `2900576` (Add interactive garden areas with beds and fencing).
 
 ### Session — 2026-11-16 — driver: student
 
@@ -56,7 +64,7 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 - **What changed:** Added a short, linked three-step guide for drawing a test boundary and placing a feature. Corrected the prototype disclaimer to distinguish fictional sample properties from attributed real regional map data. Repaired drawing status and measurement previews after the previous branch merge, including snap status and freeform, rectangle, square, and circle labels.
 - **What we checked:** In an isolated browser, followed the guide to draw and save a boundary and a 1 × 30 m bed, checked snap feedback and the dimension label, and verified the plan survived reload. Checked freeform, square, and circle previews, the existing Cedar Ridge workspace, and narrow-screen overflow. JavaScript syntax and diff formatting passed. The test data was removed from the isolated browser afterward.
 - **Limitations:** The guide does not make the prototype a survey or a professional design. Real regional map data must be checked against the course's fictional-data rules with the instructor.
-- **Committed?** no — not committed yet.
+- **Committed?** yes — `f867b59` (Improve first-time planning experience).
 
 ### Session — 2026-11-12 — driver: student
 
@@ -64,7 +72,7 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 - **What changed:** Added optional vector overlays from the Government of Nova Scotia's NSTDB landforms and water services, with contour elevation labels and independently switchable mapped water and proposed rain gardens. Selecting a hidden rain garden in the plan reveals it. Fixed a rectangle-preview coordinate mismatch discovered during map testing.
 - **Sources and limitations:** Provincial landforms and water are attributed in the app under the Open Government Licence — Nova Scotia. Contour heights use CGVD28; geometry is simplified for display. Published features are mapped, not field-verified current conditions, and are not surveys or drainage designs. Only the fixed Waverley window is requested; the parcel remains synthetic. Proposed water currently means rain-garden footprints; other proposed water types are not yet implemented.
 - **What we checked:** In an isolated browser, the live Waverley query returned nine contours, two water lines and one water polygon. Checked visible overlays, labels, zoom and slope-view switching, independent rain-garden visibility and saved-plan preservation, hidden-plan selection, error/retry and rapid-toggle handling, a narrow viewport, and rectangle preview. JavaScript syntax and diff formatting passed. Test boundary and plan were removed afterward.
-- **Committed?** no — not committed yet.
+- **Committed?** yes — `fd79db6` (Add sourced terrain and water overlays).
 
 ### Session — 2026-11-07 — driver: student
 
@@ -72,7 +80,7 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 - **What changed:** Two-finger touch gestures now zoom toward the midpoint between fingers, within the map's existing zoom limits. A multi-touch gesture cancels an accidental drawing click, and the map hint explains pinch zoom and one-finger pan mode.
 - **What we checked:** JavaScript syntax, diff formatting, and an isolated browser simulation of pinch zooming with no page errors.
 - **Limitations:** The browser gesture was simulated; a physical phone/tablet check is still desirable. Property size, contour lines, mapped water layers, plant-level bed placement, and 3D objects remain separate follow-up work.
-- **Committed?** no — not committed yet.
+- **Committed?** yes — `b23063c` (Add individual bed planting and map pinch-to-zoom).
 
 ### Session — 2026-11-07 — driver: student
 
@@ -80,7 +88,7 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 - **What changed:** Added a separate, horizontally scrollable 2D planting grid with individually clickable, numbered positions. Map dots remain a scale-limited visual reference; the grid provides the precise placement control. The planting form switches to two columns on narrow screens.
 - **What we checked:** In an isolated browser, drew a synthetic test boundary and 1 × 30 m bed, previewed 360 spots at test-only user-entered spacing, placed two species with different planting methods/dates, verified save/reload and removal, and placed a spot at a narrow viewport with no page overflow. JavaScript syntax and diff formatting passed. The test boundary and plan were removed from browser storage afterward.
 - **Accuracy and scope notes:** Spacing and source labels were explicitly test-only, not planting advice. Each saved plant stores its own species, spacing, source label, planting method, date, and normalized bed position. Plant symbols and map dots are not to scale; true 3D models and regional crop-spacing references are not implemented.
-- **Committed?** no — not committed yet.
+- **Committed?** yes — `b23063c` (Add individual bed planting and map pinch-to-zoom).
 
 ### Session — 2026-11-07 — driver: student
 

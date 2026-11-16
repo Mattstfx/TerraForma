@@ -37,3 +37,45 @@ What would it take to run this for real? Which parts would you buy as cloud serv
 ## 6. Risks and ethics
 
 What could go wrong — for your customers, their data, or society? What would you do about it?
+
+## Working notes (student-provided; develop into your own final wording)
+
+These notes organize the student's initial ideas. They are not a completed submission; add examples and make the final argument in your own words.
+
+### 1. The idea
+
+- **Customer:** People interested in permaculture, landscape design, and homesteading.
+- **Problem:** Planning and tracking a property with these principles in mind can be difficult. People may currently log information and design their properties manually.
+- **Solution:** TerraForma helps people plan and design properties in an ecologically thoughtful way.
+- **Revenue idea:** A freemium model: one project at no cost, with paid options for additional projects or company use. This pricing model is a proposal, not a feature in the current prototype.
+
+### 2. Where IT creates value
+
+- The product could be distributed online and might scale to organizations with many employees.
+- Keeping project data on a user's device is part of the current prototype's no-account approach. It also means users need to consider device loss and backups; browser-local storage is not cloud backup.
+- The hoped-for broader impact is to expose more people to permaculture principles and encourage more environmentally thoughtful decisions.
+
+### 3. Network effects
+
+- The idea so far is that wider adoption could increase awareness of permaculture. Explain whether that makes the product itself more valuable to each user, or is primarily a broader awareness benefit.
+- Still decide whether the product has one or two sides, where added value comes from as the network grows, and how it could address an empty-network problem. The current prototype does not include shared projects or a marketplace.
+
+### 4. Can it be copied?
+
+- **Value:** It could help people learn and make positive changes.
+- **Rarity:** The student believes there are not many apps focused on this kind of planning; support this with examples or research.
+- **Imitation:** Permaculture knowledge is part of the advantage, but may be imitable. Ease of use and keeping project work saved are other possible differentiators.
+- **Still decide:** What makes the organization well-positioned to use these strengths, and what specifically would take a competitor time or resources to reproduce?
+
+### 5. Cloud and operations
+
+- A real service would need ongoing hosting, code maintenance, and security updates, with costs for servers and the capacity to handle traffic.
+- A security breach could expose client information.
+- Distinguish the future hosted service from this prototype, which has no accounts or cloud sync and stores plan data in the user's browser.
+
+### 6. Risks and ethics
+
+- Customers might struggle to use the app successfully or might lose their saved data.
+- The hoped-for social benefit is greater awareness of ways to reduce environmental harm.
+- A robust, ongoing security process could reduce risks to customer data, especially if a future version introduces hosted accounts or sync.
+- Add specific ways to reduce usability and data-loss risks.

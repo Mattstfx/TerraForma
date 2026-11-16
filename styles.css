@@ -452,7 +452,8 @@ main {
   aspect-ratio: 640 / 430;
 }
 
-.map-frame.is-editing-boundary .map-markers,
+.map-frame.is-editing-boundary .map-marker,
+.map-frame.is-pan-active .map-marker,
 .map-frame.is-editing-boundary .north-arrow { pointer-events: none; }
 .map-frame.is-pan-active .site-map { cursor: grab; }
 .map-frame.is-pan-active .site-map:active { cursor: grabbing; }
@@ -541,7 +542,7 @@ main {
 .map-label { fill: #60704f; font-family: var(--font); font-size: 11px; font-weight: 700; letter-spacing: 1.2px; }
 .small-label { font-size: 8px; letter-spacing: 0.8px; }
 
-.map-markers { position: absolute; inset: 0; }
+.map-markers { position: absolute; inset: 0; pointer-events: none; }
 .map-marker, .plan-marker {
   position: absolute;
   display: grid;
@@ -556,6 +557,7 @@ main {
 
 .map-marker {
   z-index: 1;
+  pointer-events: auto;
   background: #d98b45;
   color: white;
   cursor: pointer;
@@ -706,6 +708,7 @@ main {
 
 .plan-item:first-child { border-top: 1px solid var(--line); }
 .plan-item-icon { width: 34px; height: 34px; border-radius: 10px; font-size: 1rem; }
+.plan-item-icon svg { width: 26px; height: 26px; }
 .plan-item-content h4 { margin: 0; color: var(--forest-deep); font-size: 0.82rem; }
 .plan-location { margin: 2px 0 3px; color: #768170; font-size: 0.68rem; font-weight: 650; }
 .plan-note { margin: 0; color: #747d74; font-size: 0.7rem; }
@@ -867,6 +870,7 @@ main {
 .bed-plant-leaf { fill: #4f844c; stroke: #f7f8e9; stroke-width: 0.7; vector-effect: non-scaling-stroke; }
 .bed-plant-center { fill: #d3a54c; stroke: white; stroke-width: 0.7; vector-effect: non-scaling-stroke; }
 .bed-plant-candidate { fill: rgb(39 96 65 / 50%); stroke: white; stroke-width: 0.7; pointer-events: none; vector-effect: non-scaling-stroke; }
+.planned-feature-icon { pointer-events: none; }
 .planned-area-label {
   fill: #4c432e;
   font-family: var(--font);
@@ -874,6 +878,10 @@ main {
   font-weight: 800;
   pointer-events: none;
   text-anchor: middle;
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 2px;
+  stroke-linejoin: round;
 }
 .drawing-line {
   fill: rgb(62 111 80 / 24%);

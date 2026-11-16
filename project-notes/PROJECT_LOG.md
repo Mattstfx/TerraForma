@@ -12,6 +12,14 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 ### Session — 2026-11-16 — driver: student
 
+- **Goal:** Make mapped planning features easier to distinguish.
+- **What changed:** Added a distinct SVG symbol for each planning feature on the map and in the plan list. Symbols are illustrative, not scaled models; the existing footprints remain the editable areas. Fixed an observation-marker overlay that blocked footprint clicks on the archived map.
+- **What we checked:** In an isolated browser, checked all 16 symbols, map and list rendering, clicking and keyboard selection, observation markers, boundary-edit and pan pointer behavior, proposed-water visibility, zoom, concave footprints, and a garden with a nested bed saved and reloaded. Checked a 312-pixel viewport, JavaScript syntax, and diff formatting.
+- **Limitations:** Symbols are 2D illustrations, not realistic or 3D models. Small features may require zooming in.
+- **Committed?** no — not committed yet.
+
+### Session — 2026-11-16 — driver: student
+
 - **Goal:** Give each design perspective its own planning layout and feature priorities.
 - **What changed:** Added Observe & connect, Map studio, and Action desk views linked to the permaculture, landscape, and homestead perspectives. The views rearrange the existing workspace and highlight relevant planning ideas without removing options or changing saved property data. The chosen view is saved separately in the browser.
 - **What we checked:** In an isolated browser, checked all three views at desktop, intermediate, and narrow widths, both sets of perspective buttons, preserved form input and selections, reordered dropdown choices, drawing restrictions, storage errors, and reload persistence. Drew a garden, switched views, added a bed inside it, and verified both survived reload. JavaScript syntax and diff formatting passed.

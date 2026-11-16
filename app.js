@@ -2450,14 +2450,38 @@
         });
       }
 
-      const center = item.polygon.reduce(function (result, point) {
+      let center = item.polygon.reduce(function (result, point) {
         result.x += point[0] / item.polygon.length;
         result.y += point[1] / item.polygon.length;
         return result;
       }, { x: 0, y: 0 });
+      if (!pointInPolygon([center.x, center.y], item.polygon)) {
+        for (let index = 0; index < item.polygon.length; index += 1) {
+          const previous = item.polygon[(index + item.polygon.length - 1) % item.polygon.length];
+          const point = item.polygon[index];
+          const next = item.polygon[(index + 1) % item.polygon.length];
+          const candidate = [(previous[0] + point[0] + next[0]) / 3, (previous[1] + point[1] + next[1]) / 3];
+          if (pointInPolygon(candidate, item.polygon)) {
+            center = { x: candidate[0], y: candidate[1] };
+            break;
+          }
+        }
+      }
+      const bounds = polygonBounds(item.polygon);
+      const iconSize = Math.min(24, (bounds.maxX - bounds.minX) * 0.65, (bounds.maxY - bounds.minY) * 0.65);
+      const icon = svgElement("use", {
+        href: "#feature-icon-" + item.featureId,
+        x: center.x - iconSize / 2,
+        y: center.y - iconSize / 2,
+        width: iconSize,
+        height: iconSize,
+        class: "planned-feature-icon" + (item.featureId === "rain-garden" ? " is-proposed-water" : ""),
+        "aria-hidden": "true"
+      });
+      elements.planAreas.appendChild(icon);
       const label = svgElement("text", {
         x: center.x,
-        y: center.y + 3,
+        y: center.y + iconSize / 2 + 9,
         class: "planned-area-label" + (item.featureId === "rain-garden" ? " is-proposed-water" : ""),
         "aria-hidden": "true"
       });
@@ -2537,7 +2561,9 @@
       const icon = document.createElement("span");
       icon.className = "plan-item-icon";
       icon.setAttribute("aria-hidden", "true");
-      icon.textContent = "✳";
+      const iconSvg = svgElement("svg", { viewBox: "0 0 24 24", "aria-hidden": "true" });
+      iconSvg.appendChild(svgElement("use", { href: "#feature-icon-" + item.featureId }));
+      icon.appendChild(iconSvg);
 
       const content = document.createElement("div");
       content.className = "plan-item-content";

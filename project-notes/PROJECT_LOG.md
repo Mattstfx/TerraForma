@@ -12,6 +12,14 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 ### Session — 2026-11-16 — driver: student
 
+- **Goal:** Keep dropdown choices near their controls rather than using large browser-native menus.
+- **What changed:** Added compact, scrollable menus that open above or below the selected control, including dynamically generated guild choices. The original form controls remain in place as a fallback if the menu script cannot load. Keyboard selection, type-to-search, focus, disabled choices, and required-field feedback are supported.
+- **What we checked:** In an isolated browser, checked positioning and scrolling at a 312-pixel viewport, mouse and keyboard selection, Escape, type-to-search, dynamic plant choices, required and disabled options, the native fallback, map-view restrictions, and drawing a bed inside a garden. JavaScript syntax and diff formatting passed.
+- **Limitations:** Mobile sizing was checked in a browser viewport; physical-device and screen-reader testing are still recommended.
+- **Committed?** no — not committed yet.
+
+### Session — 2026-11-16 — driver: student
+
 - **Goal:** Start an interactive garden with individually editable beds and selectable boundary fence sections.
 - **What changed:** Added garden-area footprints, numbered fence sides, and a workflow for drawing beds inside a selected garden. Beds retain their existing plant-placement editor, save independently, and do not count twice against property capacity. Standalone saved beds remain supported. Garden deletion and footprint changes are blocked while beds remain; fence sections must be removed before resizing or reshaping the garden.
 - **What we checked:** In an isolated browser, drew a garden and two beds, placed a plant, toggled fencing, reloaded, and checked undo, deletion restrictions, overlapping and out-of-garden edits, legacy standalone-bed loading, malformed relationships, and storage-failure rollback. Checked a 312-pixel viewport, JavaScript syntax, and diff formatting.

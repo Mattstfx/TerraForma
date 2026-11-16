@@ -1589,6 +1589,7 @@
       summary.id = "guild-config-summary";
       summary.setAttribute("role", "status");
       elements.guildOptions.appendChild(summary);
+      if (window.TerraFormaSelectMenus) window.TerraFormaSelectMenus.enhance(elements.guildOptions);
       updateGuildSummary();
       return;
     }
@@ -3527,7 +3528,8 @@
     updateFeatureDetails();
     elements.planNote.value = idea.reason;
     document.getElementById("plan").scrollIntoView({ behavior: "smooth", block: "start" });
-    elements.featureSelect.focus({ preventScroll: true });
+    if (window.TerraFormaSelectMenus) window.TerraFormaSelectMenus.focus(elements.featureSelect);
+    else elements.featureSelect.focus({ preventScroll: true });
     showFormError("Idea loaded. Choose the plants or components to include, then draw its footprint.");
   }
 
@@ -3633,7 +3635,8 @@
     elements.featureSelect.value = "garden-beds";
     updateFeatureDetails();
     document.getElementById("plan").scrollIntoView({ behavior: "smooth", block: "start" });
-    elements.featureSelect.focus({ preventScroll: true });
+    if (window.TerraFormaSelectMenus) window.TerraFormaSelectMenus.focus(elements.featureSelect);
+    else elements.featureSelect.focus({ preventScroll: true });
   });
   elements.terrainLayer.addEventListener("change", function () {
     if (pendingPlanItem || boundaryEditing) {
@@ -4075,4 +4078,5 @@
   updateMapViewBox(mapViewBox);
   renderPlan();
   renderPerspective();
+  if (window.TerraFormaSelectMenus) window.TerraFormaSelectMenus.enhance(document);
 })();

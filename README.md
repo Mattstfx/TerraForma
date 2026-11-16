@@ -136,6 +136,7 @@ That link is your live site. Every commit updates it automatically within a few 
 | `index.html` | The structure and text of your site |
 | `styles.css` | How it looks: colours, fonts, spacing |
 | `data.js` | All your fake data (listings, prices, users…) |
+| `select-menu.js` | Anchored dropdown menus and keyboard controls |
 | `app.js` | What the site *does* when people click things |
 | `project-notes/PROJECT_LOG.md` | Your team's record of prompts, problems and decisions |
 | `project-notes/BUSINESS_CASE.md` | The business reasoning behind your prototype |

@@ -185,10 +185,14 @@
     planForm: document.getElementById("plan-form"),
     formError: document.getElementById("form-error"),
     drawingToolbar: document.getElementById("drawing-toolbar"),
+    drawingTitle: document.getElementById("drawing-title"),
+    drawingFeature: document.getElementById("drawing-feature"),
+    focusDrawingMap: document.getElementById("focus-drawing-map"),
     drawingStatus: document.getElementById("drawing-status"),
     drawingShape: document.getElementById("drawing-shape"),
     drawingSnap: document.getElementById("drawing-snap"),
     drawingDimensions: document.getElementById("drawing-dimensions"),
+    drawingDimensionHelp: document.getElementById("drawing-dimension-help"),
     drawingWidthLabel: document.getElementById("drawing-width-label"),
     drawingWidth: document.getElementById("drawing-width"),
     drawingDepth: document.getElementById("drawing-depth"),
@@ -2256,6 +2260,9 @@
     elements.drawingWidthLabel.childNodes[0].textContent = isSquare
       ? "Side length (m) "
       : isCircle ? "Diameter (m) " : "Width (m) ";
+    elements.drawingDimensionHelp.textContent = isCircle
+      ? "The center is halfway between your two points. Enter a diameter, or leave it blank to draw the size. Measurements are approximate, not a survey."
+      : "Enter dimensions or leave them blank to draw the size. With dimensions entered, the first point anchors the shape and the second sets its direction. Measurements are approximate, not a survey.";
   }
 
   function minimumDrawingPoints() {
@@ -2265,18 +2272,30 @@
   function updateDrawingStatus() {
     const needed = minimumDrawingPoints();
     elements.finishDrawing.disabled = drawingPoints.length < needed;
+    elements.undoPoint.disabled = drawingPoints.length === 0;
+    const error = drawingPoints.length >= needed ? validateDrawing(shapePolygon()) : "";
+    elements.drawingStatus.classList.toggle("is-invalid", Boolean(error));
     const snapGridMeters = Number(elements.drawingSnap.value);
     const gridInfo = snapGridMeters ? " (grid: " + snapGridMeters + "m)" : "";
-    if (drawingPoints.length) {
+    if (error) {
+      elements.drawingStatus.textContent = error + " Adjust the shape, dimensions, or points before saving.";
+    } else if (drawingPoints.length >= needed) {
+      elements.drawingStatus.textContent = drawingShape === "freeform"
+        ? "Footprint is ready to save. You can add more points or undo the last one." + gridInfo
+        : "Footprint is ready to save. You can change dimensions or undo the second corner." + gridInfo;
+    } else if (drawingPoints.length) {
       elements.drawingStatus.textContent = drawingPoints.length + " of " + needed +
         " required point" + (needed === 1 ? "" : "s") + " placed. " +
         (drawingShape === "freeform"
           ? "Add outline points, undo, or finish." + gridInfo
           : "Place the opposite corner; adjust dimensions or snap settings if needed." + gridInfo);
     } else {
+      const location = pendingPlanItem && pendingPlanItem.parentId
+        ? "inside the selected garden"
+        : "inside the property boundary";
       elements.drawingStatus.textContent = drawingShape === "freeform"
-        ? "Click or tap at least three points inside the boundary to outline this feature." + gridInfo
-        : "Place two opposite corners inside the boundary. Optional dimensions set the scaled size." + gridInfo;
+        ? "Click or tap at least three points " + location + " to outline this feature." + gridInfo
+        : "Place two opposite corners " + location + ". Optional dimensions set the scaled size." + gridInfo;
     }
   }
 
@@ -2329,16 +2348,17 @@
     if (gridMeters) renderGridOverlay(group, gridMeters);
     
     const draftPolygon = shapePolygon();
+    const invalid = drawingPoints.length >= minimumDrawingPoints() && validateDrawing(draftPolygon);
     if (drawingShape !== "freeform" && draftPolygon.length >= 3) {
       group.appendChild(svgElement("polygon", {
         points: draftPolygon.map(function (point) { return point.join(","); }).join(" "),
-        class: "drawing-line"
+        class: "drawing-line" + (invalid ? " is-invalid" : "")
       }));
     } else if (drawingPoints.length >= 2) {
       const tag = drawingPoints.length >= 3 ? "polygon" : "polyline";
       group.appendChild(svgElement(tag, {
         points: drawingPoints.map(function (point) { return point.join(","); }).join(" "),
-        class: "drawing-line"
+        class: "drawing-line" + (invalid ? " is-invalid" : "")
       }));
     }
     
@@ -3429,10 +3449,14 @@
   }
 
   function updateUndoButton() {
-    elements.undoPlan.disabled = undoStack.length === 0;
+    elements.undoPlan.disabled = undoStack.length === 0 || Boolean(pendingPlanItem);
   }
 
   function undo() {
+    if (pendingPlanItem) {
+      elements.drawingStatus.textContent = "Finish or cancel this footprint before undoing a saved plan change. Use Undo point while drawing.";
+      return;
+    }
     if (undoStack.length === 0) return;
     const previous = planItems;
     planItems = undoStack[undoStack.length - 1];
@@ -3638,18 +3662,20 @@
       elements.drawingDepth.value = "";
     }
     drawingShape = elements.drawingShape.value;
+    elements.drawingShape.dispatchEvent(new Event("change", { bubbles: true }));
     keyboardCursor = { x: 320, y: 215 };
     elements.drawingToolbar.hidden = false;
+    elements.mapPanToggle.disabled = true;
+    elements.mapNavigationHint.textContent = "Pinch or use zoom controls while drawing. Pan mode is available after saving or canceling.";
+    elements.drawingFeature.textContent = "Placing: " + item.feature +
+      (item.parentId ? " inside the selected garden." : ".");
     renderPlan();
     syncDrawingControls();
     updateDrawingStatus();
-    elements.drawingStatus.textContent += " Drawing " + item.feature +
-      ". The rough catalogue footprint is " +
-      getCatalogItem(item.featureId).defaultAreaM2 + " m²; the saved estimate comes from your drawing.";
     showFormError("");
     renderDraft();
-    elements.mapFrame.scrollIntoView({ behavior: "smooth", block: "center" });
-    elements.mapSvg.focus({ preventScroll: true });
+    elements.drawingToolbar.scrollIntoView({ behavior: "smooth", block: "start" });
+    elements.drawingTitle.focus({ preventScroll: true });
   }
 
   function addIdeaToPlan(idea) {
@@ -3697,12 +3723,12 @@
   }
 
   function validateDrawing(points) {
-    if (drawingShape !== "freeform" && elements.drawingWidth.value &&
-        !elements.drawingWidth.checkValidity()) {
+    if (drawingShape !== "freeform" && (elements.drawingWidth.validity.badInput ||
+        (elements.drawingWidth.value && !elements.drawingWidth.checkValidity()))) {
       return "Enter a width between 1 and 500 metres, or leave it blank to draw the size.";
     }
-    if (drawingShape === "rectangle" && elements.drawingDepth.value &&
-        !elements.drawingDepth.checkValidity()) {
+    if (drawingShape === "rectangle" && (elements.drawingDepth.validity.badInput ||
+        (elements.drawingDepth.value && !elements.drawingDepth.checkValidity()))) {
       return "Enter a depth between 1 and 500 metres, or leave it blank to draw the size.";
     }
     if (points.length < minimumDrawingPoints()) {
@@ -3748,10 +3774,16 @@
     pendingPlanItem = null;
     drawingPoints = [];
     elements.drawingToolbar.hidden = true;
+    elements.mapPanToggle.disabled = false;
+    setMapPanMode(false);
     selectPlan(savedItem.id, false);
     clearGardenTarget();
     elements.planNote.value = "";
     showFormError("");
+    elements.footprintEditorStatus.textContent = "Footprint saved on this device. Drag it on the map to move it; dimensions are approximate.";
+    const title = document.getElementById("footprint-editor-title");
+    title.scrollIntoView({ behavior: "smooth", block: "start" });
+    title.focus({ preventScroll: true });
   }
 
   elements.featureSelect.addEventListener("change", function () {
@@ -3809,12 +3841,18 @@
       closeSpeciesCard();
     }
     if ((event.ctrlKey || event.metaKey) && event.key === "z" && !event.shiftKey) {
+      if (event.target instanceof Element &&
+          event.target.matches("input, textarea, select, [contenteditable='true']")) return;
       event.preventDefault();
       undo();
     }
   });
   elements.planForm.addEventListener("submit", function (event) {
     event.preventDefault();
+    if (pendingPlanItem) {
+      showFormError("Finish or cancel the current footprint before starting another.");
+      return;
+    }
     if (!canEditCurrentMap()) {
       showFormError("Switch back to the illustrative planning map before drawing a feature; the terrain preview is not georeferenced to this plan.");
       return;
@@ -4110,6 +4148,12 @@
     renderPlan();
   });
   elements.drawingShape.addEventListener("change", function () {
+    if (elements.drawingShape.value === drawingShape) return;
+    if (drawingPoints.length && !window.confirm("Changing the shape will clear the points you have drawn. Continue?")) {
+      elements.drawingShape.value = drawingShape;
+      elements.drawingShape.dispatchEvent(new Event("change", { bubbles: true }));
+      return;
+    }
     drawingShape = elements.drawingShape.value;
     drawingPoints = [];
     syncDrawingControls();
@@ -4122,8 +4166,16 @@
     updateDrawingStatus();
     renderDraft();
   });
-  elements.drawingWidth.addEventListener("input", renderDraft);
-  elements.drawingDepth.addEventListener("input", renderDraft);
+  [elements.drawingWidth, elements.drawingDepth].forEach(function (input) {
+    input.addEventListener("input", function () {
+      updateDrawingStatus();
+      renderDraft();
+    });
+  });
+  elements.focusDrawingMap.addEventListener("click", function () {
+    elements.mapSvg.scrollIntoView({ behavior: "smooth", block: "center" });
+    elements.mapSvg.focus({ preventScroll: true });
+  });
   elements.mapSvg.addEventListener("keydown", function (event) {
     if (!pendingPlanItem && !boundaryEditing) return;
     const gridMeters = Number(elements.drawingSnap.value);
@@ -4172,8 +4224,14 @@
     pendingPlanItem = null;
     drawingPoints = [];
     elements.drawingToolbar.hidden = true;
+    elements.mapPanToggle.disabled = false;
+    setMapPanMode(false);
     renderDraft();
+    updateUndoButton();
     showFormError("");
+    elements.planForm.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (window.TerraFormaSelectMenus) window.TerraFormaSelectMenus.focus(elements.featureSelect);
+    else elements.featureSelect.focus({ preventScroll: true });
   });
   elements.finishDrawing.addEventListener("click", finishDrawing);
 

@@ -51,8 +51,8 @@
       </div>
       <ol>
         <li><a href="#boundary-editor">Draw a test outline</a><span>On the Waverley map, select “Draw property outline,” place at least three points, then save. Cedar Ridge already has an outline.</span></li>
-        <li><a href="#plan-form">Choose an idea</a><span>Pick a feature and its contents, then select “Draw on map.”</span></li>
-        <li><a href="#plan">Draw and review</a><span>Place the requested points inside the outline, select “Finish area,” then review your mapped feature.</span></li>
+        <li><a href="#plan-form">Choose an idea</a><span>Pick a feature and its contents, then select “Continue to map.”</span></li>
+        <li><a href="#property">Draw and review</a><span>Choose a shape and size, place the requested points inside the outline, then select “Save footprint.”</span></li>
       </ol>
       <p class="getting-started-note">Plans stay in this browser on this device. The test outline is not a surveyed property boundary.</p>
     </section>
@@ -368,6 +368,47 @@
             </p>
           </div>
 
+          <section class="drawing-toolbar" id="drawing-toolbar" aria-labelledby="drawing-title" hidden>
+            <h4 id="drawing-title" tabindex="-1">2. Set the shape and size</h4>
+            <p id="drawing-feature"></p>
+            <div class="drawing-controls">
+              <label for="drawing-shape">Footprint shape
+                <select id="drawing-shape">
+                  <option value="freeform">Freeform</option>
+                  <option value="rectangle">Rectangle · 2 corners</option>
+                  <option value="square">Square · 2 corners</option>
+                  <option value="circle">Circle · 2 corners</option>
+                </select>
+              </label>
+              <label for="drawing-snap">Snap map points
+                <select id="drawing-snap">
+                  <option value="0">Off</option>
+                  <option value="1">1 m grid</option>
+                  <option value="5">5 m grid</option>
+                  <option value="10">10 m grid</option>
+                </select>
+              </label>
+              <div class="drawing-dimensions" id="drawing-dimensions" hidden>
+                <label for="drawing-width" id="drawing-width-label">Width (m) <span class="optional-label">optional</span>
+                  <input id="drawing-width" type="number" min="1" max="500" step="0.5" inputmode="decimal" placeholder="Draw with 2 corners">
+                </label>
+                <label for="drawing-depth" id="drawing-depth-label">Depth (m) <span class="optional-label">optional</span>
+                  <input id="drawing-depth" type="number" min="1" max="500" step="0.5" inputmode="decimal" placeholder="Draw with 2 corners">
+                </label>
+                <p id="drawing-dimension-help"></p>
+              </div>
+            </div>
+            <h4>3. Draw and save</h4>
+            <p id="drawing-status" role="status" aria-live="polite"></p>
+            <p class="drawing-keyboard-hint">To use the keyboard, focus the map, move the cursor with arrow keys, and press Enter to place points.</p>
+            <div class="drawing-actions">
+              <button class="map-action-button" id="focus-drawing-map" type="button">Focus map</button>
+              <button class="map-action-button" id="undo-point" type="button">Undo point</button>
+              <button class="map-action-button map-action-primary" id="finish-drawing" type="button" disabled>Save footprint</button>
+              <button class="map-action-button" id="cancel-drawing" type="button">Cancel</button>
+            </div>
+          </section>
+
           <div class="map-frame" role="group" aria-label="Illustrative planning map with optional Waverley-area terrain data">
             <svg class="site-map" id="site-map" viewBox="0 0 640 430" role="group" tabindex="0" aria-labelledby="map-title map-description" aria-label="Interactive illustrative property map. While drawing a feature or property outline, use arrow keys and Enter to add points.">
               <title id="map-title">Illustrative map · Cedar Ridge Homestead</title>
@@ -439,7 +480,7 @@
           <p class="map-navigation-hint">Feature symbols are illustrative, not scaled models. Zoom in to see small footprints more clearly.</p>
           <section class="footprint-editor" id="footprint-editor" aria-labelledby="footprint-editor-title" hidden>
             <div class="footprint-editor-heading">
-              <h4 id="footprint-editor-title">Edit selected footprint</h4>
+              <h4 id="footprint-editor-title" tabindex="-1">Edit selected footprint</h4>
               <button class="map-action-button" id="clear-footprint-selection" type="button">Done</button>
             </div>
             <p id="footprint-editor-name"></p>
@@ -530,41 +571,6 @@
               <button class="map-action-button" id="cancel-boundary" type="button" hidden>Cancel outline</button>
             </div>
             <p class="boundary-editor-status" id="boundary-editor-status" role="status" aria-live="polite">Draw and save a synthetic test boundary to enable planning on this terrain map.</p>
-          </div>
-          <div class="drawing-toolbar" id="drawing-toolbar" hidden>
-            <p id="drawing-status" role="status" aria-live="polite">Click the map to outline this feature using at least three points.</p>
-            <div class="drawing-controls">
-              <label for="drawing-shape">Footprint shape
-                <select id="drawing-shape">
-                  <option value="freeform">Freeform</option>
-                  <option value="rectangle">Rectangle · 2 corners</option>
-                  <option value="square">Square · 2 corners</option>
-                  <option value="circle">Circle · 2 corners</option>
-                </select>
-              </label>
-              <label for="drawing-snap">Snap map points
-                <select id="drawing-snap">
-                  <option value="0">Off</option>
-                  <option value="1">1 m grid</option>
-                  <option value="5">5 m grid</option>
-                  <option value="10">10 m grid</option>
-                </select>
-              </label>
-              <div class="drawing-dimensions" id="drawing-dimensions" hidden>
-                <label for="drawing-width" id="drawing-width-label">Width (m) <span class="optional-label">optional</span>
-                  <input id="drawing-width" type="number" min="1" max="500" step="0.5" inputmode="decimal" placeholder="Draw with 2 corners">
-                </label>
-                <label for="drawing-depth" id="drawing-depth-label">Depth (m) <span class="optional-label">optional</span>
-                  <input id="drawing-depth" type="number" min="1" max="500" step="0.5" inputmode="decimal" placeholder="Draw with 2 corners">
-                </label>
-                <p>Enter dimensions to set exact scaled proportions, or leave them blank and draw the corners. The demo map is illustrative, not a survey.</p>
-              </div>
-            </div>
-            <div class="drawing-actions">
-              <button class="map-action-button" id="undo-point" type="button">Undo point</button>
-              <button class="map-action-button map-action-primary" id="finish-drawing" type="button" disabled>Finish area</button>
-              <button class="map-action-button" id="cancel-drawing" type="button">Cancel</button>
-            </div>
           </div>
         </article>
 
@@ -680,9 +686,9 @@
         </article>
 
         <form class="panel add-plan-panel" id="plan-form">
-          <p class="eyebrow">Keep exploring</p>
+          <p class="eyebrow">1. Choose a feature</p>
           <h3>Add a planning idea</h3>
-          <p class="muted">Choose infrastructure or a planting area, configure its contents, then draw it on the map.</p>
+          <p class="muted">Choose a feature and its contents here. Next, set its shape and size and draw it on the map.</p>
           <div class="garden-target" id="garden-target" hidden>
             <span id="garden-target-label"></span>
             <button type="button" class="map-action-button" id="clear-garden-target">Place independently instead</button>
@@ -729,8 +735,8 @@
           </div>
           <label for="plan-note">Planning note <span class="optional-label">(optional)</span></label>
           <textarea id="plan-note" name="note" rows="3" maxlength="240" placeholder="What should you observe or research?"></textarea>
-          <button class="button button-dark" type="submit">Draw on map <span aria-hidden="true">↗</span></button>
-          <p class="form-footnote">Draw inside the active property's boundary with freeform, rectangle, or square tools. New terrain-test footprints align to the fixed Waverley-area map; they are not a survey. Features must not overlap, except beds placed inside their garden area.</p>
+          <button class="button button-dark" type="submit">Continue to map <span aria-hidden="true">↗</span></button>
+          <p class="form-footnote">Draw inside the active property's boundary. Features must not overlap, except beds placed inside their garden area. The terrain-test map is not a survey.</p>
           <p class="form-error" id="form-error" role="alert" hidden></p>
         </form>
       </div>

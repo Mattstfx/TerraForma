@@ -12,6 +12,14 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 ### Session — 2026-11-16 — driver: student
 
+- **Goal:** Make placing a planning feature easier to follow.
+- **What changed:** Organized placement into choosing a feature, setting shape and size, and drawing and saving. Moved drawing controls above the map, added keyboard guidance and live validation with an invalid-outline highlight, and clarified approximate dimensions. Unfinished drawings are protected from starting another feature or changing shape without confirmation; saving opens the selected feature's editor.
+- **What we checked:** In an isolated browser, tested missing boundaries, shape and dimension controls, freeform, rectangle, square and circle, invalid boundary, overlap and crossing feedback, undo, keyboard drawing, cancel, storage failure, and drawing a bed inside a garden. Checked save/reload and a 312-pixel viewport, JavaScript syntax, and diff formatting.
+- **Limitations:** Measurements are approximate, not surveys. Zoom remains available while drawing, but pan mode requires finishing or cancelling first. Mobile testing used a browser viewport, not a physical device.
+- **Committed?** no — not committed yet.
+
+### Session — 2026-11-16 — driver: student
+
 - **Goal:** Make mapped planning features easier to distinguish.
 - **What changed:** Added a distinct SVG symbol for each planning feature on the map and in the plan list. Symbols are illustrative, not scaled models; the existing footprints remain the editable areas. Fixed an observation-marker overlay that blocked footprint clicks on the archived map.
 - **What we checked:** In an isolated browser, checked all 16 symbols, map and list rendering, clicking and keyboard selection, observation markers, boundary-edit and pan pointer behavior, proposed-water visibility, zoom, concave footprints, and a garden with a nested bed saved and reloaded. Checked a 312-pixel viewport, JavaScript syntax, and diff formatting.

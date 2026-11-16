@@ -436,6 +436,14 @@
             </div>
             <button class="map-action-button map-action-primary" id="apply-footprint-edits" type="button">Apply footprint changes</button>
             <p class="footprint-editor-status" id="footprint-editor-status" role="status" aria-live="polite"></p>
+            <section class="garden-editor" id="garden-editor" aria-labelledby="garden-editor-title" hidden>
+              <h5 id="garden-editor-title">Garden layout</h5>
+              <p>Choose the numbered boundary sides to fence. Each side is one straight section; openings, gates, and fence specifications are not yet modelled. Remove fences before resizing or reshaping the garden.</p>
+              <div id="garden-fence-sections"></div>
+              <p id="garden-editor-status" role="status" aria-live="polite"></p>
+              <button class="map-action-button" id="garden-add-bed" type="button">Add a bed inside this garden</button>
+              <div id="garden-bed-list"></div>
+            </section>
             <section class="bed-planting-editor" id="bed-planting-editor" aria-labelledby="bed-planting-title" hidden>
               <h5 id="bed-planting-title">Place individual plants</h5>
               <p>For a rectangular bed, enter row and within-row spacing from a seed packet, nursery label, or cited growing guide. TerraForma does not guess spacing or verify user-entered sources.</p>
@@ -646,6 +654,10 @@
           <p class="eyebrow">Keep exploring</p>
           <h3>Add a planning idea</h3>
           <p class="muted">Choose infrastructure or a planting area, configure its contents, then draw it on the map.</p>
+          <div class="garden-target" id="garden-target" hidden>
+            <span id="garden-target-label"></span>
+            <button type="button" class="map-action-button" id="clear-garden-target">Place independently instead</button>
+          </div>
           <label for="feature-select">Feature type</label>
           <select id="feature-select" name="feature" required></select>
           <div class="detail-field" id="detail-field">
@@ -688,7 +700,7 @@
           <label for="plan-note">Planning note <span class="optional-label">(optional)</span></label>
           <textarea id="plan-note" name="note" rows="3" maxlength="240" placeholder="What should you observe or research?"></textarea>
           <button class="button button-dark" type="submit">Draw on map <span aria-hidden="true">↗</span></button>
-          <p class="form-footnote">Draw inside the active property's boundary with freeform, rectangle, or square tools. New terrain-test footprints align to the fixed Waverley-area map; they are not a survey. Avoid overlapping areas.</p>
+          <p class="form-footnote">Draw inside the active property's boundary with freeform, rectangle, or square tools. New terrain-test footprints align to the fixed Waverley-area map; they are not a survey. Features must not overlap, except beds placed inside their garden area.</p>
           <p class="form-error" id="form-error" role="alert" hidden></p>
         </form>
       </div>

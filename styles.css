@@ -771,6 +771,9 @@ main {
 }
 .planned-area.is-selected { filter: drop-shadow(0 0 2px #fff); }
 .planned-area:focus-visible { outline: none; stroke: #243d30; stroke-width: 5; }
+.planned-area.is-garden { fill: rgb(142 178 112 / 28%); stroke: #496735; }
+.garden-fence { fill: none; stroke: #5a3920; stroke-width: 3; stroke-dasharray: 6 3; vector-effect: non-scaling-stroke; pointer-events: none; }
+.garden-side-label { fill: #fff; stroke: #243d30; stroke-width: 2; paint-order: stroke; font-size: 10px; font-weight: 700; pointer-events: none; }
 .bed-planted-plant { cursor: help; }
 .bed-plant-leaf { fill: #4f844c; stroke: #f7f8e9; stroke-width: 0.7; vector-effect: non-scaling-stroke; }
 .bed-plant-center { fill: #d3a54c; stroke: white; stroke-width: 0.7; vector-effect: non-scaling-stroke; }
@@ -892,6 +895,14 @@ main {
 }
 .footprint-editor-fields input:disabled { background: #edf0e9; color: #68746b; }
 .footprint-editor-status { min-height: 1em; margin: 7px 0 0; color: #53644f; font-size: 0.66rem; }
+.garden-editor { margin-top: 12px; padding-top: 11px; border-top: 1px solid #d6e0d1; }
+.garden-editor[hidden], .garden-target[hidden] { display: none; }
+.garden-editor h5 { margin: 0 0 5px; color: var(--forest-deep); font-size: 0.73rem; }
+.garden-editor p, .garden-target { color: #53644f; font-size: 0.68rem; }
+#garden-fence-sections { display: flex; flex-wrap: wrap; gap: 7px 12px; }
+#garden-fence-sections label { display: inline-flex; align-items: center; gap: 4px; font-size: 0.66rem; }
+#garden-bed-list { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.garden-target { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0; padding: 8px; border-radius: 8px; background: var(--moss); }
 .bed-planting-editor { margin-top: 12px; padding-top: 11px; border-top: 1px solid #d6e0d1; }
 .bed-planting-editor[hidden] { display: none; }
 .bed-planting-editor h5 { margin: 0 0 5px; color: var(--forest-deep); font-size: 0.73rem; }

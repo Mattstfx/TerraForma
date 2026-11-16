@@ -94,6 +94,13 @@ const TERRAIN_DEMO_PROPERTY = {
 
 const PLAN_CATALOG = [
   {
+    id: "garden-area",
+    name: "Garden area",
+    category: "Growing",
+    defaultAreaM2: 100,
+    options: ["Garden area with beds and optional boundary fencing"]
+  },
+  {
     id: "garden-beds",
     name: "Vegetable beds",
     category: "Growing",

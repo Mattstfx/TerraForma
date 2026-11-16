@@ -12,6 +12,14 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 ### Session — 2026-11-16 — driver: student
 
+- **Goal:** Start an interactive garden with individually editable beds and selectable boundary fence sections.
+- **What changed:** Added garden-area footprints, numbered fence sides, and a workflow for drawing beds inside a selected garden. Beds retain their existing plant-placement editor, save independently, and do not count twice against property capacity. Standalone saved beds remain supported. Garden deletion and footprint changes are blocked while beds remain; fence sections must be removed before resizing or reshaping the garden.
+- **What we checked:** In an isolated browser, drew a garden and two beds, placed a plant, toggled fencing, reloaded, and checked undo, deletion restrictions, overlapping and out-of-garden edits, legacy standalone-bed loading, malformed relationships, and storage-failure rollback. Checked a 312-pixel viewport, JavaScript syntax, and diff formatting.
+- **Limitations:** Fence sections cover whole polygon sides; gates and fence specifications are not modelled. Garden and bed geometry is approximate 2D planning, not a survey or construction design. A garden cannot yet move together with its beds.
+- **Committed?** no — not committed yet.
+
+### Session — 2026-11-16 — driver: student
+
 - **Goal for this session:** Make the school demo easier for a first-time visitor to use and fix problems found in its core planning flow.
 - **What changed:** Added a short, linked three-step guide for drawing a test boundary and placing a feature. Corrected the prototype disclaimer to distinguish fictional sample properties from attributed real regional map data. Repaired drawing status and measurement previews after the previous branch merge, including snap status and freeform, rectangle, square, and circle labels.
 - **What we checked:** In an isolated browser, followed the guide to draw and save a boundary and a 1 × 30 m bed, checked snap feedback and the dimension label, and verified the plan survived reload. Checked freeform, square, and circle previews, the existing Cedar Ridge workspace, and narrow-screen overflow. JavaScript syntax and diff formatting passed. The test data was removed from the isolated browser afterward.

@@ -84,6 +84,14 @@
     applyFootprintEdits: document.getElementById("apply-footprint-edits"),
     clearFootprintSelection: document.getElementById("clear-footprint-selection"),
     footprintEditorStatus: document.getElementById("footprint-editor-status"),
+    gardenEditor: document.getElementById("garden-editor"),
+    gardenFenceSections: document.getElementById("garden-fence-sections"),
+    gardenEditorStatus: document.getElementById("garden-editor-status"),
+    gardenAddBed: document.getElementById("garden-add-bed"),
+    gardenBedList: document.getElementById("garden-bed-list"),
+    gardenTarget: document.getElementById("garden-target"),
+    gardenTargetLabel: document.getElementById("garden-target-label"),
+    clearGardenTarget: document.getElementById("clear-garden-target"),
     bedPlantingEditor: document.getElementById("bed-planting-editor"),
     bedPlantSpecies: document.getElementById("bed-plant-species"),
     bedPlantCultivar: document.getElementById("bed-plant-cultivar"),
@@ -260,6 +268,7 @@
             position: Array.isArray(plant.position) ? plant.position.slice() : []
           });
         }) : [],
+        fenceSections: Array.isArray(item.fenceSections) ? item.fenceSections.slice() : [],
         rotationDegrees: Number.isFinite(item.rotationDegrees) ? item.rotationDegrees : 0
       });
     });
@@ -289,6 +298,7 @@
   let speciesCardTimer = null;
   let speciesCardAnchor = null;
   let pendingPlanItem = null;
+  let gardenTargetId = null;
   let drawingPoints = [];
   let boundaryEditing = false;
   let boundaryPoints = [];
@@ -1864,23 +1874,45 @@
     return false;
   }
 
-  function isInsideProperty(points) {
-    const boundary = propertyBoundary;
+  function isInsidePolygon(points, boundary) {
     for (let index = 0; index < points.length; index += 1) {
       const start = points[index];
       const end = points[(index + 1) % points.length];
-      const segmentLength = Math.hypot(end[0] - start[0], end[1] - start[1]);
-      const steps = Math.max(1, Math.ceil(segmentLength / 0.5));
-      for (let step = 0; step <= steps; step += 1) {
-        const ratio = step / steps;
-        const sample = [
-          start[0] + (end[0] - start[0]) * ratio,
-          start[1] + (end[1] - start[1]) * ratio
-        ];
-        if (!pointInPolygon(sample, boundary)) return false;
+      if (!pointInPolygon(start, boundary)) return false;
+      const dx = end[0] - start[0];
+      const dy = end[1] - start[1];
+      const lengthSquared = dx * dx + dy * dy;
+      if (!lengthSquared) continue;
+      const cuts = [0, 1];
+      boundary.forEach(function (edgeStart, edgeIndex) {
+        const edgeEnd = boundary[(edgeIndex + 1) % boundary.length];
+        const ex = edgeEnd[0] - edgeStart[0];
+        const ey = edgeEnd[1] - edgeStart[1];
+        const offsetX = edgeStart[0] - start[0];
+        const offsetY = edgeStart[1] - start[1];
+        const denominator = dx * ey - dy * ex;
+        if (Math.abs(denominator) > 1e-9) {
+          const ratio = (offsetX * ey - offsetY * ex) / denominator;
+          const edgeRatio = (offsetX * dy - offsetY * dx) / denominator;
+          if (ratio > 0 && ratio < 1 && edgeRatio >= 0 && edgeRatio <= 1) cuts.push(ratio);
+        } else if (Math.abs(offsetX * dy - offsetY * dx) < 1e-9) {
+          [edgeStart, edgeEnd].forEach(function (point) {
+            const ratio = ((point[0] - start[0]) * dx + (point[1] - start[1]) * dy) / lengthSquared;
+            if (ratio > 0 && ratio < 1) cuts.push(ratio);
+          });
+        }
+      });
+      cuts.sort(function (a, b) { return a - b; });
+      for (let cut = 1; cut < cuts.length; cut += 1) {
+        const ratio = (cuts[cut - 1] + cuts[cut]) / 2;
+        if (!pointInPolygon([start[0] + dx * ratio, start[1] + dy * ratio], boundary)) return false;
       }
     }
     return true;
+  }
+
+  function isInsideProperty(points) {
+    return isInsidePolygon(points, propertyBoundary);
   }
 
   function polygonsOverlap(first, second) {
@@ -1901,8 +1933,37 @@
 
   function usedAreaM2(items) {
     return items.reduce(function (total, item) {
-      return total + polygonArea(item.polygon) * propertyMapAreaM2PerUnit;
+      return total + (item.parentId ? 0 : polygonArea(item.polygon) * propertyMapAreaM2PerUnit);
     }, 0);
+  }
+
+  function gardenChildren(id) {
+    return planItems.filter(function (item) { return item.parentId === id; });
+  }
+
+  function validatePlanGeometry(item, points) {
+    if (!isInsideProperty(points)) return "The entire footprint must stay inside the property boundary.";
+    const parent = item.parentId && planItems.find(function (entry) {
+      return entry.id === item.parentId && entry.featureId === "garden-area";
+    });
+    if (item.parentId && (!parent || item.featureId !== "garden-beds")) {
+      return "The selected garden is no longer available for this bed.";
+    }
+    if (parent && !isInsidePolygon(points, parent.polygon)) {
+      return "The entire bed must stay inside its garden area.";
+    }
+    if (item.featureId === "garden-area" && gardenChildren(item.id).length) {
+      return "Remove this garden's beds before changing its footprint.";
+    }
+    if (planItems.some(function (other) {
+      if (other.id === item.id || other.id === item.parentId || other.parentId === item.id) return false;
+      return polygonsOverlap(other.polygon, points);
+    })) return "This footprint overlaps or touches another mapped feature.";
+    const remaining = planItems.filter(function (entry) { return entry.id !== item.id; });
+    if (usedAreaM2(remaining) + (item.parentId ? 0 : polygonArea(points) * propertyMapAreaM2PerUnit) > propertyAreaM2) {
+      return "This footprint would exceed the entered property-area estimate.";
+    }
+    return "";
   }
 
   function updateCapacity() {
@@ -2297,10 +2358,13 @@
 
   function renderMapAreas() {
     elements.planAreas.replaceChildren();
-    planItems.forEach(function (item) {
+    planItems.slice().sort(function (a, b) {
+      return Number(Boolean(a.parentId)) - Number(Boolean(b.parentId));
+    }).forEach(function (item) {
       const polygon = svgElement("polygon", {
         points: item.polygon.map(function (point) { return point.join(","); }).join(" "),
         class: "planned-area" + (item.featureId === "rain-garden" ? " is-proposed-water" : "") +
+          (item.featureId === "garden-area" ? " is-garden" : "") +
           (item.id === selectedPlanId ? " is-selected" : ""),
         tabindex: "0",
         role: "button",
@@ -2312,6 +2376,7 @@
       title.textContent = item.feature + " · " + item.location;
       polygon.appendChild(title);
       polygon.addEventListener("click", function (event) {
+        if (pendingPlanItem && pendingPlanItem.parentId === item.id) return;
         event.stopPropagation();
         selectPlan(item.id, false);
       });
@@ -2322,6 +2387,27 @@
         }
       });
       elements.planAreas.appendChild(polygon);
+      (item.fenceSections || []).forEach(function (index) {
+        const start = item.polygon[index];
+        const end = item.polygon[(index + 1) % item.polygon.length];
+        elements.planAreas.appendChild(svgElement("line", {
+          x1: start[0], y1: start[1], x2: end[0], y2: end[1], class: "garden-fence"
+        }));
+      });
+      if (item.featureId === "garden-area" && item.id === selectedPlanId) {
+        item.polygon.forEach(function (point, index) {
+          const next = item.polygon[(index + 1) % item.polygon.length];
+          const number = svgElement("text", {
+            x: (point[0] + next[0]) / 2,
+            y: (point[1] + next[1]) / 2,
+            class: "garden-side-label",
+            "text-anchor": "middle",
+            "aria-hidden": "true"
+          });
+          number.textContent = String(index + 1);
+          elements.planAreas.appendChild(number);
+        });
+      }
 
       const center = item.polygon.reduce(function (result, point) {
         result.x += point[0] / item.polygon.length;
@@ -2431,6 +2517,7 @@
         : "";
       location.textContent = item.location + " · about " +
         Math.round(polygonArea(item.polygon) * propertyMapAreaM2PerUnit) + " m²" + dimensions + rotation;
+      if (item.parentId) location.textContent += " · inside a garden area";
       const variety = document.createElement("p");
       variety.className = "plan-variety";
       variety.textContent = item.variety || "Planning option to research";
@@ -2547,11 +2634,22 @@
       removeButton.textContent = "Remove";
       removeButton.setAttribute("aria-label", "Remove " + item.feature + " from the plan");
       removeButton.addEventListener("click", function () {
-        captureUndoState();
+        if (gardenChildren(item.id).length) {
+          elements.storageMessage.textContent = "Remove this garden's beds before removing the garden.";
+          elements.storageMessage.classList.add("storage-error");
+          return;
+        }
+        const previousPlan = clonePlanItems(planItems);
         planItems = planItems.filter(function (planItem) { return planItem.id !== item.id; });
+        if (!savePlan()) {
+          planItems = previousPlan;
+          return;
+        }
+        recordUndoState(previousPlan);
+        if (gardenTargetId === item.id) clearGardenTarget();
         if (selectedPlanId === item.id) selectedPlanId = null;
-        savePlan();
         renderPlan();
+        updateFeatureNoteEditor();
       });
       actions.append(locateButton, removeButton);
       article.append(icon, content, actions);
@@ -2565,6 +2663,7 @@
   function updateFootprintEditor() {
     const item = planItems.find(function (entry) { return entry.id === selectedPlanId; });
     elements.footprintEditor.hidden = !item;
+    elements.gardenEditor.hidden = !item || item.featureId !== "garden-area";
     elements.bedPlantingEditor.hidden = !item || item.featureId !== "garden-beds";
     if (!item) {
       bedPlantingConfig = null;
@@ -2582,6 +2681,9 @@
     elements.footprintDepth.disabled = item.shape === "circle" || item.shape === "square";
     elements.footprintRotation.value = Number.isFinite(item.rotationDegrees) ? item.rotationDegrees : 0;
     elements.footprintEditorStatus.textContent = "Drag the selected footprint on the map to move it. Dimensions are approximate map measurements.";
+    elements.gardenFenceSections.replaceChildren();
+    elements.gardenBedList.replaceChildren();
+    if (item.featureId === "garden-area") renderGardenEditor(item);
     elements.previewBedPlantingSpots.disabled = item.shape !== "rectangle";
     elements.bedPlantingsList.replaceChildren();
     if (item.featureId === "garden-beds") {
@@ -2593,9 +2695,59 @@
       } else if (!bedPlantingConfig) {
         elements.bedPlantingStatus.textContent = "Set the bed to 1 × 30 m if desired, then choose a plant and source-backed spacing to preview positions.";
       }
+
       renderBedPlantingsList(item);
     }
     elements.stopBedPlanting.hidden = !bedPlantingConfig;
+  }
+
+  function renderGardenEditor(item) {
+    elements.gardenEditorStatus.textContent = gardenChildren(item.id).length
+      ? "Remove all beds before moving, resizing, or removing this garden."
+      : "Measurements are approximate; fencing is a planning sketch, not a construction design.";
+    item.polygon.forEach(function (point, index) {
+      const label = document.createElement("label");
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = (item.fenceSections || []).includes(index);
+      checkbox.addEventListener("change", function () {
+        const previousPlan = clonePlanItems(planItems);
+        const previous = (item.fenceSections || []).slice();
+        item.fenceSections = checkbox.checked
+          ? previous.concat(index).sort(function (a, b) { return a - b; })
+          : previous.filter(function (value) { return value !== index; });
+        if (!savePlan()) {
+          item.fenceSections = previous;
+          checkbox.checked = !checkbox.checked;
+          elements.gardenEditorStatus.textContent = "Could not save this fence change.";
+          return;
+        }
+        recordUndoState(previousPlan);
+        renderMapAreas();
+        elements.gardenEditorStatus.textContent = "Fence section saved on this device.";
+      });
+      label.append(checkbox, document.createTextNode("Side " + (index + 1)));
+      elements.gardenFenceSections.appendChild(label);
+    });
+    const children = gardenChildren(item.id);
+    if (!children.length) {
+      elements.gardenBedList.textContent = "No beds in this garden yet.";
+    } else {
+      children.forEach(function (bed, index) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "map-action-button";
+        button.textContent = "Edit bed " + (index + 1);
+        button.addEventListener("click", function () { selectPlan(bed.id, false); });
+        elements.gardenBedList.appendChild(button);
+      });
+    }
+  }
+
+  function clearGardenTarget() {
+    gardenTargetId = null;
+    elements.gardenTarget.hidden = true;
+    elements.gardenTargetLabel.textContent = "";
   }
 
   function bedPlantMapPoint(item, position) {
@@ -2898,17 +3050,8 @@
       return "The footprint is too small. Increase its dimensions before applying.";
     }
     if (hasSelfIntersection(points)) return "The footprint crosses itself. Change its shape or dimensions.";
-    if (!isInsideProperty(points)) return "The entire footprint must stay inside the property boundary.";
-    if (planItems.some(function (item) {
-      return item.id !== itemId && polygonsOverlap(item.polygon, points);
-    })) return "This footprint overlaps or touches another mapped feature.";
-    const otherArea = planItems.reduce(function (total, item) {
-      return total + (item.id === itemId ? 0 : polygonArea(item.polygon) * propertyMapAreaM2PerUnit);
-    }, 0);
-    if (otherArea + polygonArea(points) * propertyMapAreaM2PerUnit > propertyAreaM2) {
-      return "This footprint would exceed the entered property-area estimate.";
-    }
-    return "";
+    const item = planItems.find(function (entry) { return entry.id === itemId; });
+    return item ? validatePlanGeometry(item, points) : "This footprint no longer exists.";
   }
 
   function finishFootprintDrag(commit) {
@@ -2925,12 +3068,16 @@
       elements.footprintEditorStatus.textContent = error;
       return;
     }
+    const previousPlan = clonePlanItems(planItems);
+    const previousItem = previousPlan.find(function (entry) { return entry.id === item.id; });
+    previousItem.polygon = drag.originalPolygon.map(function (point) { return point.slice(); });
     if (!savePlan()) {
       item.polygon = drag.originalPolygon;
       renderPlan();
       elements.footprintEditorStatus.textContent = "Could not save this move. The footprint was returned to its prior position.";
       return;
     }
+    recordUndoState(previousPlan);
     renderPlan();
     elements.footprintEditorStatus.textContent = "Footprint moved and saved on this device.";
   }
@@ -2946,6 +3093,10 @@
       return;
     }
     const shape = elements.footprintShape.value;
+    if (item.featureId === "garden-area" && (item.fenceSections || []).length) {
+      elements.footprintEditorStatus.textContent = "Remove the fence sections before resizing or reshaping this garden.";
+      return;
+    }
     const width = Number(elements.footprintWidth.value);
     const depth = shape === "circle" || shape === "square"
       ? width
@@ -2962,7 +3113,7 @@
       shape: item.shape,
       rotationDegrees: item.rotationDegrees
     };
-    captureUndoState();
+    const previousPlan = clonePlanItems(planItems);
     item.polygon = polygon;
     item.shape = shape;
     item.rotationDegrees = rotationDegrees;
@@ -2974,6 +3125,7 @@
       elements.footprintEditorStatus.textContent = "Could not save these changes. The footprint is unchanged.";
       return;
     }
+    recordUndoState(previousPlan);
     renderPlan();
     elements.footprintEditorStatus.textContent = "Footprint changes saved on this device.";
   }
@@ -3059,28 +3211,65 @@
         throw new Error("The saved planning data has an unexpected format.");
       }
 
-      const occupied = [];
-      planItems = parsed.map(function (item, index) {
+      if (new Set(parsed.map(function (item) { return item.id; })).size !== parsed.length) {
+        throw new Error("The saved plan contains duplicate feature IDs.");
+      }
+      const loaded = [];
+      const sorted = parsed.slice().sort(function (a, b) {
+        return Number(Boolean(a.parentId)) - Number(Boolean(b.parentId));
+      });
+      planItems = sorted.map(function (item) {
+        if (item.parentId !== undefined && item.parentId !== null && typeof item.parentId !== "string") {
+          throw new Error("A saved garden relationship has an unexpected format.");
+        }
+        const parent = item.parentId && loaded.find(function (entry) {
+          return entry.id === item.parentId && entry.featureId === "garden-area";
+        });
+        if (item.parentId && (!parent || item.featureId !== "garden-beds")) {
+          throw new Error("A saved bed refers to a missing or invalid garden.");
+        }
         const sample = ACTIVE_PROPERTY.initialPlan.find(function (entry) { return entry.id === item.id; });
+        const occupied = loaded.filter(function (entry) { return !entry.parentId; }).map(function (entry) {
+          return entry.polygon;
+        });
         let polygon = Array.isArray(item.polygon) && item.polygon.length >= 3 &&
           item.polygon.every(function (point) {
             return Array.isArray(point) && point.length === 2 &&
               Number.isFinite(point[0]) && Number.isFinite(point[1]);
           }) ? item.polygon.map(function (point) { return point.slice(); }) :
-          sample ? sample.polygon.map(function (point) { return point.slice(); }) :
-          findMigrationFootprint(occupied);
-        if (!polygon || hasSelfIntersection(polygon) || !isInsideProperty(polygon) ||
+          sample ? sample.polygon.map(function (point) { return point.slice(); }) : null;
+        if (parent) {
+          if (!polygon || hasSelfIntersection(polygon) || !isInsideProperty(polygon) ||
+              !isInsidePolygon(polygon, parent.polygon) || loaded.some(function (entry) {
+                return entry.id !== parent.id && polygonsOverlap(entry.polygon, polygon);
+              })) {
+            throw new Error("A saved garden bed has invalid or overlapping geometry.");
+          }
+        } else if (!polygon || hasSelfIntersection(polygon) || !isInsideProperty(polygon) ||
             occupied.some(function (existing) { return polygonsOverlap(existing, polygon); })) {
+          if (item.featureId === "garden-area" &&
+              (parsed.some(function (entry) { return entry.parentId === item.id; }) ||
+               (Array.isArray(item.fenceSections) && item.fenceSections.length))) {
+            throw new Error("A saved garden with beds or fencing has invalid geometry.");
+          }
           polygon = findMigrationFootprint(occupied);
         }
         if (!polygon) throw new Error("The saved plan has more features than can be safely placed on the sample map.");
-        occupied.push(polygon);
         const feature = getCatalogItem(item.featureId) ||
           PLAN_CATALOG.find(function (entry) { return entry.name === item.feature; }) ||
           PLAN_CATALOG.find(function (entry) {
             return entry.id === "fruit-tree" && item.feature.toLowerCase().indexOf("fruit tree") !== -1;
           }) ||
           getCatalogItem("garden-beds");
+        if (item.fenceSections !== undefined &&
+            (!Array.isArray(item.fenceSections) ||
+             (item.fenceSections.length && feature.id !== "garden-area") ||
+             new Set(item.fenceSections).size !== item.fenceSections.length ||
+             item.fenceSections.some(function (section) {
+               return !Number.isInteger(section) || section < 0 || section >= polygon.length;
+             }))) {
+          throw new Error("Saved garden fence sections have an unexpected format.");
+        }
         const guildPlants = Array.isArray(item.guildPlants)
           ? item.guildPlants.filter(function (id) {
             return APPLE_GUILD_PLANTS.some(function (plant) { return plant.id === id; });
@@ -3105,7 +3294,7 @@
             return Object.assign({}, plant, { position: plant.position.slice() });
           })
           : [];
-        return Object.assign({}, item, {
+        const result = Object.assign({}, item, {
           featureId: feature.id,
           polygon: polygon,
           variety: typeof item.variety === "string" ? item.variety : "Planning option to research",
@@ -3133,8 +3322,11 @@
           rotationDegrees: Number.isFinite(item.rotationDegrees) &&
             item.rotationDegrees >= -360 && item.rotationDegrees <= 360
             ? item.rotationDegrees
-            : 0
+            : 0,
+          fenceSections: item.fenceSections ? item.fenceSections.slice() : []
         });
+        loaded.push(result);
+        return result;
       });
     } catch (error) {
       storageAvailable = false;
@@ -3160,7 +3352,11 @@
   }
 
   function captureUndoState() {
-    undoStack.push(planItems.map(function (item) { return Object.assign({}, item); }));
+    recordUndoState(clonePlanItems(planItems));
+  }
+
+  function recordUndoState(snapshot) {
+    undoStack.push(snapshot);
     redoStack = [];
     updateUndoButton();
   }
@@ -3171,12 +3367,19 @@
 
   function undo() {
     if (undoStack.length === 0) return;
-    redoStack.push(planItems.map(function (item) { return Object.assign({}, item); }));
-    planItems = undoStack.pop();
+    const previous = planItems;
+    planItems = undoStack[undoStack.length - 1];
+    if (!savePlan()) {
+      planItems = previous;
+      return;
+    }
+    undoStack.pop();
+    redoStack.push(clonePlanItems(previous));
+    if (gardenTargetId && !planItems.some(function (item) { return item.id === gardenTargetId; })) clearGardenTarget();
     selectedPlanId = null;
     updateUndoButton();
     renderPlan();
-    savePlan();
+    updateFeatureNoteEditor();
   }
 
   function savePlan() {
@@ -3319,6 +3522,7 @@
       showFormError("This sample idea has no matching map feature yet.");
       return;
     }
+    clearGardenTarget();
     elements.featureSelect.value = feature.id;
     updateFeatureDetails();
     elements.planNote.value = idea.reason;
@@ -3375,15 +3579,7 @@
     })) return "Two outline points are too close together. Move or undo one of them.";
     if (polygonArea(points) < 4) return "This outline is too small to estimate. Draw a larger area.";
     if (hasSelfIntersection(points)) return "The outline crosses itself. Undo points and draw a simple shape.";
-    if (!isInsideProperty(points)) return "Every part of the footprint must stay inside the drawn property boundary.";
-    if (planItems.some(function (item) { return polygonsOverlap(item.polygon, points); })) {
-      return "This footprint overlaps or touches another planned area. Choose a separate part of the map.";
-    }
-    const estimate = polygonArea(points) * propertyMapAreaM2PerUnit;
-    if (usedAreaM2(planItems) + estimate > propertyAreaM2) {
-      return "This area would exceed the remaining property planning capacity.";
-    }
-    return "";
+    return validatePlanGeometry(pendingPlanItem, points);
   }
 
   function finishDrawing() {
@@ -3404,18 +3600,41 @@
       plantings: [],
       createdAt: new Date().toISOString()
     });
-    captureUndoState();
+    const previousPlan = clonePlanItems(planItems);
     planItems.push(savedItem);
+    if (!savePlan()) {
+      planItems = previousPlan;
+      elements.drawingStatus.textContent = "Could not save this footprint. Your drawing remains open.";
+      return;
+    }
+    recordUndoState(previousPlan);
     pendingPlanItem = null;
     drawingPoints = [];
     elements.drawingToolbar.hidden = true;
     selectPlan(savedItem.id, false);
-    savePlan();
+    clearGardenTarget();
     elements.planNote.value = "";
     showFormError("");
   }
 
-  elements.featureSelect.addEventListener("change", updateFeatureDetails);
+  elements.featureSelect.addEventListener("change", function () {
+    if (elements.featureSelect.value !== "garden-beds") clearGardenTarget();
+    updateFeatureDetails();
+  });
+  elements.clearGardenTarget.addEventListener("click", clearGardenTarget);
+  elements.gardenAddBed.addEventListener("click", function () {
+    const garden = planItems.find(function (item) {
+      return item.id === selectedPlanId && item.featureId === "garden-area";
+    });
+    if (!garden) return;
+    gardenTargetId = garden.id;
+    elements.gardenTargetLabel.textContent = "New bed will be placed inside the garden chosen with Add a bed (" + garden.location + ").";
+    elements.gardenTarget.hidden = false;
+    elements.featureSelect.value = "garden-beds";
+    updateFeatureDetails();
+    document.getElementById("plan").scrollIntoView({ behavior: "smooth", block: "start" });
+    elements.featureSelect.focus({ preventScroll: true });
+  });
   elements.terrainLayer.addEventListener("change", function () {
     if (pendingPlanItem || boundaryEditing) {
       elements.terrainLayer.value = activeMapView;
@@ -3522,6 +3741,7 @@
     beginDrawing({
       id: "plan-" + Date.now(),
       featureId: feature.id,
+      parentId: feature.id === "garden-beds" ? gardenTargetId : null,
       feature: feature.name,
       variety: feature.options[optionIndex],
       contents: selected.contents,
@@ -3560,8 +3780,14 @@
       elements.bedPlantingStatus.textContent = "Choose one of the highlighted available positions inside the bed.";
       return;
     }
-    if (!pendingPlanItem || (event.target.closest &&
-        event.target.closest(".map-marker, .planned-area, .planned-area-label, .north-arrow"))) return;
+    if (!pendingPlanItem) return;
+    const clickedArea = event.target.closest && event.target.closest(".planned-area");
+    if (clickedArea && clickedArea.getAttribute("data-plan-id") === pendingPlanItem.parentId) {
+      addDrawingPoint(pointerToMapPoint(event));
+      return;
+    }
+    if (event.target.closest &&
+        event.target.closest(".map-marker, .planned-area, .planned-area-label, .north-arrow")) return;
     addDrawingPoint(pointerToMapPoint(event));
   });
   elements.mapSvg.addEventListener("pointerdown", function (event) {

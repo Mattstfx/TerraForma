@@ -14,9 +14,12 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 - **Goal:** Bring the project log up to date and publish the prototype.
 - **What changed:** Corrected the commit records for completed sessions, enabled GitHub Pages from the `main` branch root, and organized student-supplied business-case ideas as working notes.
+- **Key prompts we gave Copilot:**
+  1. "Show me the site and then commit the other sessions info so we can commit this session."
+  2. "What else is needed in the school documentation?"
 - **What we checked:** The Pages build and deployment completed successfully, and the published URL returned the TerraForma page. No browser-local data was changed.
 - **Limitations / next steps:** Develop the working notes into your own final business-case analysis, resolve the open network-effect and VRIN questions, and test with a physical mobile device and screen reader.
-- **Committed?** no — documentation changes are pending commit.
+- **Committed?** yes — `1eb1c12` (Document project milestones and publish TerraForma site).
 
 ### Session — 2026-11-16 — driver: student
 

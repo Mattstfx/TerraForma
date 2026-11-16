@@ -179,6 +179,21 @@ main {
 .theme-control select { width: 100%; min-height: 36px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--ink); font: inherit; }
 .theme-status { min-height: 1em; margin: 0; color: var(--muted); font-size: 0.62rem; }
 
+.getting-started {
+  margin-bottom: 22px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+.getting-started h2 { margin: 0; color: var(--forest-deep); font-family: Georgia, "Times New Roman", serif; font-size: 1.3rem; font-weight: 500; }
+.getting-started p { margin: 5px 0 0; color: #647168; font-size: 0.73rem; }
+.getting-started ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 24px; margin: 13px 0 0; padding-left: 20px; }
+.getting-started li { padding-left: 2px; color: var(--forest); font-size: 0.75rem; font-weight: 700; }
+.getting-started li a { text-underline-offset: 3px; }
+.getting-started li span { display: block; margin-top: 3px; color: #647168; font-size: 0.69rem; font-weight: 400; }
+.getting-started .getting-started-note { margin-top: 13px; font-size: 0.66rem; }
+
 .button {
   display: inline-flex;
   min-height: 46px;
@@ -694,6 +709,8 @@ main {
   .welcome { padding-bottom: 27px; }
   .welcome h1 { font-size: clamp(2.05rem, 10vw, 2.8rem); }
   .welcome-copy { font-size: 0.88rem; }
+  .getting-started { padding: 16px; }
+  .getting-started ol { grid-template-columns: 1fr; gap: 8px; }
   .brief-disclosure > summary { align-items: flex-start; flex-direction: column; gap: 3px; }
   .brief-actions { align-items: flex-start; flex-direction: column; }
   .brief-actions > div { width: 100%; }

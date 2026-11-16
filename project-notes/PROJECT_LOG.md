@@ -10,6 +10,14 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 ## Work sessions
 
+### Session — 2026-11-16 — driver: student
+
+- **Goal for this session:** Make the school demo easier for a first-time visitor to use and fix problems found in its core planning flow.
+- **What changed:** Added a short, linked three-step guide for drawing a test boundary and placing a feature. Corrected the prototype disclaimer to distinguish fictional sample properties from attributed real regional map data. Repaired drawing status and measurement previews after the previous branch merge, including snap status and freeform, rectangle, square, and circle labels.
+- **What we checked:** In an isolated browser, followed the guide to draw and save a boundary and a 1 × 30 m bed, checked snap feedback and the dimension label, and verified the plan survived reload. Checked freeform, square, and circle previews, the existing Cedar Ridge workspace, and narrow-screen overflow. JavaScript syntax and diff formatting passed. The test data was removed from the isolated browser afterward.
+- **Limitations:** The guide does not make the prototype a survey or a professional design. Real regional map data must be checked against the course's fictional-data rules with the instructor.
+- **Committed?** no — not committed yet.
+
 ### Session — 2026-11-12 — driver: student
 
 - **Goal for this session:** Add source-backed contours and separate mapped water from proposed water on the terrain test map.

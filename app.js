@@ -2163,6 +2163,7 @@
   function updateDrawingStatus() {
     const needed = minimumDrawingPoints();
     elements.finishDrawing.disabled = drawingPoints.length < needed;
+    const snapGridMeters = Number(elements.drawingSnap.value);
     const gridInfo = snapGridMeters ? " (grid: " + snapGridMeters + "m)" : "";
     if (drawingPoints.length) {
       elements.drawingStatus.textContent = drawingPoints.length + " of " + needed +
@@ -2256,9 +2257,10 @@
     
     if (drawingPoints.length > 0 && drawingShape === "freeform") {
       const lastPoint = drawingPoints[drawingPoints.length - 1];
-      const distance = distanceInMeters(lastPoint, keyboardCursor);
-      const midX = (lastPoint[0] + keyboardCursor[0]) / 2;
-      const midY = (lastPoint[1] + keyboardCursor[1]) / 2;
+      const cursor = [keyboardCursor.x, keyboardCursor.y];
+      const distance = distanceInMeters(lastPoint, cursor);
+      const midX = (lastPoint[0] + cursor[0]) / 2;
+      const midY = (lastPoint[1] + cursor[1]) / 2;
       
       group.appendChild(svgElement("text", {
         x: midX,
@@ -2267,18 +2269,15 @@
         "text-anchor": "middle"
       })).textContent = distance.toFixed(1) + " m";
     } else if ((drawingShape === "rectangle" || drawingShape === "square" || drawingShape === "circle") && drawingPoints.length >= 1) {
-      const anchor = drawingPoints[0];
-      const endpoint = drawingPoints[1] || keyboardCursor;
-      const widthM = distanceInMeters(anchor, [endpoint[0], anchor[1]]);
-      const depthM = distanceInMeters(anchor, [anchor[0], endpoint[1]]);
-      const circleDiam = Math.hypot(widthM, depthM);
-      
-      const midX = (anchor[0] + endpoint[0]) / 2;
-      const midY = (anchor[1] + endpoint[1]) / 2;
+      const bounds = polygonBounds(draftPolygon);
+      const widthM = (bounds.maxX - bounds.minX) / mapUnitsPerMeter();
+      const depthM = (bounds.maxY - bounds.minY) / mapUnitsPerMeter();
+      const midX = (bounds.minX + bounds.maxX) / 2;
+      const midY = (bounds.minY + bounds.maxY) / 2;
       
       let label = "";
       if (drawingShape === "circle") {
-        label = (circleDiam).toFixed(1) + " m diam";
+        label = widthM.toFixed(1) + " m diam";
       } else if (drawingShape === "square") {
         label = (widthM).toFixed(1) + " m × " + (widthM).toFixed(1) + " m";
       } else {
@@ -3756,6 +3755,7 @@
   elements.drawingSnap.addEventListener("change", function () {
     const snappedCursor = snapMapPoint([keyboardCursor.x, keyboardCursor.y]);
     keyboardCursor = { x: snappedCursor[0], y: snappedCursor[1] };
+    updateDrawingStatus();
     renderDraft();
   });
   elements.drawingWidth.addEventListener("input", renderDraft);

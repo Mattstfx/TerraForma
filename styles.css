@@ -323,6 +323,7 @@ main {
 }
 
 .property-heading .eyebrow { margin-bottom: 4px; }
+.property-workspace-picker { min-width: 0; max-width: 100%; }
 .muted { color: var(--muted); }
 .property-heading .muted { margin: 3px 0 0; font-size: 0.82rem; }
 
@@ -518,6 +519,24 @@ main {
 .terrain-raster { display: none; }
 .terrain-relief-overlay { display: none; }
 .map-ground { fill: #e8eee1; }
+.map-frame.is-fictional-demo .illustration-context { display: none; }
+.map-frame.is-fictional-demo .map-markers { display: none; }
+.fictional-contour {
+  fill: none;
+  stroke: #8d7457;
+  stroke-width: 0.6;
+  opacity: 0.7;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+.fictional-suggestion-marker {
+  fill: #fff7c0;
+  fill-opacity: 0.5;
+  stroke: #9c7322;
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+  pointer-events: none;
+}
 .parcel { fill: #d6e0c9; stroke: #667e61; stroke-width: 3; stroke-dasharray: 8 7; }
 .map-frame.is-georeferenced-terrain .parcel {
   fill: rgb(214 224 201 / 10%);

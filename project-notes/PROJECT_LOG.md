@@ -10,6 +10,41 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 ## Work sessions
 
+### Session — 2026-11-20 — driver: student
+
+- **Goal:** Create a fictional half-acre map for testing planning features without replacing existing workspaces.
+- **Key prompt:** "last task is to create a detailed fake map of a single interactive property" with closer contour intervals, a house, woodland, curved driveway and easier placement.
+- **What changed:** Added a separate fictional workspace with an existing house, illustrated woodland and driveway, simulated SVG contours and simplified grading for certain footprints. Added suggested test positions and one-click center placement in this workspace; existing workspaces retain their previous drawing tools.
+- **What we checked:** In an isolated browser, placed each catalog feature in its suggested position, added a bed inside a garden, checked overlap rejection and free placement, reloaded saved plans, toggled contours, zoomed to the one-inch simulated interval, checked grading changes and undo, switched to both older workspaces, and checked a narrow browser viewport. JavaScript syntax and diff formatting were checked.
+- **Limitations:** The height model, woodland and driveway are fictional, and the driveway and woodland are fixed illustrations. Grading is simplified and only applies to buildings, greenhouses, gardens, beds and compost areas; other features do not change elevation. Test positions are not suitability recommendations, and the model is not a survey or excavation design. Wind effects are not simulated. Physical-device testing remains outstanding.
+- **Committed?** no.
+
+**Prompt-history note:** The writing guide asks for the prompts that mattered, not every message. Key prompts are recorded for several sessions (2026-11-06, selected 2026-11-07 sessions, and 2026-11-16); exact prompts for the remaining sessions have not been recovered, so do not treat this as a complete transcript.
+
+### Project setup prompt
+
+> this is the template i want to use.
+>
+> https://github.com/dmattie/ai-to-startup-template
+
+### Broader feature request — 2026-11-16
+
+This request introduced several ideas later handled in separate work sessions:
+
+> the drop down menus, i dont like how they pop out full screen like that.
+>
+> the whole idea of having the three different views was to have that switch the prioritys in the building types of all things and the layout should be geared to that.
+>
+> id like to have selectable elevation lines. rebuld the map with SVG so i can zoom in without losing detail.
+>
+> there should be a way to change the map, ie being able to clear trees and flaten/change shape of the land within reason using actual measurements that an excavator can do.
+>
+> the icons for each item on the map should have its own SVG design, and make the UI UX of placing things from the add a planning idea. maybe being able to choose a garden area and then having the obility to add or remove or extend fence areas etc.
+>
+> I also wanted three different layouts of this UI to see which kind i like best. i didnt mean just giving me three different colour schemes.
+>
+> each item on the map should be interactive. maybe 3d it when clicking on an item so it can be modified and have that look match the icons on the map. i should be able to foe example click on a garden and add a fence and be able to select each bed inside the garden and be able to modify it there
+
 ### Session — 2026-11-16 — driver: student
 
 - **Goal:** Bring the project log up to date and publish the prototype.
@@ -25,6 +60,9 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 - **Goal:** Make placing a planning feature easier to follow.
 - **What changed:** Organized placement into choosing a feature, setting shape and size, and drawing and saving. Moved drawing controls above the map, added keyboard guidance and live validation with an invalid-outline highlight, and clarified approximate dimensions. Unfinished drawings are protected from starting another feature or changing shape without confirmation; saving opens the selected feature's editor.
+- **Key prompts we gave Copilot:**
+  1. "whats the next item"
+  2. "ok lets get started"
 - **What we checked:** In an isolated browser, tested missing boundaries, shape and dimension controls, freeform, rectangle, square and circle, invalid boundary, overlap and crossing feedback, undo, keyboard drawing, cancel, storage failure, and drawing a bed inside a garden. Checked save/reload and a 312-pixel viewport, JavaScript syntax, and diff formatting.
 - **Limitations:** Measurements are approximate, not surveys. Zoom remains available while drawing, but pan mode requires finishing or cancelling first. Mobile testing used a browser viewport, not a physical device.
 - **Committed?** yes — `338742e` (Improve map placement workflow).
@@ -33,6 +71,9 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 - **Goal:** Make mapped planning features easier to distinguish.
 - **What changed:** Added a distinct SVG symbol for each planning feature on the map and in the plan list. Symbols are illustrative, not scaled models; the existing footprints remain the editable areas. Fixed an observation-marker overlay that blocked footprint clicks on the archived map.
+- **Key prompts we gave Copilot:**
+  1. "the icons for each item on the map should have its own SVG design"
+  2. "ok lets get the next item done"
 - **What we checked:** In an isolated browser, checked all 16 symbols, map and list rendering, clicking and keyboard selection, observation markers, boundary-edit and pan pointer behavior, proposed-water visibility, zoom, concave footprints, and a garden with a nested bed saved and reloaded. Checked a 312-pixel viewport, JavaScript syntax, and diff formatting.
 - **Limitations:** Symbols are 2D illustrations, not realistic or 3D models. Small features may require zooming in.
 - **Committed?** yes — `afb2c14` (Add distinct planning feature symbols).
@@ -41,6 +82,9 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 - **Goal:** Give each design perspective its own planning layout and feature priorities.
 - **What changed:** Added Observe & connect, Map studio, and Action desk views linked to the permaculture, landscape, and homestead perspectives. The views rearrange the existing workspace and highlight relevant planning ideas without removing options or changing saved property data. The chosen view is saved separately in the browser.
+- **Key prompts we gave Copilot:**
+  1. "I also wanted three different layouts of this UI to see which kind i like best. i didnt mean just giving me three different colour schemes."
+  2. "lets get the next one started. pick one, is there any questions you have first"
 - **What we checked:** In an isolated browser, checked all three views at desktop, intermediate, and narrow widths, both sets of perspective buttons, preserved form input and selections, reordered dropdown choices, drawing restrictions, storage errors, and reload persistence. Drew a garden, switched views, added a bed inside it, and verified both survived reload. JavaScript syntax and diff formatting passed.
 - **Limitations:** Highlighted ideas are starting points, not site-specific recommendations. Mobile layouts were checked in a browser viewport, not on a physical device.
 - **Committed?** yes — `97d79e9` (Add perspective-based planning layouts).
@@ -49,6 +93,10 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 - **Goal:** Keep dropdown choices near their controls rather than using large browser-native menus.
 - **What changed:** Added compact, scrollable menus that open above or below the selected control, including dynamically generated guild choices. The original form controls remain in place as a fallback if the menu script cannot load. Keyboard selection, type-to-search, focus, disabled choices, and required-field feedback are supported.
+- **Key prompts we gave Copilot:**
+  1. "whats next on the list?"
+  2. "the drop down menus, i dont like how they pop out full screen like that."
+  3. "ok. lets start on the drop down menus"
 - **What we checked:** In an isolated browser, checked positioning and scrolling at a 312-pixel viewport, mouse and keyboard selection, Escape, type-to-search, dynamic plant choices, required and disabled options, the native fallback, map-view restrictions, and drawing a bed inside a garden. JavaScript syntax and diff formatting passed.
 - **Limitations:** Mobile sizing was checked in a browser viewport; physical-device and screen-reader testing are still recommended.
 - **Committed?** yes — `0c02f2c` (Add compact anchored dropdown menus).
@@ -57,6 +105,9 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 - **Goal:** Start an interactive garden with individually editable beds and selectable boundary fence sections.
 - **What changed:** Added garden-area footprints, numbered fence sides, and a workflow for drawing beds inside a selected garden. Beds retain their existing plant-placement editor, save independently, and do not count twice against property capacity. Standalone saved beds remain supported. Garden deletion and footprint changes are blocked while beds remain; fence sections must be removed before resizing or reshaping the garden.
+- **Key prompts we gave Copilot:**
+  1. "maybe being able to choose a garden area and then having the obility to add or remove or extend fence areas etc."
+  2. "i should be able to foe example click on a garden and add a fence and be able to select each bed inside the garden and be able to modify it there"
 - **What we checked:** In an isolated browser, drew a garden and two beds, placed a plant, toggled fencing, reloaded, and checked undo, deletion restrictions, overlapping and out-of-garden edits, legacy standalone-bed loading, malformed relationships, and storage-failure rollback. Checked a 312-pixel viewport, JavaScript syntax, and diff formatting.
 - **Limitations:** Fence sections cover whole polygon sides; gates and fence specifications are not modelled. Garden and bed geometry is approximate 2D planning, not a survey or construction design. A garden cannot yet move together with its beds.
 - **Committed?** yes — `2900576` (Add interactive garden areas with beds and fencing).
@@ -65,6 +116,9 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 - **Goal for this session:** Make the school demo easier for a first-time visitor to use and fix problems found in its core planning flow.
 - **What changed:** Added a short, linked three-step guide for drawing a test boundary and placing a feature. Corrected the prototype disclaimer to distinguish fictional sample properties from attributed real regional map data. Repaired drawing status and measurement previews after the previous branch merge, including snap status and freeform, rectangle, square, and circle labels.
+- **Key prompts we gave Copilot:**
+  1. "where are we with this project? what has to get done for the school part still. i think it needs to be turned on and shared with my professor. im not sure if this qualifies as an MVP"
+  2. "then can we work on making the MVP as gooder as we can. lol?"
 - **What we checked:** In an isolated browser, followed the guide to draw and save a boundary and a 1 × 30 m bed, checked snap feedback and the dimension label, and verified the plan survived reload. Checked freeform, square, and circle previews, the existing Cedar Ridge workspace, and narrow-screen overflow. JavaScript syntax and diff formatting passed. The test data was removed from the isolated browser afterward.
 - **Limitations:** The guide does not make the prototype a survey or a professional design. Real regional map data must be checked against the course's fictional-data rules with the instructor.
 - **Committed?** yes — `f867b59` (Improve first-time planning experience).

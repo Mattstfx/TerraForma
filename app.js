@@ -14,6 +14,12 @@
       brief: "terraforma-waverley-site-brief",
       profile: "terraforma-waverley-profile",
       boundary: "terraforma-waverley-boundary"
+    },
+    "fictional-half-acre": {
+      plan: "terraforma-fictional-half-acre-plan",
+      brief: "terraforma-fictional-half-acre-brief",
+      profile: "terraforma-fictional-half-acre-profile",
+      boundary: "terraforma-fictional-half-acre-boundary"
     }
   };
   const squareMetersPerAcre = 4046.8564224;
@@ -257,7 +263,7 @@
     cancelPropertyProfile: document.getElementById("cancel-property-profile")
   };
 
-  let activeProjectId = "waverley-terrain-demo";
+  let activeProjectId = "fictional-half-acre";
   try {
     const savedProjectId = window.localStorage.getItem(activeProjectStorageKey);
     if (savedProjectId && projectStorageKeys[savedProjectId]) activeProjectId = savedProjectId;
@@ -266,7 +272,16 @@
   }
   const ACTIVE_PROPERTY = activeProjectId === "waverley-terrain-demo"
     ? TERRAIN_DEMO_PROPERTY
-    : PROPERTY;
+    : activeProjectId === "fictional-half-acre" ? FICTIONAL_DEMO_PROPERTY : PROPERTY;
+  const isFictionalDemo = activeProjectId === "fictional-half-acre";
+  const fictionalLandscape = document.getElementById("fictional-landscape");
+  const fictionalContours = document.getElementById("fictional-contours");
+  const fictionalSuggestion = document.getElementById("fictional-suggestion");
+  const fictionalContourControl = document.getElementById("fictional-contour-control");
+  const fictionalContourToggle = document.getElementById("fictional-contours-toggle");
+  const fictionalContourStatus = document.getElementById("fictional-contour-status");
+  const demoSuggestedSpot = document.getElementById("demo-suggested-spot");
+  const demoPlacementHelp = document.getElementById("demo-placement-help");
 
   function currentStorageKey(type) {
     return projectStorageKeys[activeProjectId][type];
@@ -587,6 +602,10 @@
   }
 
   function setMapView(view) {
+    if (isFictionalDemo && view !== "illustrative") {
+      view = "illustrative";
+      elements.terrainLayer.value = view;
+    }
     if (activeProjectId === "waverley-terrain-demo" && view === "illustrative") {
       view = "dtm-hillshade";
       elements.terrainLayer.value = view;
@@ -601,6 +620,11 @@
     elements.mapFrame.classList.toggle("is-terrain-view", isTerrain);
     elements.mapFrame.classList.toggle("is-terrain-preview", isTerrain && !isGeoreferencedTerrain);
     elements.mapFrame.classList.toggle("is-georeferenced-terrain", isGeoreferencedTerrain);
+    elements.mapFrame.classList.toggle("is-fictional-demo", isFictionalDemo);
+    fictionalLandscape.hidden = !isFictionalDemo;
+    fictionalContours.hidden = !isFictionalDemo || !fictionalContourToggle.checked;
+    fictionalContourControl.hidden = !isFictionalDemo;
+    fictionalContourStatus.hidden = !isFictionalDemo;
     elements.propertyGrid.classList.toggle("is-terrain-view", isTerrain);
     elements.terrainSource.hidden = !isTerrain;
     elements.terrainLegend.hidden = !isTerrain || !terrainLayerDetails[view].legend;
@@ -612,7 +636,8 @@
     elements.cancelBoundary.disabled = isTerrain && !isGeoreferencedTerrain;
     elements.mapFrame.setAttribute("aria-label", isTerrain
       ? "Real Natural Resources Canada terrain data preview for the Waverley area, Nova Scotia. This is not a legal parcel boundary."
-      : "Illustrative property map with three selectable observation locations.");
+      : isFictionalDemo ? "Fictional half-acre planning map with simulated contours."
+        : "Illustrative property map with three selectable observation locations.");
     elements.mapSvg.setAttribute("aria-label", isTerrain
       ? isGeoreferencedTerrain
         ? "Waverley-area terrain test map. Draw a synthetic parcel boundary and place plan features in this fixed map area."
@@ -622,11 +647,19 @@
     if (!isTerrain) {
       elements.mapTitle.textContent = "Illustrative map · " + elements.propertyName.textContent;
       elements.mapDescription.textContent =
-        "A fictional, not-to-scale property drawing with wooded edges, a clearing, a path, and a low corner.";
+        isFictionalDemo
+          ? "A fictional half-acre with an editable house, illustrated woodland and curved driveway, simulated contour lines and planning footprints."
+          : "A fictional, not-to-scale property drawing with wooded edges, a clearing, a path, and a low corner.";
       elements.mapContext.textContent = "Illustrative layout · Not to scale";
       elements.mapScaleNote.textContent = "Illustrative, not measured";
       elements.terrainStatus.textContent =
-        "Terrain layers use a fixed Waverley-area test window. The terrain is real; the demo property and boundary are synthetic.";
+        isFictionalDemo
+          ? "Imaginary contours flatten around buildings, greenhouses, gardens, beds and compost areas. Other features do not change elevation. Not a survey or excavation plan. The fixed drive and woodland are illustrations; wind effects are not modeled."
+          : "Terrain layers use a fixed Waverley-area test window. The terrain is real; the demo property and boundary are synthetic.";
+      if (isFictionalDemo) {
+        elements.mapContext.textContent = "Fictional half-acre · simulated terrain and grading";
+        elements.mapScaleNote.textContent = "Fictional model dimensions · not a survey";
+      }
       elements.boundaryEditorNote.textContent =
         "The terrain illustration stays fictional. Edit the outline to match a sketch; it is not georeferenced or a surveyed boundary.";
       elements.terrainRaster.removeAttribute("href");
@@ -701,6 +734,11 @@
         "New synthetic test property · Cedar Ridge remains archived and available.";
       elements.mapSectionHint.textContent =
         "Draw a synthetic boundary, then add building or landscape footprints. Terrain layers show regional elevation only.";
+    } else if (isFictionalDemo) {
+      elements.propertyWorkspaceStatus.textContent =
+        "Fictional demonstration property · other workspaces and their saved plans are preserved.";
+      elements.mapSectionHint.textContent =
+        "Choose a planning idea, then use its suggested spot or click the map once.";
     } else {
       elements.propertyWorkspaceStatus.textContent =
         "Archived demo workspace · saved plans and sketches are preserved separately.";
@@ -708,6 +746,16 @@
     }
     const illustrativeOption = elements.terrainLayer.querySelector('option[value="illustrative"]');
     illustrativeOption.hidden = activeProjectId === "waverley-terrain-demo";
+    Array.from(elements.terrainLayer.options).forEach(function (option) {
+      if (option.value !== "illustrative") option.hidden = isFictionalDemo;
+    });
+    if (isFictionalDemo) {
+      elements.drawingShape.querySelector('option[value="rectangle"]').textContent = "Rectangle · one click";
+      elements.drawingShape.querySelector('option[value="square"]').textContent = "Square · one click";
+      elements.drawingShape.querySelector('option[value="circle"]').textContent = "Circle · one click";
+      elements.drawingWidth.placeholder = "Width in metres";
+      elements.drawingDepth.placeholder = "Depth in metres";
+    }
     elements.terrainLayer.value = activeMapView;
     setMapView(activeMapView);
   }
@@ -2029,12 +2077,159 @@
     return node;
   }
 
+  const demoSpotIds = [
+    "garden-area", "greenhouse", "food-forest", "garden-beds",
+    "fruit-tree", "berry-planting", "apple-guild", "angled-espalier",
+    "pollinator-patch", "beneficial-habitat", "pest-exclusion", "rain-garden",
+    "compost-area", "building-footprint", "garden-path", "native-border"
+  ];
+  let contourFrame = null;
+
+  function fictionalSpot(featureId) {
+    const index = demoSpotIds.indexOf(featureId);
+    if (index < 0) return null;
+    return [240 + (index % 4) * 85, 95 + Math.floor(index / 4) * 70];
+  }
+
+  function renderFictionalSuggestion() {
+    fictionalSuggestion.replaceChildren();
+    const spot = isFictionalDemo && pendingPlanItem && !pendingPlanItem.parentId
+      ? fictionalSpot(pendingPlanItem.featureId) : null;
+    fictionalSuggestion.hidden = !spot;
+    if (!spot) return;
+    fictionalSuggestion.appendChild(svgElement("circle", {
+      cx: spot[0], cy: spot[1], r: 12, class: "fictional-suggestion-marker"
+    }));
+  }
+
+  demoSuggestedSpot.addEventListener("click", function () {
+    const spot = pendingPlanItem && fictionalSpot(pendingPlanItem.featureId);
+    if (!spot) return;
+    if (drawingShape === "freeform") {
+      elements.drawingStatus.textContent = "Choose a rectangle, square, or circle to use the suggested spot.";
+      return;
+    }
+    drawingPoints = [spot];
+    keyboardCursor = { x: spot[0], y: spot[1] };
+    updateDrawingStatus();
+    renderDraft();
+  });
+
+  function fictionalBaseElevation(x, y) {
+    return 10 + x * 0.0015 + y * 0.004 +
+      0.12 * Math.sin(x / 85) * Math.cos(y / 75);
+  }
+
+  function distanceToPolygon(point, polygon) {
+    let distance = Infinity;
+    polygon.forEach(function (start, index) {
+      const end = polygon[(index + 1) % polygon.length];
+      const dx = end[0] - start[0];
+      const dy = end[1] - start[1];
+      const length = dx * dx + dy * dy;
+      const t = length ? Math.max(0, Math.min(1,
+        ((point[0] - start[0]) * dx + (point[1] - start[1]) * dy) / length)) : 0;
+      distance = Math.min(distance, Math.hypot(point[0] - start[0] - t * dx, point[1] - start[1] - t * dy));
+    });
+    return distance;
+  }
+
+  function scheduleFictionalContours() {
+    if (!isFictionalDemo || contourFrame !== null) return;
+    contourFrame = requestAnimationFrame(function () {
+      contourFrame = null;
+      renderFictionalContours();
+    });
+  }
+
+  function renderFictionalContours() {
+    fictionalContours.replaceChildren();
+    fictionalContours.hidden = !fictionalContourToggle.checked;
+    if (!fictionalContourToggle.checked) {
+      fictionalContourStatus.textContent = "Simulated contours hidden.";
+      return;
+    }
+    const zoom = 640 / mapViewBox.width;
+    const interval = zoom >= 12 ? 0.0254 : zoom >= 5 ? 0.1 : zoom >= 2 ? 0.25 : 0.5;
+    fictionalContourStatus.textContent = "Simulated contour interval: " +
+      (interval === 0.0254 ? "1 inch (2.54 cm)" : interval + " m") +
+      ". Imaginary elevations and grading; not engineering measurements.";
+    const clip = svgElement("clipPath", { id: "fictional-contour-clip" });
+    clip.appendChild(svgElement("polygon", {
+      points: propertyBoundary.map(function (point) { return point.join(","); }).join(" ")
+    }));
+    fictionalContours.appendChild(clip);
+    const lines = svgElement("g", { "clip-path": "url(#fictional-contour-clip)" });
+    fictionalContours.appendChild(lines);
+    const graded = planItems.filter(function (item) {
+      return ["building-footprint", "greenhouse", "garden-area", "garden-beds", "compost-area"].includes(item.featureId);
+    }).map(function (item) {
+      const center = polygonCenter(item.polygon);
+      return { polygon: item.polygon, target: fictionalBaseElevation(center.x, center.y) };
+    });
+    function height(x, y) {
+      let value = fictionalBaseElevation(x, y);
+      graded.forEach(function (area) {
+        const point = [x, y];
+        const distance = pointInPolygon(point, area.polygon) ? 0 : distanceToPolygon(point, area.polygon);
+        const weight = Math.max(0, 1 - distance / 8);
+        value += (area.target - value) * weight * weight * (3 - 2 * weight);
+      });
+      return value;
+    }
+    const columns = 100;
+    const rows = 68;
+    const stepX = mapViewBox.width / columns;
+    const stepY = mapViewBox.height / rows;
+    const values = [];
+    for (let y = 0; y <= rows; y += 1) {
+      const row = [];
+      for (let x = 0; x <= columns; x += 1) {
+        row.push(height(mapViewBox.x + x * stepX, mapViewBox.y + y * stepY));
+      }
+      values.push(row);
+    }
+    const paths = new Map();
+    for (let y = 0; y < rows; y += 1) {
+      for (let x = 0; x < columns; x += 1) {
+        const corners = [
+          [mapViewBox.x + x * stepX, mapViewBox.y + y * stepY, values[y][x]],
+          [mapViewBox.x + (x + 1) * stepX, mapViewBox.y + y * stepY, values[y][x + 1]],
+          [mapViewBox.x + (x + 1) * stepX, mapViewBox.y + (y + 1) * stepY, values[y + 1][x + 1]],
+          [mapViewBox.x + x * stepX, mapViewBox.y + (y + 1) * stepY, values[y + 1][x]]
+        ];
+        const min = Math.min.apply(null, corners.map(function (p) { return p[2]; }));
+        const max = Math.max.apply(null, corners.map(function (p) { return p[2]; }));
+        for (let level = Math.ceil(min / interval); level * interval < max; level += 1) {
+          const elevation = level * interval;
+          const crossings = [];
+          corners.forEach(function (a, index) {
+            const b = corners[(index + 1) % 4];
+            if ((a[2] < elevation) === (b[2] < elevation)) return;
+            const t = (elevation - a[2]) / (b[2] - a[2]);
+            crossings.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+          });
+          for (let i = 0; i + 1 < crossings.length; i += 2) {
+            const segment = "M" + crossings[i][0].toFixed(2) + " " + crossings[i][1].toFixed(2) +
+              "L" + crossings[i + 1][0].toFixed(2) + " " + crossings[i + 1][1].toFixed(2);
+            paths.set(level, (paths.get(level) || "") + segment);
+          }
+        }
+      }
+    }
+    paths.forEach(function (path) {
+      lines.appendChild(svgElement("path", { d: path, class: "fictional-contour" }));
+    });
+  }
+
+  fictionalContourToggle.addEventListener("change", scheduleFictionalContours);
+
   function mapUnitsPerMeter() {
     return 1 / Math.sqrt(propertyMapAreaM2PerUnit);
   }
 
   function constrainedMapViewBox(viewBox) {
-    const width = Math.max(120, Math.min(640, viewBox.width));
+    const width = Math.max(isFictionalDemo ? 25 : 120, Math.min(640, viewBox.width));
     const height = width * 430 / 640;
     return {
       x: Math.max(0, Math.min(640 - width, viewBox.x)),
@@ -2054,8 +2249,9 @@
     ].join(" "));
     elements.mapZoomLevel.textContent = Math.round(640 / mapViewBox.width * 100) + "%";
     elements.mapZoomOut.disabled = mapViewBox.width >= 640;
-    elements.mapZoomIn.disabled = mapViewBox.width <= 120;
+    elements.mapZoomIn.disabled = mapViewBox.width <= (isFictionalDemo ? 25 : 120);
     elements.mapZoomReset.disabled = mapViewBox.width === 640 && mapViewBox.x === 0 && mapViewBox.y === 0;
+    scheduleFictionalContours();
   }
 
   function zoomMap(factor) {
@@ -2127,6 +2323,18 @@
     if (!drawingPoints.length) return [];
 
     const anchor = drawingPoints[0];
+    if (isFictionalDemo) {
+      const dimensions = specifiedDrawingDimensions();
+      const width = (dimensions.width || 5) * mapUnitsPerMeter();
+      const depth = (drawingShape === "square" ? dimensions.width || 5 : dimensions.depth || dimensions.width || 4) * mapUnitsPerMeter();
+      if (drawingShape === "circle") return circlePolygon(anchor, width);
+      return [
+        [anchor[0] - width / 2, anchor[1] - depth / 2],
+        [anchor[0] + width / 2, anchor[1] - depth / 2],
+        [anchor[0] + width / 2, anchor[1] + depth / 2],
+        [anchor[0] - width / 2, anchor[1] + depth / 2]
+      ];
+    }
     const endpoint = drawingPoints[1] || [keyboardCursor.x, keyboardCursor.y];
     const dimensions = specifiedDrawingDimensions();
     const directionX = endpoint[0] < anchor[0] ? -1 : 1;
@@ -2260,13 +2468,15 @@
     elements.drawingWidthLabel.childNodes[0].textContent = isSquare
       ? "Side length (m) "
       : isCircle ? "Diameter (m) " : "Width (m) ";
-    elements.drawingDimensionHelp.textContent = isCircle
+    elements.drawingDimensionHelp.textContent = isFictionalDemo
+      ? "Click once to place the center; adjust the dimensions before saving. Dimensions describe the fictional model, not a surveyed site."
+      : isCircle
       ? "The center is halfway between your two points. Enter a diameter, or leave it blank to draw the size. Measurements are approximate, not a survey."
       : "Enter dimensions or leave them blank to draw the size. With dimensions entered, the first point anchors the shape and the second sets its direction. Measurements are approximate, not a survey.";
   }
 
   function minimumDrawingPoints() {
-    return drawingShape === "freeform" ? 3 : 2;
+    return drawingShape === "freeform" ? 3 : isFictionalDemo ? 1 : 2;
   }
 
   function updateDrawingStatus() {
@@ -2282,7 +2492,8 @@
     } else if (drawingPoints.length >= needed) {
       elements.drawingStatus.textContent = drawingShape === "freeform"
         ? "Footprint is ready to save. You can add more points or undo the last one." + gridInfo
-        : "Footprint is ready to save. You can change dimensions or undo the second corner." + gridInfo;
+        : isFictionalDemo ? "Footprint is ready to save. Adjust dimensions or undo to reposition it." + gridInfo
+          : "Footprint is ready to save. You can change dimensions or undo the second corner." + gridInfo;
     } else if (drawingPoints.length) {
       elements.drawingStatus.textContent = drawingPoints.length + " of " + needed +
         " required point" + (needed === 1 ? "" : "s") + " placed. " +
@@ -2295,7 +2506,9 @@
         : "inside the property boundary";
       elements.drawingStatus.textContent = drawingShape === "freeform"
         ? "Click or tap at least three points " + location + " to outline this feature." + gridInfo
-        : "Place two opposite corners " + location + ". Optional dimensions set the scaled size." + gridInfo;
+        : isFictionalDemo ? "Click once " + location + " to place the center" +
+          (pendingPlanItem && pendingPlanItem.parentId ? "." : ", or use the suggested spot.") + gridInfo
+          : "Place two opposite corners " + location + ". Optional dimensions set the scaled size." + gridInfo;
     }
   }
 
@@ -2543,6 +2756,7 @@
     });
     renderDraft();
     renderBedPlantingCandidates();
+    scheduleFictionalContours();
   }
 
   function nearestZone(points) {
@@ -3653,8 +3867,11 @@
     selectedPlanId = null;
     pendingPlanItem = item;
     drawingPoints = [];
-    elements.drawingShape.value = item.featureId === "garden-beds" ? "rectangle" : "freeform";
-    if (item.featureId === "garden-beds") {
+    elements.drawingShape.value = isFictionalDemo || item.featureId === "garden-beds" ? "rectangle" : "freeform";
+    if (isFictionalDemo) {
+      elements.drawingWidth.value = item.featureId === "garden-beds" ? "1" : "6";
+      elements.drawingDepth.value = item.featureId === "garden-beds" ? "3" : "4";
+    } else if (item.featureId === "garden-beds") {
       elements.drawingWidth.value = "1";
       elements.drawingDepth.value = "30";
     } else {
@@ -3665,6 +3882,9 @@
     elements.drawingShape.dispatchEvent(new Event("change", { bubbles: true }));
     keyboardCursor = { x: 320, y: 215 };
     elements.drawingToolbar.hidden = false;
+    demoSuggestedSpot.hidden = !isFictionalDemo || Boolean(item.parentId);
+    demoPlacementHelp.hidden = !isFictionalDemo;
+    renderFictionalSuggestion();
     elements.mapPanToggle.disabled = true;
     elements.mapNavigationHint.textContent = "Pinch or use zoom controls while drawing. Pan mode is available after saving or canceling.";
     elements.drawingFeature.textContent = "Placing: " + item.feature +
@@ -3713,7 +3933,13 @@
 
   function addDrawingPoint(point) {
     if (!pendingPlanItem) return;
-    if (drawingShape !== "freeform" && drawingPoints.length >= 2) {
+    if (drawingShape !== "freeform" && drawingPoints.length >= (isFictionalDemo ? 1 : 2)) {
+      if (isFictionalDemo) {
+        drawingPoints = [snapMapPoint(point)];
+        updateDrawingStatus();
+        renderDraft();
+        return;
+      }
       elements.drawingStatus.textContent = "Both corners are set. Finish the area or undo the second corner to redraw it.";
       return;
     }
@@ -3774,6 +4000,8 @@
     pendingPlanItem = null;
     drawingPoints = [];
     elements.drawingToolbar.hidden = true;
+    fictionalSuggestion.replaceChildren();
+    fictionalSuggestion.hidden = true;
     elements.mapPanToggle.disabled = false;
     setMapPanMode(false);
     selectPlan(savedItem.id, false);
@@ -4224,6 +4452,8 @@
     pendingPlanItem = null;
     drawingPoints = [];
     elements.drawingToolbar.hidden = true;
+    fictionalSuggestion.replaceChildren();
+    fictionalSuggestion.hidden = true;
     elements.mapPanToggle.disabled = false;
     setMapPanMode(false);
     renderDraft();

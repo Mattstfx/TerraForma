@@ -92,6 +92,39 @@ const TERRAIN_DEMO_PROPERTY = {
   initialPlan: []
 };
 
+const FICTIONAL_DEMO_PROPERTY = {
+  id: "fictional-half-acre",
+  name: "TerraForma Demonstration Garden",
+  location: "Fictional property · not a real location",
+  area: 0.5,
+  areaUnit: "acres",
+  areaNote: "Half-acre fictional model, not a surveyed property",
+  areaM2: 2023.4282112,
+  mapAreaM2PerUnit: 2023.4282112 / (500 * 400),
+  mapBoundary: [[70, 15], [570, 15], [570, 415], [70, 415]],
+  zones: [{
+    id: "demo-clearing",
+    label: "Fictional clearing",
+    shortLabel: "Clearing",
+    x: 72,
+    y: 82,
+    category: "Sunlight",
+    evidence: "Fictional example",
+    title: "Illustrative growing space",
+    note: "The sun, wind, soils and drainage on this imaginary property have not been modeled or measured."
+  }],
+  initialPlan: [{
+    id: "fictional-house",
+    featureId: "building-footprint",
+    feature: "Building footprint",
+    location: "Fictional home",
+    variety: "Existing house / dwelling",
+    note: "Fictional demonstration house, not an actual site or construction design.",
+    polygon: [[100, 245], [195, 245], [195, 325], [100, 325]],
+    shape: "rectangle"
+  }]
+};
+
 const PLAN_CATALOG = [
   {
     id: "garden-area",

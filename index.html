@@ -47,12 +47,12 @@
       <div>
         <p class="eyebrow">Start here</p>
         <h2 id="getting-started-title">Try a simple plan</h2>
-        <p>Use the default Waverley test workspace, or explore the ready-made Cedar Ridge demo.</p>
+        <p>Start with the fictional half-acre demonstration, or switch to an existing workspace.</p>
       </div>
       <ol>
-        <li><a href="#boundary-editor">Draw a test outline</a><span>On the Waverley map, select “Draw property outline,” place at least three points, then save. Cedar Ridge already has an outline.</span></li>
+        <li><a href="#property">Explore the property</a><span>The fictional demonstration has an outline and home ready to use. The Waverley workspace needs a test outline first.</span></li>
         <li><a href="#plan-form">Choose an idea</a><span>Pick a feature and its contents, then select “Continue to map.”</span></li>
-        <li><a href="#property">Draw and review</a><span>Choose a shape and size, place the requested points inside the outline, then select “Save footprint.”</span></li>
+        <li><a href="#property">Place and review</a><span>In the fictional demonstration, choose a suggested spot or click once to place a footprint, then save. Other workspaces use the existing drawing tools.</span></li>
       </ol>
       <p class="getting-started-note">Plans stay in this browser on this device. The test outline is not a surveyed property boundary.</p>
     </section>
@@ -67,6 +67,7 @@
         <div class="property-workspace-picker">
           <label for="property-workspace">Property workspace
             <select id="property-workspace">
+              <option value="fictional-half-acre">Fictional half-acre · demonstration</option>
               <option value="waverley-terrain-demo">Waverley terrain test · new</option>
               <option value="cedar-ridge">Cedar Ridge · archived demo</option>
             </select>
@@ -345,6 +346,8 @@
             <p class="terrain-data-note" id="terrain-status" role="status" aria-live="polite">
               Real regional terrain data; the new test parcel is synthetic, not a surveyed or legal property.
             </p>
+            <label id="fictional-contour-control" hidden><input id="fictional-contours-toggle" type="checkbox" checked> Show fictional simulated contours</label>
+            <p id="fictional-contour-status" class="terrain-data-note" hidden></p>
           </div>
           <p class="terrain-data-source" id="terrain-source" hidden>
             Elevation source: <a href="https://ftp.maps.canada.ca/pub/elevation/dem_mne/HRDEMmosaic_mosaiqueMNEHR/" target="_blank" rel="noreferrer">Natural Resources Canada HRDEM Mosaic</a> under the
@@ -371,6 +374,8 @@
           <section class="drawing-toolbar" id="drawing-toolbar" aria-labelledby="drawing-title" hidden>
             <h4 id="drawing-title" tabindex="-1">2. Set the shape and size</h4>
             <p id="drawing-feature"></p>
+            <button class="map-action-button" id="demo-suggested-spot" type="button" hidden>Use suggested spot</button>
+            <p id="demo-placement-help" hidden>Use the suggested test spot or click once to position the footprint. Adjust its size below. Spots are examples, not site-suitability recommendations.</p>
             <div class="drawing-controls">
               <label for="drawing-shape">Footprint shape
                 <select id="drawing-shape">
@@ -444,6 +449,13 @@
               <g id="mapped-water-overlay" class="provincial-overlay" aria-hidden="true"></g>
               <g id="contour-overlay" class="provincial-overlay" aria-hidden="true"></g>
               <path class="parcel" id="property-boundary" d="M90 55 L319 45 L554 91 L527 344 L293 380 L76 331 Z"></path>
+              <g id="fictional-landscape" hidden aria-hidden="true">
+                <path d="M70 15 H570 V58 C480 64 415 48 350 57 C245 64 158 54 70 76 Z" fill="url(#woods)"></path>
+                <path d="M70 401 C190 396 223 373 171 349 C148 338 139 337 145 325" fill="none" stroke="#ad9a79" stroke-width="24"></path>
+                <path d="M70 401 C190 396 223 373 171 349 C148 338 139 337 145 325" fill="none" stroke="#dfcfac" stroke-width="18"></path>
+              </g>
+              <g id="fictional-contours" hidden aria-hidden="true"></g>
+              <g id="fictional-suggestion" hidden aria-hidden="true"></g>
               <path class="tree-zone illustration-context" d="M101 76 C163 57 224 76 284 66 L272 116 C216 126 163 105 102 125 Z"></path>
               <path class="tree-zone illustration-context" d="M494 88 C522 105 534 129 527 167 L511 300 C492 287 486 270 490 245 Z"></path>
               <path class="field-zone illustration-context" d="M145 145 C226 119 341 132 421 144 L407 256 C327 269 234 260 155 280 Z"></path>
@@ -751,7 +763,7 @@
 
     <section class="honesty-note" aria-label="Prototype limitations">
       <span class="honesty-icon" aria-hidden="true">i</span>
-      <p><strong>A note about this demo</strong> Property boundaries and sample observations are fictional. Cedar Ridge is illustrative; the Waverley view uses real regional terrain and optional provincial map data, not a surveyed parcel. Areas and dimensions are approximate. Plant and wildlife examples are ideas to research, not verified regional recommendations. Plans save only in this browser. This prototype does not provide AI analysis, professional land assessments, accounts, or payments.</p>
+      <p><strong>A note about this demo</strong> Property boundaries and sample observations are fictional. The half-acre demonstration uses imaginary elevation and simplified grading; its woodland and drive are fixed illustrations. Suggested spots are for testing, not verified suitability. Cedar Ridge is illustrative; the Waverley view uses real regional terrain and optional provincial map data, not a surveyed parcel. Areas and dimensions are approximate. Plant and wildlife examples are ideas to research, not verified regional recommendations. Plans save only in this browser. This prototype does not provide AI analysis, professional land assessments, accounts, or payments.</p>
     </section>
   </main>
 

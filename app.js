@@ -2134,6 +2134,25 @@
     return distance;
   }
 
+  function fictionalElevationModel() {
+    const graded = planItems.filter(function (item) {
+      return ["building-footprint", "greenhouse", "garden-area", "garden-beds", "compost-area"].includes(item.featureId);
+    }).map(function (item) {
+      const center = polygonCenter(item.polygon);
+      return { polygon: item.polygon, target: fictionalBaseElevation(center.x, center.y) };
+    });
+    return function (x, y) {
+      let value = fictionalBaseElevation(x, y);
+      graded.forEach(function (area) {
+        const point = [x, y];
+        const distance = pointInPolygon(point, area.polygon) ? 0 : distanceToPolygon(point, area.polygon);
+        const weight = Math.max(0, 1 - distance / 8);
+        value += (area.target - value) * weight * weight * (3 - 2 * weight);
+      });
+      return value;
+    };
+  }
+
   function scheduleFictionalContours() {
     if (!isFictionalDemo || contourFrame !== null) return;
     contourFrame = requestAnimationFrame(function () {
@@ -2161,22 +2180,7 @@
     fictionalContours.appendChild(clip);
     const lines = svgElement("g", { "clip-path": "url(#fictional-contour-clip)" });
     fictionalContours.appendChild(lines);
-    const graded = planItems.filter(function (item) {
-      return ["building-footprint", "greenhouse", "garden-area", "garden-beds", "compost-area"].includes(item.featureId);
-    }).map(function (item) {
-      const center = polygonCenter(item.polygon);
-      return { polygon: item.polygon, target: fictionalBaseElevation(center.x, center.y) };
-    });
-    function height(x, y) {
-      let value = fictionalBaseElevation(x, y);
-      graded.forEach(function (area) {
-        const point = [x, y];
-        const distance = pointInPolygon(point, area.polygon) ? 0 : distanceToPolygon(point, area.polygon);
-        const weight = Math.max(0, 1 - distance / 8);
-        value += (area.target - value) * weight * weight * (3 - 2 * weight);
-      });
-      return value;
-    }
+    const height = fictionalElevationModel();
     const columns = 100;
     const rows = 68;
     const stepX = mapViewBox.width / columns;
@@ -2757,6 +2761,7 @@
     renderDraft();
     renderBedPlantingCandidates();
     scheduleFictionalContours();
+    if (fictionalScene) fictionalScene.update();
   }
 
   function nearestZone(points) {
@@ -4486,6 +4491,31 @@
   elements.interfaceTheme.addEventListener("change", saveInterfaceTheme);
   elements.featureNoteSave.addEventListener("click", saveFeatureNote);
   elements.featureNoteCancel.addEventListener("click", deselectPlan);
+
+  const sceneAvailable = window.TerraFormaFictionalScene &&
+    typeof window.TerraFormaFictionalScene.create === "function";
+  if (isFictionalDemo && !sceneAvailable) {
+    const scenePanel = document.getElementById("fictional-scene-panel");
+    scenePanel.hidden = false;
+    document.getElementById("scene-toggle").disabled = true;
+    const message = document.createElement("p");
+    message.textContent = "The experimental 3D view could not load. The 2D map remains available.";
+    scenePanel.appendChild(message);
+    console.error("TerraForma could not load the fictional 3D scene.");
+  }
+  const fictionalScene = isFictionalDemo && sceneAvailable ? window.TerraFormaFictionalScene.create({
+    getItems: function () { return planItems; },
+    getBoundary: function () { return propertyBoundary; },
+    getElevation: fictionalElevationModel,
+    contains: pointInPolygon,
+    bedPlantPoint: bedPlantMapPoint,
+    unitsPerMeter: mapUnitsPerMeter,
+    select: function (id) {
+      if (pendingPlanItem || boundaryEditing) return false;
+      selectPlan(id, false);
+      return true;
+    }
+  }) : null;
 
   readPropertyBoundary();
   readPropertyProfile();

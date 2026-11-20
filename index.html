@@ -490,6 +490,32 @@
           </div>
           <p class="map-navigation-hint" id="map-navigation-hint">Pinch to zoom. Select a footprint to edit or drag it to move; turn on Pan map for one-finger panning.</p>
           <p class="map-navigation-hint">Feature symbols are illustrative, not scaled models. Zoom in to see small footprints more clearly.</p>
+          <section class="scene-panel" id="fictional-scene-panel" aria-labelledby="scene-title" hidden>
+            <h4 id="scene-title">Experimental 3D property</h4>
+            <p>Place and edit features on the 2D map above. This view shows the same plan as stylized 3D objects; click an object to select it for editing.</p>
+            <button type="button" class="map-action-button map-action-primary" id="scene-toggle" aria-expanded="false">Open 3D view</button>
+            <div id="scene-content" hidden>
+              <canvas id="scene-canvas" width="960" height="620" role="img" aria-label="Fictional 3D terrain and planned features. Use the mapped features list to select features without a pointer."></canvas>
+              <div class="scene-controls">
+                <label for="scene-time">Sun time <output id="scene-time-output"></output>
+                  <input id="scene-time" type="range" min="5" max="21" step="0.25" value="12">
+                </label>
+                <label for="scene-growth">Fictional tree age <output id="scene-growth-output"></output>
+                  <input id="scene-growth" type="range" min="0" max="30" step="1" value="5">
+                </label>
+                <label for="scene-angle">View direction <output id="scene-angle-output"></output>
+                  <input id="scene-angle" type="range" min="-180" max="180" step="5" value="-30">
+                </label>
+              </div>
+              <div class="scene-water-actions">
+                <label><input id="scene-flow" type="checkbox"> Show downhill flow paths</label>
+                <button type="button" class="map-action-button" id="scene-rain">Start simulated rain</button>
+                <button type="button" class="map-action-button" id="scene-reset-water">Clear simulated water</button>
+              </div>
+              <p id="scene-status" role="status" aria-live="polite"></p>
+              <p class="scene-caveat">Fictional June 21 at 45° N, solar time; shadows are simplified projections, not a shade study. Tree growth and object heights are invented. Rain and flow use the same imaginary elevation model as the 2D contours, with closed edges and no infiltration, pipes or buildings blocking water. Water is reset when the terrain changes. Not for drainage, construction or planting decisions.</p>
+            </div>
+          </section>
           <section class="footprint-editor" id="footprint-editor" aria-labelledby="footprint-editor-title" hidden>
             <div class="footprint-editor-heading">
               <h4 id="footprint-editor-title" tabindex="-1">Edit selected footprint</h4>
@@ -784,6 +810,7 @@
 
   <script src="data.js"></script>
   <script src="select-menu.js"></script>
+  <script src="fictional-scene.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

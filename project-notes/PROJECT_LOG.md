@@ -10,6 +10,15 @@ Keep this up to date as you go — a few lines per work session is enough. It's 
 
 ## Work sessions
 
+### Session — 2026-11-20 — experimental 3D scene
+
+- **Goal:** Explore a 3D view of the fictional property with sun, tree growth and water.
+- **Key prompt:** "there should be a shade and sun aspect ... a slider that shows the sun through out the day ... one to show the growth of the trees and their projected shadows. the contour lines should be functionally usable by water."
+- **What changed:** Added a local, dependency-free 3D scene for the fictional workspace. Existing mapped items appear as simple projected forms, with selectable objects, fictional tree growth, a June-solstice solar-time slider and approximate projected shadows. A coarse rain simulation and downhill arrows use the same height model as the fictional contour lines; water resets when grading or the boundary changes.
+- **What we checked:** In an isolated browser, checked sun, tree age, view direction, flow arrows, rain accumulation and reset, selection of a 3D greenhouse, garden fencing, footprint edits and terrain-triggered water reset. Checked narrow-screen layout, saved-plan reload, JavaScript syntax and diff formatting.
+- **Limitations:** Object models and shadows are schematic, including simplified tree canopies; the sun is for a fictional 45° N location on June 21 in solar time. Growth rates are invented. The coarse closed-boundary water simulation ignores infiltration, evaporation, pipes, obstacles and real rainfall conditions. It is not a shade study, drainage assessment or engineering design. Feature placement still happens on the 2D map. Physical-device testing remains outstanding.
+- **Committed?** no.
+
 ### Session — 2026-11-20 — driver: student
 
 - **Goal:** Create a fictional half-acre map for testing planning features without replacing existing workspaces.

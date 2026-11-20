@@ -537,6 +537,30 @@ main {
   stroke-dasharray: 4 3;
   pointer-events: none;
 }
+.scene-panel {
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px solid #c5d2bd;
+  border-radius: 12px;
+  background: #f5f8ee;
+}
+.scene-panel h4 { margin: 0 0 6px; color: var(--forest-deep); }
+.scene-panel p { color: var(--muted); font-size: 0.78rem; line-height: 1.5; }
+#scene-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 12px;
+  border: 1px solid #c5d2bd;
+  border-radius: 8px;
+}
+.scene-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 12px 0; }
+.scene-controls label { display: grid; gap: 5px; font-size: 0.75rem; font-weight: 700; }
+.scene-controls input { width: 100%; }
+.scene-controls output { font-weight: 400; }
+.scene-water-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.scene-water-actions label { font-size: 0.75rem; }
+.scene-caveat { border-left: 3px solid #bd9a5d; padding-left: 10px; }
 .parcel { fill: #d6e0c9; stroke: #667e61; stroke-width: 3; stroke-dasharray: 8 7; }
 .map-frame.is-georeferenced-terrain .parcel {
   fill: rgb(214 224 201 / 10%);
